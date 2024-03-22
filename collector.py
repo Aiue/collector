@@ -23,6 +23,9 @@ class Archive:
         self.archiveID = archiveID
         self.indexPathsFile = RemoteFile(indexPathsFile)
 
+    def __repr__(self):
+        return self.archiveID
+
     def updatePaths(self):
         f = RemoteFile(indexPathsFile)
         for line in f.read(): # TODO: Catch errors.
@@ -74,6 +77,9 @@ class Domain:
     def __init__(self, domain):
         self.domain = domain
         self.archives = {}
+
+    def __repr__(self):
+        return self.domain
 
     def loadHistory(self):
         # TODO: Writeme
