@@ -70,3 +70,16 @@ class RetryQueue:
             return
         self.queue.pop(0).download(True)
 
+class Domain:
+    def __init__(self, domain):
+        self.domain = domain
+        self.archives = {}
+
+    def loadHistory(self):
+        # TODO: Writeme
+        pass
+
+    def updateHistory(self, archiveID, history):
+        # TODO: Writeme
+        pass
+
