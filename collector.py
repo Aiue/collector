@@ -79,7 +79,28 @@ class Domain:
         # TODO: Writeme
         pass
 
-    def updateHistory(self, archiveID, history):
+    def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
         # TODO: Writeme
         pass
 
+    def search(self, archive):
+        # TODO: Writeme
+        pass
+
+    def searchClusters(self, clusters):
+        # TODO: Writeme
+        pass
+
+    def getFile(self, index):
+        # TODO: Writeme
+        pass
+
+class ClusterIndex:
+    def __init__(self, url=None):
+        # BE VERY, VERY CAREFUL WITH INITIALIZING WITH A CLUSTER INDEX URL
+        # They're huge, and this should only ever be done through within
+        # a memoized function.
+        self.index = []
+        if url:
+            #TODO: Writeme
+            pass
