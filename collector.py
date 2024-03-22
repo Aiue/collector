@@ -60,3 +60,13 @@ class RemoteFile:
         # TODO: Writeme
         pass
 
+class RetryQueue:
+    def __init__(self):
+        self.queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
+        # TODO: Writeme
+        
+    def process(self):
+        if len(self.queue) == 0:
+            return
+        self.queue.pop(0).download(True)
+
