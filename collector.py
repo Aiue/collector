@@ -5,6 +5,18 @@
 
 import time
 
+# Configuration, using a dict for verbosity purposes.
+config = {
+    archive_host = 'data.commoncrawl.org',
+    archive_list_uri = '/cc-index/collections/index.html',
+    max_requests_limit = 5,
+    max_requests_time = 5,
+    cache_index_clusters = True,
+}
+
+# Global variable initiation.
+lastRequests = []
+
 # Classes
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
