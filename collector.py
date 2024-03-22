@@ -43,3 +43,20 @@ class Archives:
         contents = index.read()
         # TODO: Parse the html response (or catch errors).
         self.lastUpdate = time.time()
+
+class RemoteFile:
+    def __init__(self, url, offset=None, length=None, filename=None):
+        self.url = url
+        self.offset = offset
+        self.length = length
+        self.filename = filename
+        self.attempts = 0
+
+    def download(self, retry=None):
+        # TODO: Writeme
+        pass
+
+    def read(self, shouldCache=None):
+        # TODO: Writeme
+        pass
+
