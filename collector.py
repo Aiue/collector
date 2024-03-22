@@ -48,7 +48,7 @@ class Archives:
         self.lastUpdate = time.time()
 
 class RemoteFile:
-    def __init__(self, url, offset=None, length=None, filename=None):
+    def __init__(self, url, filename=None, offset=None, length=None):
         self.url = url
         self.offset = offset
         self.length = length
