@@ -61,14 +61,6 @@ class RemoteFile:
         self.length = length
         self.attempts = 0
 
-
-        # RF.download() - calls get() AND write() ..but what if we have it, DUPLICATION
-        # RF.read() - very special case
-        #               if we have cache, read from cache
-        #               otherwise, call get()
-        #                 if we should cache, call write()
-        # RF.write() - Writes to file.
-        # RF.get() - Just handles the HTTP request.
     def download(self):
         # Just a wrapper, but it simplifies things.
         if not self.filename:
@@ -119,7 +111,22 @@ class RemoteFile:
             raise
         f.write(contents)
         f.close()
-        
+
+    def get():
+        headers = None # Should not need to be initialized/emptied, but do it anyway.
+        if not self.offset or not self.length: # No need to error handle if only one is set.
+            # The below may be uglier than other formatting according to some standards, but
+            # in emacs it looks better this way!
+            headers = {'Range': "bytes=" + str(offset) + "-" + str(offset+length-1)}
+        try:
+            r = requests.get(self.url, headers=headers)
+        except Exception:
+            raise
+        if r.status_code != 200:
+            raise Exception('Failed to get %s: %i %s', url, r.status_code, r.reason)
+        else:
+            return r.content
+
 class RetryQueue:
     def __init__(self):
         self.queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
