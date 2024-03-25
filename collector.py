@@ -91,14 +91,15 @@ class RemoteFile:
             try:
                 f = open(self.filename, 'rb')
             except Exception as error:
-                raise(error)
+                raise
             else:
                 contents = f.read()
+                f.close()
         else:
             try:
                 contents = self.get()
             except Exception as error:
-                raise(error)
+                raise
             else:
                 if self.filename: # We should cache file.
                     try:
@@ -109,6 +110,16 @@ class RemoteFile:
             return contents
         return gzip.decompress(contents)
 
+    def write(self, contents):
+        if not self.filename:
+            raise Exception('RemoteFile.write() called with no filename set: %s', url)
+        try:
+            f = open(self.filename, 'wb')
+        except Exception:
+            raise
+        f.write(contents)
+        f.close()
+        
 class RetryQueue:
     def __init__(self):
         self.queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
