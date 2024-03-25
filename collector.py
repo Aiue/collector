@@ -49,7 +49,10 @@ class Archives:
             return
         index = RemoteFile(config.archive_host + config.archive_list_uri)
         index.bypass_decompression = True # Hack for this one special case
-        contents = index.read()
+        try:
+            contents = index.read()
+        except Exception as error:
+            logger.warning('Could not read archive list: %s', error)
         # TODO: Parse the html response (or catch errors).
         self.lastUpdate = time.time()
 
