@@ -48,6 +48,7 @@ class Archives:
         if time.time() - self.lastUpdate < 86400:
             return
         index = RemoteFile(config.archive_host + config.archive_list_uri)
+        index.bypass_decompression = True # Hack for this one special case
         contents = index.read()
         # TODO: Parse the html response (or catch errors).
         self.lastUpdate = time.time()
@@ -106,7 +107,7 @@ class RemoteFile:
                         logger.warning('Could not write cache file \'%s\': %s', filename, error)
         if self.bypass_decompression: # special case for main index
             return contents
-        return (gzip.decompress(contents))
+        return gzip.decompress(contents)
 
 class RetryQueue:
     def __init__(self):
