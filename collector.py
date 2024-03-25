@@ -3,6 +3,7 @@
 # Written by Jens Nilsson Sahlin for Linköping University 2024
 # Additional details will be available in README.md
 
+import gzip
 import logging
 import os.path
 import requests
@@ -78,15 +79,34 @@ class RemoteFile:
                 contents = self.get()
             except Exception as error:
                 # We do not need to raise it further.
-                logger.error(error)
+                logger.error('could not download file from %s: %s', url, error)
                 # TODO: Add to retry queue. Needs a reference to it.
                 return False
             self.write(contents)
             return True
 
     def read(self):
-        # TODO: Writeme
-        pass
+        if self.filename and os.path.exists(self.filename): # File is in cache.
+            try:
+                f = open(self.filename, 'rb')
+            except Exception as error:
+                raise(error)
+            else:
+                contents = f.read()
+        else:
+            try:
+                contents = self.get()
+            except Exception as error:
+                raise(error)
+            else:
+                if self.filename: # We should cache file.
+                    try:
+                        self.write(contents)
+                    except Exception as error:
+                        logger.warning('Could not write cache file \'%s\': %s', filename, error)
+        if self.bypass_decompression: # special case for main index
+            return contents
+        return (gzip.decompress(contents))
 
 class RetryQueue:
     def __init__(self):
