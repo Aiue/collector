@@ -3,11 +3,14 @@
 # Written by Jens Nilsson Sahlin for Linköping University 2024
 # Additional details will be available in README.md
 
+import logging
+import os.path
+import requests
 import time
 
 # Configuration, using a dict for verbosity purposes.
 config = {
-    archive_host = 'data.commoncrawl.org',
+    archive_host = 'https://data.commoncrawl.org',
     archive_list_uri = '/cc-index/collections/index.html',
     max_requests_limit = 5,
     max_requests_time = 5,
@@ -16,6 +19,7 @@ config = {
 
 # Global variable initiation.
 lastRequests = []
+logger = logging.getLogger('collector') 
 
 # Classes
 class Archive:
@@ -50,16 +54,37 @@ class Archives:
 class RemoteFile:
     def __init__(self, url, filename=None, offset=None, length=None):
         self.url = url
+        self.filename = filename # Local filename, doubles as cache indicator.
         self.offset = offset
         self.length = length
-        self.filename = filename
         self.attempts = 0
 
-    def download(self, retry=None):
-        # TODO: Writeme
-        pass
 
-    def read(self, shouldCache=None):
+        # RF.download() - calls get() AND write() ..but what if we have it, DUPLICATION
+        # RF.read() - very special case
+        #               if we have cache, read from cache
+        #               otherwise, call get()
+        #                 if we should cache, call write()
+        # RF.write() - Writes to file.
+        # RF.get() - Just handles the HTTP request.
+    def download(self):
+        # Just a wrapper, but it simplifies things.
+        if not self.filename:
+            logger.error('attempted to download file with no local filename set: %s', self.url)
+        elif if os.path.exists(self.filename):
+            logger.warning('attempted to download already existing file: %s', self.filename)
+        else:
+            try:
+                contents = self.get()
+            except Exception as error:
+                # We do not need to raise it further.
+                logger.error(error)
+                # TODO: Add to retry queue. Needs a reference to it.
+                return False
+            self.write(contents)
+            return True
+
+    def read(self):
         # TODO: Writeme
         pass
 
@@ -71,7 +96,7 @@ class RetryQueue:
     def process(self):
         if len(self.queue) == 0:
             return
-        self.queue.pop(0).download(True)
+        self.queue.pop(0).download()
 
 class Domain:
     def __init__(self, domain):
