@@ -225,6 +225,14 @@ class Domain:
     def __init__(self, domain):
         self.domain = domain
         self.archives = {}
+        self.searchString = ""
+        left,right = domain.split('/', 1)
+        left = left.split('.')
+        for i in range(len(left),0,-1):
+            self.searchString += left[i-1]
+            if i > 1:
+                self.searchString += ','
+        self.searchString += ')/' + right
 
     def __repr__(self):
         return self.domain
