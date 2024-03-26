@@ -32,12 +32,18 @@ class Archive:
         return self.archiveID
 
     def updatePaths(self):
-        f = RemoteFile(indexPathsFile)
-        for line in f.read(): # TODO: Catch errors.
-            if line.endswith('cluster.idx'):
-                self.clusterIndex = RemoteFile(line)
-                i = line.rfind('cluster.idx')
-                self.indexPathsURI = line[0:i]
+        try:
+            f = RemoteFile(self.indexPathsFile)
+        except Exception as error:
+            logger.error('Could not read remote file %s: %s', self.indexPathsFile, error)
+        else:
+            for line in f.read():
+                if line.endswith('cluster.idx'):
+                    self.clusterIndex = RemoteFile(line)
+                    i = line.rfind('cluster.idx')
+                    self.indexPathsURI = line[0:i]
+            if not self.clusterIndex:
+                raise Exception('Could not update paths for archive %s.', self.archiveID)
 
 class Archives:
     def __init__(self):
