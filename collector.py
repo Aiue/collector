@@ -41,7 +41,7 @@ class Archive:
         else:
             for line in f.read():
                 if line.endswith('cluster.idx'):
-                    self.clusterIndex = RemoteFile(line)
+                    self.clusterIndex = RemoteFile(line, '.cache/' + self.archiveID + '/cluster.idx')
                     i = line.rfind('cluster.idx')
                     self.indexPathsURI = line[0:i]
             if not self.clusterIndex:
@@ -80,7 +80,7 @@ class Archives:
             if tag == "a" and self.linkCounter == 3:
                 logger.debug('Parsed archive %s %s', self.archiveID, self.indexPathsFile)
                 self.linkCounter = 0
-                self.archives.insert(len(self.archives), Archive(self.archiveID, self.indexPathsFile))
+                self.archives.append(Archive(self.archiveID, self.indexPathsFile))
                 self.archiveID = None
                 self.indexPathsFile = None
                 
@@ -218,7 +218,7 @@ class RetryQueue:
         self.save()
 
     def add(self, item):
-        self.queue.insert(len(self.queue), item)
+        self.queue.append(item)
         
     def save(self):
         try:
@@ -266,13 +266,21 @@ class Domain:
         # TODO: Writeme
         pass
 
-# comments for now, because I'm mid rewrite, and I did a silly elsewhere that I need to rewrite first
-#class ClusterIndex:
-#    def __init__(self, archive=None):
-#        # BE VERY, VERY CAREFUL WITH INITIALIZING WITH AN ARCHIVE
-#        # They're huge, and this should only ever be done through within
-#        # a memoized function.
-#        self.index = []
-#        if archive:
-#            
-#            pass
+class ClusterIndex:
+    def __init__(self, clusterIndex=None):
+        # BE VERY, VERY CAREFUL WITH INITIALIZING WITH AN ARCHIVE
+        # They're huge, and this should only ever be done through within
+        # a memoized function.
+        self.index = []
+        if clusterIndex:
+            for line in clusterIndex.read():
+                searchable_string,rest = line.split(' ')
+                timestamp,filename,offset,length,cluster = rest.split('\t')
+                self.index.append(
+                    (searchable_string,
+                     int(timestamp),
+                     filename,
+                     int(offset),
+                     int(length),
+                     int(cluster)
+                     ))
