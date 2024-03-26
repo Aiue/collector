@@ -4,6 +4,7 @@
 # Additional details will be available in README.md
 
 import gzip
+import html.parser
 import logging
 import os.path
 import requests
@@ -50,6 +51,46 @@ class Archives:
         self.archives = {}
         self.lastUpdate = 0
 
+    class HTMLParser:
+        # Catch everything from <tbody> to </tbody>.
+        # Groups of 3 <a>:
+        #  1: archiveID
+        #  2: we don't care about this one
+        #  3: cc-index.paths.gz
+        def __init__(self):
+            self.archives = []
+            self.isScanningTableBody = False
+            self.linkCounter = 0
+
+        def handle_starttag(self, tag, attributes):
+            if tag == "tbody":
+                self.isScanningTableBody = True
+            if self.isScanningTableBody:
+                if tag == "a":
+                    linkCounter += 1
+                    if linkCounter == 3:
+                        # As of writing, only 'href' attributes are present.
+                        # But in case this changes in the future, let's be vigilant.
+                        for attribute in attributes:
+                            if attribute[0] == "href":
+                                self.indexPathsFile = attribute[1]
+
+        def handle_endtag(self, tag):
+            if tag == "a" and self.linkCounter == 3:
+                logger.debug('Parsed archive %s %s', self.archiveID, self.indexPathsFile)
+                self.linkCounter = 0
+                self.archives.insert(len(self.archives), Archive(self.archiveID, self.indexPathsFile))
+                self.archiveID = None
+                self.indexPathsFile = None
+                
+            elif tag == "tbody":
+                self.close()
+
+        def handle_data(self, data):
+            if linkCounter == 1:
+                self.archiveID = data
+            
+        
     def update(self):
         if time.time() - self.lastUpdate < 86400:
             return
