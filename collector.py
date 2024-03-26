@@ -275,7 +275,7 @@ class Domain:
 
     # Search functions are here rather than on the classes they operate on for cache purposes.
     def search(self, archive):
-        if memoize.search and memoize.search[0] = archive.archiveID:
+        if memoize.search and memoize.search[0] = archive:
             return memoize.search[1]
 
         results = []
@@ -285,12 +285,12 @@ class Domain:
                 searchable_string,rest = line.split(' ')
                 timestamp,filename,offset,length,cluster = rest.split('\t')
                 index.append(
-                    (searchable_string,
-                     int(timestamp),
-                     filename,
-                     int(offset),
-                     int(length),
-                     int(cluster)
+                    (searchable_string, # 0
+                     int(timestamp),    # 1
+                     filename,          # 2
+                     int(offset),       # 3
+                     int(length),       # 4
+                     int(cluster)       # 5
                     ))
         except Exception:
             raise
@@ -305,12 +305,37 @@ class Domain:
                     position += 1
                 else:
                     break
-                memoize.search = (archive.archiveID, results)
+                memoize.search = (archive, results)
                 return results
 
-    def searchClusters(self, clusters):
-        # TODO: Writeme
-        pass
+    def searchClusters(self, archive, clusters): # #TODO: Not happy with variable names here. Need to revisit and rename.
+        if memoize.searchClusters and memoize.searchClusters[0] == self and memoize.searchClusters[1] == archive:
+            return memoize.searchClusters[2]
+
+        results = []
+        for cluster in clusters:
+            index = []
+            indexFile = RemoteFile(
+                archive.indexPathsURI + cluster[2],
+                '.cache/' + archive.archiveID + '/' + cluster[2] + '-' + cluster[5],
+                cluster[3],
+                cluster[4])
+            try:
+                for line in indexFile.read():
+                    searchable_string,timestamp,json = line.split(' ')
+                    index.append((searchable_string, int(timestamp), json))
+            except Exception:
+                raise
+            else:
+                position = bisect.bisect_left(index, (self.searchString, 0, ""))
+                # Unlike the cluster index, there should be no earlier result than position.
+                while position < len(index):
+                    if self.searchString in index[position][0]:
+                        results.append(index[position])
+                    else:
+                        break
+        memoize.searchClusters = (self, archive, results)
+        return results
 
     def getFile(self, index):
         # TODO: Writeme
