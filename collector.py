@@ -5,6 +5,7 @@
 
 import gzip
 import html.parser
+import json
 import logging
 import os
 import os.path
@@ -232,8 +233,10 @@ class RetryQueue:
 
 class Domain:
     def __init__(self, domain):
+        if '/' in domain:
+            raise Exception('Domains cannot contain \'/\'') # May want to adress this differently.
         self.domain = domain
-        self.archives = {}
+        self.history = {}
         self.searchString = ""
         left,right = domain.split('/', 1)
         left = left.split('.')
@@ -247,13 +250,27 @@ class Domain:
         return self.domain
 
     def loadHistory(self):
-        # TODO: Writeme
-        pass
+        if os.path.exists('history/' + self.domain):
+            try:
+                f = open('history/' + self.domain, 'r')
+            except Exception:
+                raise
+            else:
+                self.history = json.load(f)
+                logger.info('Loaded search history for %s', self.domain)
 
     def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
-        # TODO: Writeme
-        pass
+        if not os.path.exists('history'):
+            os.mkdir('history')
+        try:
+            f = open('history/' + self.domain, 'w')
+        except Exception:
+            raise
+        else:
+            json.dump(self.history, f)
+            # No log message, we might do this often.
 
+    # Search functions are here rather than on the classes they operate on for cache purposes.
     def search(self, archive):
         # TODO: Writeme
         pass
@@ -266,7 +283,7 @@ class Domain:
         # TODO: Writeme
         pass
 
-class ClusterIndex:
+class ClusterIndex: # Since all this really does it hold data, I may break it out of the class.
     def __init__(self, clusterIndex=None):
         # BE VERY, VERY CAREFUL WITH INITIALIZING WITH AN ARCHIVE
         # They're huge, and this should only ever be done through within
