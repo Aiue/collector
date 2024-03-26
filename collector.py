@@ -6,6 +6,7 @@
 import gzip
 import html.parser
 import logging
+import os
 import os.path
 import requests
 import time
@@ -162,6 +163,14 @@ class RemoteFile:
     def write(self, contents):
         if not self.filename:
             raise Exception('RemoteFile.write() called with no filename set: %s', url)
+        if '/' in self.filename:
+            left,right = self.filename.rsplit('/', 1)
+            if not os.path.exists(left):
+                log.info("Recursively creating directory '%s'.", left)
+            try:
+                os.makedirs(left)
+            except Exception:
+                raise
         try:
             f = open(self.filename, 'wb')
         except Exception:
@@ -257,12 +266,13 @@ class Domain:
         # TODO: Writeme
         pass
 
-class ClusterIndex:
-    def __init__(self, url=None):
-        # BE VERY, VERY CAREFUL WITH INITIALIZING WITH A CLUSTER INDEX URL
-        # They're huge, and this should only ever be done through within
-        # a memoized function.
-        self.index = []
-        if url:
-            #TODO: Writeme
-            pass
+# comments for now, because I'm mid rewrite, and I did a silly elsewhere that I need to rewrite first
+#class ClusterIndex:
+#    def __init__(self, archive=None):
+#        # BE VERY, VERY CAREFUL WITH INITIALIZING WITH AN ARCHIVE
+#        # They're huge, and this should only ever be done through within
+#        # a memoized function.
+#        self.index = []
+#        if archive:
+#            
+#            pass
