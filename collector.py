@@ -99,9 +99,18 @@ class Archives:
         try:
             contents = index.read()
         except Exception as error:
-            logger.warning('Could not read archive list: %s', error)
-        # TODO: Parse the html response (or catch errors).
-        self.lastUpdate = time.time()
+            raise
+        else:
+            parser = self.HTMLParser()
+            parser.feed(contents)
+            if len(parser.archives) == 0:
+                raise Exception('Could not parse archive list.')
+            for archive in parser.archives:
+                if not self.archives[archive.archiveID]:
+                    logger.info('New archive: %s', archive.archiveID)
+                    self.archives[archive.archiveID] = archive
+
+            self.lastUpdate = time.time()
 
 class RemoteFile:
     def __init__(self, url, filename=None, offset=None, length=None):
