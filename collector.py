@@ -279,19 +279,34 @@ class Domain:
             return memoize.search[1]
 
         results = []
-        index = ClusterIndex(archive.clusterIndex)
-        # This search format should mean we're always left of anything matching our search string.
-        position = bisect.bisect_left(index, (self.searchString, 0, "", 0, 0, 0))
-        # We may (and likely will) have matches in the index cluster prior to our match.
-        results.append(index[position-1])
-        while position < len(index):
-            if self.searchString in index[position][0]:
-                results.append(index[position])
-                position += 1
-            else:
-                break
-        memoize.search = (archive.archiveID, results)
-        return results
+        index = []
+        try:
+            for line in archive.clusterIndex.read():
+                searchable_string,rest = line.split(' ')
+                timestamp,filename,offset,length,cluster = rest.split('\t')
+                index.append(
+                    (searchable_string,
+                     int(timestamp),
+                     filename,
+                     int(offset),
+                     int(length),
+                     int(cluster)
+                    ))
+        except Exception:
+            raise
+        else:
+            # This search format should mean we're always left of anything matching our search string.
+            position = bisect.bisect_left(index, (self.searchString, 0, "", 0, 0, 0))
+            # We may (and likely will) have matches in the index cluster prior to our match.
+            results.append(index[position-1])
+            while position < len(index):
+                if self.searchString in index[position][0]:
+                    results.append(index[position])
+                    position += 1
+                else:
+                    break
+                memoize.search = (archive.archiveID, results)
+                return results
 
     def searchClusters(self, clusters):
         # TODO: Writeme
@@ -300,22 +315,3 @@ class Domain:
     def getFile(self, index):
         # TODO: Writeme
         pass
-
-class ClusterIndex: # Since all this really does it hold data, I may break it out of the class.
-    def __init__(self, clusterIndex=None):
-        # BE VERY, VERY CAREFUL WITH INITIALIZING WITH AN ARCHIVE
-        # They're huge, and this should only ever be done through within
-        # a memoized function.
-        self.index = []
-        if clusterIndex:
-            for line in clusterIndex.read():
-                searchable_string,rest = line.split(' ')
-                timestamp,filename,offset,length,cluster = rest.split('\t')
-                self.index.append(
-                    (searchable_string,
-                     int(timestamp),
-                     filename,
-                     int(offset),
-                     int(length),
-                     int(cluster)
-                     ))
