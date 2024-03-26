@@ -23,7 +23,10 @@ config = {
 
 # Global variable initiation.
 lastRequests = []
-logger = logging.getLogger('collector') 
+logger = logging.getLogger('collector')
+memoize = {} # Master container for memoize cache.
+             # memoize.function = (arg, result) or (arg1, arg2, result)
+             # Because once arg changes, we will no longer need result.
 
 # Classes
 class Archive:
@@ -272,8 +275,23 @@ class Domain:
 
     # Search functions are here rather than on the classes they operate on for cache purposes.
     def search(self, archive):
-        # TODO: Writeme
-        pass
+        if memoize.search and memoize.search[0] = archive.archiveID:
+            return memoize.search[1]
+
+        results = []
+        index = ClusterIndex(archive.clusterIndex)
+        # This search format should mean we're always left of anything matching our search string.
+        position = bisect.bisect_left(index, (self.searchString, 0, "", 0, 0, 0))
+        # We may (and likely will) have matches in the index cluster prior to our match.
+        results.append(index[position-1])
+        while position < len(index):
+            if self.searchString in index[position][0]:
+                results.append(index[position])
+                position += 1
+            else:
+                break
+        memoize.search = (archive.archiveID, results)
+        return results
 
     def searchClusters(self, clusters):
         # TODO: Writeme
