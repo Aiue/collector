@@ -189,9 +189,21 @@ class RemoteFile:
 class RetryQueue:
     def __init__(self):
         self.queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
-        # TODO: Writeme
-        
-    def process(self):
+
+        if os.path.exists('retryqueue'):
+            try:
+                f = open('retryqueue', 'r')
+            except Exception as error:
+                raise OSError('Could not load retry queue: %s', error)
+            for line in f:
+                url,filename,offset,length,attempts = line.split('\t')
+                self.queue.insert(len(self.queue), RemoteFile(url, filename, int(offset), int(length)))
+                self.queue.attempts = int(attempts) # Not the prettiest way of doing it, but this one case
+                                                    # does not warrant __init__ inclusion.
+            f.close()
+            log.info('Loaded retry queue with %d items.', len(self.queue))
+
+    def process(self): # TODO: Write to disk.
         if len(self.queue) == 0:
             return
         self.queue.pop(0).download()
