@@ -192,19 +192,31 @@ class RetryQueue:
             try:
                 f = open('retryqueue', 'r')
             except Exception as error:
-                raise OSError('Could not load retry queue: %s', error)
-            for line in f:
-                url,filename,offset,length,attempts = line.split('\t')
-                self.queue.insert(len(self.queue), RemoteFile(url, filename, int(offset), int(length)))
-                self.queue.attempts = int(attempts) # Not the prettiest way of doing it, but this one case
+                log.error('Could not load retry queue: %s', error)
+            else:
+                for line in f:
+                    url,filename,offset,length,attempts = line.split('\t')
+                    self.queue.insert(len(self.queue), RemoteFile(url, filename, int(offset), int(length)))
+                    self.queue.attempts = int(attempts) # Not the prettiest way of doing it, but this one case
                                                     # does not warrant __init__ inclusion.
-            f.close()
-            log.info('Loaded retry queue with %d items.', len(self.queue))
+                f.close()
+                log.info('Loaded retry queue with %d items.', len(self.queue))
 
     def process(self):
         if len(self.queue) == 0:
             return
         self.queue.pop(0).download()
+        self.save()
+
+    def save(self):
+        try:
+            f = open('retryqueue', 'w')
+        except Exception as error:
+            log.error('Could not write retry queue: %s', error)
+        else:
+            for item in self.queue:
+                f.write(item.url + '\t' + item.filename + '\t' + str(item.offset) + '\t' + str(item.length) + '\t' + str(item.attempts))
+            f.close()
 
 class Domain:
     def __init__(self, domain):
