@@ -196,7 +196,7 @@ class RetryQueue:
             else:
                 for line in f:
                     url,filename,offset,length,attempts = line.split('\t')
-                    self.queue.insert(len(self.queue), RemoteFile(url, filename, int(offset), int(length)))
+                    self.add(RemoteFile(url, filename, int(offset), int(length)))
                     self.queue.attempts = int(attempts) # Not the prettiest way of doing it, but this one case
                                                     # does not warrant __init__ inclusion.
                 f.close()
@@ -208,6 +208,9 @@ class RetryQueue:
         self.queue.pop(0).download()
         self.save()
 
+    def add(self, item):
+        self.queue.insert(len(self.queue), item)
+        
     def save(self):
         try:
             f = open('retryqueue', 'w')
