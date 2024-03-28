@@ -247,7 +247,11 @@ class Domain:
             self.searchString += left[i-1]
             if i > 1:
                 self.searchString += ','
-        self.searchString += ')/' + right
+        self.searchString += ')/' + right # TODO: Consider skipping this to include subdomains.
+                                          # May want additional steps to allow for wildcard matching.
+                                          # Caveat: only left-side wildcards (*.domain.com) would be
+                                          # workable with binary search, and simply removing this would
+                                          # make those implicit.
 
     def __repr__(self):
         return self.domain
@@ -274,6 +278,7 @@ class Domain:
             # No log message, we might do this often.
 
     # Search functions are here rather than on the classes they operate on for cache purposes.
+    # Rather than having their own classes*, actually.
     def search(self, archive):
         if memoize.search and memoize.search[0] = archive:
             return memoize.search[1]
@@ -315,9 +320,11 @@ class Domain:
         results = []
         for cluster in clusters:
             index = []
+            if config.cache_index_clusters:
+                cacheFileName = '.cache/' + archive.archiveID + '/' + cluster[2] + '-' + cluster[5]
             indexFile = RemoteFile(
                 archive.indexPathsURI + cluster[2],
-                '.cache/' + archive.archiveID + '/' + cluster[2] + '-' + cluster[5],
+                cacheFileName,
                 cluster[3],
                 cluster[4])
             try:
@@ -338,5 +345,22 @@ class Domain:
         return results
 
     def getFile(self, index):
-        # TODO: Writeme
-        pass
+        # First, determine what to fetch.
+        
+
+        # Sample filename:
+        # crawl-data/CC-MAIN-2023-50/segments/1700679100942.92/warc/CC-MAIN-20231209170619-20231209200619-00251.warc.gz
+        #                  ^                       ^                               ^
+        # We want        this                    this                          and this, along with byte-ranges in file to ensure uniqueness of name.
+
+# Either change the list to single integer, or update .searchCluster() to only do one cluster at a time.
+#history = {
+#    archiveID: .., # Variable types. 'True' if fully searched.
+#                   #                 'None' if fully unsearched.
+#                   #                 List of integers if in progress:
+#                   #                     [0]: cluster last downloaded file is in
+#                   #                     [1]: index position in searchCluster() results
+#                   #                            for last downloaded file
+#    ...
+#}
+
