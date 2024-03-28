@@ -268,7 +268,7 @@ class Domain:
                 logger.info('Loaded search history for %s', self.domain)
 
     def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
-        # TODO: Actually use the history argument too.
+        self.history[archiveID] = history
         if not os.path.exists('history'):
             os.mkdir('history')
         try:
