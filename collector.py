@@ -305,7 +305,7 @@ class Domain:
             # We may (and likely will) have matches in the index cluster prior to our match.
             results.append(index[position-1])
             while position < len(index):
-                if self.searchString in index[position][0]:
+                if index[position][0].startswith(self.searchString):
                     results.append(index[position])
                     position += 1
                 else:
@@ -318,6 +318,10 @@ class Domain:
             return memoize.searchClusters[2]
 
         results = []
+        # TODO: (maybe)
+        # This method has the potential to create very large lists. But unless we're matching against an entire
+        # top domain, we shouldn't get anywhere near the size of a cluster index. Even so, it may be worth
+        # considering a rewrite.
         for cluster in clusters:
             index = []
             if config.cache_index_clusters:
@@ -337,7 +341,7 @@ class Domain:
                 position = bisect.bisect_left(index, (self.searchString, 0, ""))
                 # Unlike the cluster index, there should be no earlier result than position.
                 while position < len(index):
-                    if self.searchString in index[position][0]:
+                    if index[position][0].startswith(self.searchStringi):
                         results.append(index[position])
                     else:
                         break
