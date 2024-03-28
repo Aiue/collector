@@ -19,6 +19,7 @@ config = {
     max_requests_limit = 5,
     max_requests_time = 5,
     cache_index_clusters = True,
+    pywb_collection_dir = 'path/to/pywb/collection',
 }
 
 # Global variable initiation.
@@ -118,14 +119,14 @@ class Archives:
             self.lastUpdate = time.time()
 
 class RemoteFile:
-    def __init__(self, url, filename=None, offset=None, length=None):
+    def __init__(self, url, filename=None, offset=None, length=None): #TODO: Add digest information.
         self.url = url
         self.filename = filename # Local filename, doubles as cache indicator.
         self.offset = offset
         self.length = length
         self.attempts = 0
 
-    def download(self):
+    def download(self): #TODO: Add digest check.
         # Just a wrapper, but it simplifies things.
         if not self.filename:
             logger.error('attempted to download file with no local filename set: %s', self.url)
@@ -267,6 +268,7 @@ class Domain:
                 logger.info('Loaded search history for %s', self.domain)
 
     def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
+        # TODO: Actually use the history argument too.
         if not os.path.exists('history'):
             os.mkdir('history')
         try:
@@ -342,29 +344,52 @@ class Domain:
                 # Unlike the cluster index, there should be no earlier result than position.
                 while position < len(index):
                     if index[position][0].startswith(self.searchStringi):
-                        results.append(index[position])
+                        # Only the json data will be interesting from here on.
+                        results.append(index[position][2])
                     else:
                         break
         memoize.searchClusters = (self, archive, results)
         return results
 
-    def getFile(self, index):
+    def getFile(self, archive, index):
         # First, determine what to fetch.
-        
+        if not self.history[archive.archiveID]:
+            position = 0
+        elif type(self.history[archive.archiveID]) == bool:
+            # This shouldn't ever happen here. But let's catch it anyway.
+            raise Exception('Attempted to download completed domain/archive combination: %s %s', self.domain, archive.archiveID)
+        elif type(self.history[archive.archiveID]) == int:
+            position = self.history[archive.archiveID] + 1
 
-        # Sample filename:
+        fileInfo = json.loads(index[position])
+        # Fields of interest: filename, offset, length, digest
+        # Fields of potential interest: mime-detected, status, ..more?
+
+        # Sample filenames:
         # crawl-data/CC-MAIN-2023-50/segments/1700679100942.92/warc/CC-MAIN-20231209170619-20231209200619-00251.warc.gz
         #                  ^                       ^                               ^
-        # We want        this                    this                          and this, along with byte-ranges in file to ensure uniqueness of name.
+        # We want       not this                 this                          and this, along with byte-ranges in file to ensure uniqueness of name.
 
-# Either change the list to single integer, or update .searchCluster() to only do one cluster at a time.
-#history = {
-#    archiveID: .., # Variable types. 'True' if fully searched.
-#                   #                 'None' if fully unsearched.
-#                   #                 List of integers if in progress:
-#                   #                     [0]: cluster last downloaded file is in
-#                   #                     [1]: index position in searchCluster() results
-#                   #                            for last downloaded file
-#    ...
-#}
+        # crawl-001/2009/01/12/1/1231766653431_1.arc.gz
+        # The only difference between formats appear to be between .arc.gz and .warc.gz
 
+        filerange = '-' + str(fileInfo.filename.offset) + '-' + str(fileInfo.filename.offset+fileInfo.filename.length-1)
+
+        filename = pywb_collection_dir + '/' + archive.archiveID + '-'
+        if fileInfo.filename.endswith('.arc.gz'):
+            for name in fileInfo.filename.split('/'):
+                filename += name
+            filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
+        elif fileInfo.filename.endswith('.warc.gz'):
+            _,_,_,partial_path,_,warcfile = fileInfo.filename.split('/')
+            filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
+
+        url = config.archive_host + '/' + fileInfo.filename
+        rf = RemoteFile(url, filename, fileInfo.offset, fileInfo.length)
+        logger.info('Downloading from %s (range %i-%i) to %s', url, fileInfo.offset, fileInfo.offset+fileInfo.length-1, filename)
+        rf.download()
+
+        if position == len(index)-1:
+            self.updateHistory(archive.archiveID, True)
+        else:
+            self.updateHistory(archive.archiveID, position)
