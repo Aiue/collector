@@ -14,12 +14,12 @@ import time
 
 # Configuration, using a dict for verbosity purposes.
 config = {
-    archive_host = 'https://data.commoncrawl.org',
-    archive_list_uri = '/cc-index/collections/index.html',
-    max_requests_limit = 5,
-    max_requests_time = 5,
-    cache_index_clusters = True,
-    pywb_collection_dir = 'path/to/pywb/collection',
+    'archive_host': 'https://data.commoncrawl.org',
+    'archive_list_uri': '/cc-index/collections/index.html',
+    'max_requests_limit': 5,
+    'max_requests_time': 5,
+    'cache_index_clusters': True,
+    'pywb_collection_dir':  'path/to/pywb/collection',
 }
 
 # Global variable initiation.
@@ -130,7 +130,7 @@ class RemoteFile:
         # Just a wrapper, but it simplifies things.
         if not self.filename:
             logger.error('attempted to download file with no local filename set: %s', self.url)
-        elif if os.path.exists(self.filename):
+        elif os.path.exists(self.filename):
             logger.warning('attempted to download already existing file: %s', self.filename)
         else:
             try:
@@ -282,7 +282,7 @@ class Domain:
     # Search functions are here rather than on the classes they operate on for cache purposes.
     # Rather than having their own classes*, actually.
     def search(self, archive):
-        if memoize.search and memoize.search[0] = archive:
+        if memoize.search and memoize.search[0] == archive:
             return memoize.search[1]
 
         results = []
