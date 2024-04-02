@@ -14,17 +14,17 @@ import requests
 import time
 
 # Configuration, using a dict for verbosity purposes.
-config = {
-    'archive_host': 'https://data.commoncrawl.org',
-    'archive_list_uri': '/cc-index/collections/index.html',
-    'max_file_size': 104857600, # Max file size we'll download.
-                                # Currently set to 100 MiB, which may seem ridiculously large in context.
-                                # Only applies to [W]ARC files.
-    'max_requests_limit': 5,
-    'max_requests_time': 5,
-    'cache_index_clusters': True,
-    'pywb_collection_dir':  'path/to/pywb/collection',
-}
+class config:
+    archive_host = 'https://data.commoncrawl.org',
+    archive_list_uri = '/cc-index/collections/index.html',
+    max_file_size = 104857600, # Max file size we'll download.
+                               # Currently set to 100 MiB, which may seem ridiculously large in context.
+                               # Only applies to [W]ARC files.
+    max_requests_limit = 5,
+    max_requests_time = 5,
+    cache_index_clusters = True,
+    pywb_collection_dir = 'path/to/pywb/collection',
+    domain_list_file = 'domains.txt',
 
 # Global variable initiation.
 logger = logging.getLogger('collector')
@@ -117,6 +117,7 @@ class Archives:
                     self.archives[archive.archiveID] = archive
 
             self.lastUpdate = time.time()
+        
 
 class RemoteFile:
     lastRequests = []
@@ -191,7 +192,7 @@ class RemoteFile:
             if self.lastRequests[0] < diff:
                 logger.info('request limit reached, sleeping for %f seconds.', diff)
                 time.sleep(diff)
-            self.lastRequests..pop(0)
+            self.lastRequests.pop(0)
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
         if not self.offset or not self.length: # No need to error handle if only one is set.
@@ -398,3 +399,6 @@ class Domain:
             self.updateHistory(archive.archiveID, True)
         else:
             self.updateHistory(archive.archiveID, position)
+
+#
+
