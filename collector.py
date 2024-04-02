@@ -143,7 +143,8 @@ class RemoteFile:
                 # We do not need to raise it further.
                 logger.error('could not download file from %s: %s', url, error)
                 # TODO: Add to retry queue. Needs a reference to it.
-            self.write(contents)
+            else:
+                self.write(contents)
 
     def read(self):
         if self.filename and os.path.exists(self.filename): # File is in cache.
