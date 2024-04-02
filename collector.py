@@ -15,16 +15,16 @@ import time
 
 # Configuration, using a dict for verbosity purposes.
 class config:
-    archive_host = 'https://data.commoncrawl.org',
-    archive_list_uri = '/cc-index/collections/index.html',
+    archive_host = 'https://data.commoncrawl.org'
+    archive_list_uri = '/cc-index/collections/index.html'
     max_file_size = 104857600, # Max file size we'll download.
                                # Currently set to 100 MiB, which may seem ridiculously large in context.
                                # Only applies to [W]ARC files.
-    max_requests_limit = 5,
-    max_requests_time = 5,
-    cache_index_clusters = True,
-    pywb_collection_dir = 'path/to/pywb/collection',
-    domain_list_file = 'domains.txt',
+    max_requests_limit = 5
+    max_requests_time = 5
+    cache_index_clusters = True
+    pywb_collection_dir = 'path/to/pywb/collection'
+    domain_list_file = 'domains.txt'
 
 # Global variable initiation.
 logger = logging.getLogger('collector')
