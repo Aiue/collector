@@ -17,6 +17,9 @@ import time
 config = {
     'archive_host': 'https://data.commoncrawl.org',
     'archive_list_uri': '/cc-index/collections/index.html',
+    'max_file_size': 104857600, # Max file size we'll download.
+                                # Currently set to 100 MiB, which may seem ridiculously large in context.
+                                # Only applies to [W]ARC files.
     'max_requests_limit': 5,
     'max_requests_time': 5,
     'cache_index_clusters': True,
@@ -382,21 +385,24 @@ class Domain:
         # crawl-001/2009/01/12/1/1231766653431_1.arc.gz
         # The only difference between formats appear to be between .arc.gz and .warc.gz
 
-        filerange = '-' + str(fileInfo.filename.offset) + '-' + str(fileInfo.filename.offset+fileInfo.filename.length-1)
+        if fileInfo.length > config.max_file_size:
+            logger.info('Skipping download of %s as file exceeds size limit at %d bytes.', fileInfo.filename, fileInfo.length)
+        else:
+            filerange = '-' + str(fileInfo.offset) + '-' + str(fileInfo.offset+fileInfo.length-1)
 
-        filename = pywb_collection_dir + '/' + archive.archiveID + '-'
-        if fileInfo.filename.endswith('.arc.gz'):
-            for name in fileInfo.filename.split('/'):
-                filename += name
-            filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
-        elif fileInfo.filename.endswith('.warc.gz'):
-            _,_,_,partial_path,_,warcfile = fileInfo.filename.split('/')
-            filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
+            filename = pywb_collection_dir + '/' + archive.archiveID + '-'
+            if fileInfo.filename.endswith('.arc.gz'):
+                for name in fileInfo.filename.split('/'):
+                    filename += name
+                    filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
+            elif fileInfo.filename.endswith('.warc.gz'):
+                _,_,_,partial_path,_,warcfile = fileInfo.filename.split('/')
+                filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
 
-        url = config.archive_host + '/' + fileInfo.filename
-        rf = RemoteFile(url, filename, fileInfo.offset, fileInfo.length)
-        logger.info('Downloading from %s (range %i-%i) to %s', url, fileInfo.offset, fileInfo.offset+fileInfo.length-1, filename)
-        rf.download()
+                url = config.archive_host + '/' + fileInfo.filename
+                rf = RemoteFile(url, filename, fileInfo.offset, fileInfo.length)
+                logger.info('Downloading from %s (range %i-%i) to %s', url, fileInfo.offset, fileInfo.offset+fileInfo.length-1, filename)
+                rf.download()
 
         if position == len(index)-1:
             self.updateHistory(archive.archiveID, True)
