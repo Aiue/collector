@@ -25,9 +25,6 @@ config = {
 
 # Global variable initiation.
 logger = logging.getLogger('collector')
-memoize = {} # Master container for memoize cache.
-             # memoize.function = (arg, result) or (arg1, arg2, result)
-             # Because once arg changes, we will no longer need result.
 
 # Classes
 class Archive:
@@ -246,6 +243,8 @@ class RetryQueue:
             f.close()
 
 class Domain:
+    memoizeCache = {}
+    
     def __init__(self, domain):
         if '/' in domain:
             raise Exception('Domains cannot contain \'/\'') # May want to adress this differently.
@@ -292,8 +291,8 @@ class Domain:
     # Search functions are here rather than on the classes they operate on for cache purposes.
     # Rather than having their own classes*, actually.
     def search(self, archive):
-        if memoize.search and memoize.search[0] == archive:
-            return memoize.search[1]
+        if memoizeCache.search and memoizeCache.search[0] == archive:
+            return memoizeCache.search[1]
 
         results = []
         index = []
@@ -322,12 +321,12 @@ class Domain:
                     position += 1
                 else:
                     break
-                memoize.search = (archive, results)
+                memoizeCache.search = (archive, results)
                 return results
 
     def searchClusters(self, archive, clusters): # #TODO: Not happy with variable names here. Need to revisit and rename.
-        if memoize.searchClusters and memoize.searchClusters[0] == self and memoize.searchClusters[1] == archive:
-            return memoize.searchClusters[2]
+        if memoizeCache.searchClusters and memoizeCache.searchClusters[0] == self and memoizeCache.searchClusters[1] == archive:
+            return memoizeCache.searchClusters[2]
 
         results = []
         # TODO: (maybe)
@@ -358,7 +357,7 @@ class Domain:
                         results.append(index[position][2])
                     else:
                         break
-        memoize.searchClusters = (self, archive, results)
+        memoizeCache.searchClusters = (self, archive, results)
         return results
 
     def getFile(self, archive, index):
