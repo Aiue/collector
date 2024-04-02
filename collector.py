@@ -300,6 +300,11 @@ class Domain:
 
         results = []
         index = []
+        if not archive.clusterIndex: # Implies indexPathsURI is also empty
+            try:
+                archive.updatePaths()
+            except Exception:
+                raise
         try:
             for line in archive.clusterIndex.read():
                 searchable_string,rest = line.split(' ')
@@ -338,6 +343,7 @@ class Domain:
         # top domain, we shouldn't get anywhere near the size of a cluster index. Even so, it may be worth
         # considering a rewrite.
         for cluster in clusters:
+            # We do not need a call to Archive.updatePaths() here, we should only get here after Domain.search()
             index = []
             if config.cache_index_clusters:
                 cacheFileName = '.cache/' + archive.archiveID + '/' + cluster[2] + '-' + cluster[5]
