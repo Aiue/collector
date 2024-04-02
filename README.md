@@ -4,6 +4,8 @@ The purpose of this script is to search the [Common Crawl](https://commoncrawl.o
 ## Usage
 The script is intended to run as a daemon over a long period of time. Other uses may be possible, but would not be advised without proper modifications.
 
+When running alongside pywb, it is assumed that pywb has been configured to use automatic index updating. The purpose is twofold: stay out of pywb's venv, and don't trigger index rebuilds too frequently.
+
 A few basic configuration options are housed at the beginning of the script. I will choose not to describe them here for the time being, as they should hopefully do that well enough themselves.
 
 The domains to be searched should be listed in [domains.txt](domains.txt), which will be expected to be a plaintext file. Separate domain entries with a newline. By request, the script will prioritise finish searching all archives for one domain, letting the domain's history be completed.
