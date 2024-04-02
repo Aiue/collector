@@ -449,7 +449,7 @@ def main():
             time.sleep(time_to_sleep)
             continue
 
-        if time.time() - self.lastUpdate < 86400:
+        # TODO: These will all require exception handling.
         results = domain.search(archive)
         results = domain.searchClusters(archive, results)
         domain.getFile(archive, results)
