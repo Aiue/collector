@@ -402,3 +402,49 @@ class Domain:
 
 #
 
+def main():
+    logger.info('Collector running.')
+    archives = Archives()
+    domains = []
+    try:
+        f = open(config.domain_list_file, 'r')
+    except Exception as error:
+        logger.error('Could not read \'%s\': %s', config.domain_list_file, error)
+        raise
+    for line in f.read():
+        domains.append(Domain(line))
+    f.close()
+
+    if len(domains) == 0:
+        logger.error('No domains loaded, exiting.')
+        raise Exception('No domains loaded.')
+
+    retryqueue = RetryQueue()
+
+    while True:
+        try:
+            archives.update()
+        except Exception as error: # TODO: Treat different exceptions .. differently. Will require some additional rewriting.
+                                   # The key thing is that for some exceptions we'll want to continue after a call to sleep.
+            logger.error('Could not update archives: %s', error)
+
+        retryqueue.process()
+
+        archive = None
+        domain = None
+        for d in domains:
+            # Not the most elegant solution, but we'll want a double break somehow.
+            if domain:
+                break
+            for a in archives:
+                if d.history[a.archiveID] != True:
+                    domain = d
+                    archive = a
+                    break
+
+        results = domain.search(archive)
+        results = domain.searchClusters(archive, results)
+        domain.getFile(archive, results)
+
+if __name__ == "__main__":
+    main()
