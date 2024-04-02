@@ -442,6 +442,14 @@ def main():
                     archive = a
                     break
 
+        if not domain:
+            # Sleep until next archive list update.
+            time_to_sleep = time.time() - archive.lastUpdate + 86400
+            logger.info('All searches currently finished, sleeping until next archive list update in %.2f seconds.', time_to_sleep)
+            time.sleep(time_to_sleep)
+            continue
+
+        if time.time() - self.lastUpdate < 86400:
         results = domain.search(archive)
         results = domain.searchClusters(archive, results)
         domain.getFile(archive, results)
