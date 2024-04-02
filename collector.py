@@ -133,18 +133,21 @@ class RemoteFile:
     def download(self): #TODO: Add digest check.
         # Just a wrapper, but it simplifies things.
         if not self.filename:
-            logger.error('attempted to download file with no local filename set: %s', self.url)
+            logger.error('Attempted to download file with no local filename set: %s', self.url)
         elif os.path.exists(self.filename):
-            logger.warning('attempted to download already existing file: %s', self.filename)
+            logger.warning('Attempted to download already existing file: %s', self.filename)
         else:
             try:
                 contents = self.get()
             except Exception as error:
                 # We do not need to raise it further.
-                logger.error('could not download file from %s: %s', url, error)
+                logger.error('Could not download file from %s: %s', url, error)
                 # TODO: Add to retry queue. Needs a reference to it.
             else:
-                self.write(contents)
+                try:
+                    self.write(contents)
+                except Exception as error:
+                    logger.error('Could not write file: \'%s\'', self.filename)
 
     def read(self):
         if self.filename and os.path.exists(self.filename): # File is in cache.
@@ -207,9 +210,9 @@ class RemoteFile:
             raise
         if r.status_code != 200:
             raise Exception('Failed to get %s: %i %s', url, r.status_code, r.reason)
-        else:
-            self.lastRequests.append(time.time())
-            return r.content
+
+        self.lastRequests.append(time.time())
+        return r.content
 
 class RetryQueue:
     def __init__(self):
