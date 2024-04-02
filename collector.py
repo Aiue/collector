@@ -24,7 +24,6 @@ config = {
 }
 
 # Global variable initiation.
-lastRequests = []
 logger = logging.getLogger('collector')
 memoize = {} # Master container for memoize cache.
              # memoize.function = (arg, result) or (arg1, arg2, result)
@@ -120,6 +119,8 @@ class Archives:
             self.lastUpdate = time.time()
 
 class RemoteFile:
+    lastRequests = []
+
     def __init__(self, url, filename=None, offset=None, length=None): #TODO: Add digest information.
         self.url = url
         self.filename = filename # Local filename, doubles as cache indicator.
@@ -185,6 +186,13 @@ class RemoteFile:
         f.close()
 
     def get():
+        if len(self.lastRequests) >= config.max_requests_limit:
+            diff = time.time() - config.max_requests_time
+            if self.lastRequests[0] < diff:
+                logger.info('request limit reached, sleeping for %f seconds.', diff)
+                time.sleep(diff)
+            self.lastRequests..pop(0)
+
         headers = None # Should not need to be initialized/emptied, but do it anyway.
         if not self.offset or not self.length: # No need to error handle if only one is set.
             # The below may be uglier than other formatting according to some standards, but
@@ -197,6 +205,7 @@ class RemoteFile:
         if r.status_code != 200:
             raise Exception('Failed to get %s: %i %s', url, r.status_code, r.reason)
         else:
+            self.lastRequests.append(time.time())
             return r.content
 
 class RetryQueue:
