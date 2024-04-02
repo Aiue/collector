@@ -374,16 +374,6 @@ class Domain:
             position = self.history[archive.archiveID] + 1
 
         fileInfo = json.loads(index[position])
-        # Fields of interest: filename, offset, length, digest
-        # Fields of potential interest: mime-detected, status, ..more?
-
-        # Sample filenames:
-        # crawl-data/CC-MAIN-2023-50/segments/1700679100942.92/warc/CC-MAIN-20231209170619-20231209200619-00251.warc.gz
-        #                  ^                       ^                               ^
-        # We want       not this                 this                          and this, along with byte-ranges in file to ensure uniqueness of name.
-
-        # crawl-001/2009/01/12/1/1231766653431_1.arc.gz
-        # The only difference between formats appear to be between .arc.gz and .warc.gz
 
         if fileInfo.length > config.max_file_size:
             logger.info('Skipping download of %s as file exceeds size limit at %d bytes.', fileInfo.filename, fileInfo.length)
