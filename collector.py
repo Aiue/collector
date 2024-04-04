@@ -29,6 +29,10 @@ class config:
 # Global variable initiation.
 logger = logging.getLogger('collector')
 
+# Exceptions
+class ParserError(Exception):
+    pass
+
 # Classes
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
@@ -51,7 +55,7 @@ class Archive:
                     i = line.rfind('cluster.idx')
                     self.indexPathsURI = line[0:i]
             if not self.clusterIndex:
-                raise Exception('Could not update paths for archive %s.', self.archiveID)
+                raise ParserError('Could not update paths for archive %s (incomplete or otherwise malformed cluster index).', self.archiveID)
 
 class Archives:
     def __init__(self):
@@ -111,7 +115,7 @@ class Archives:
             parser = self.HTMLParser()
             parser.feed(contents)
             if len(parser.archives) == 0:
-                raise Exception('Could not parse archive list.')
+                raise ParserError('Could not parse archive list.')
             for archive in parser.archives:
                 if not self.archives[archive.archiveID]:
                     logger.info('New archive: %s', archive.archiveID)
@@ -147,7 +151,8 @@ class RemoteFile:
                 try:
                     self.write(contents)
                 except Exception as error:
-                    logger.error('Could not write file: \'%s\'', self.filename)
+                    # TODO: This should also add it to the retry queue.
+                    logger.error('Could not write file \'%s\': %s', self.filename, error)
 
     def read(self):
         if self.filename and os.path.exists(self.filename): # File is in cache.
@@ -175,7 +180,7 @@ class RemoteFile:
 
     def write(self, contents):
         if not self.filename:
-            raise Exception('RemoteFile.write() called with no filename set: %s', url)
+            raise RuntimeError('RemoteFile.write() called with no filename set: %s', url)
         if '/' in self.filename:
             left,right = self.filename.rsplit('/', 1)
             if not os.path.exists(left):
@@ -222,6 +227,7 @@ class RetryQueue:
             try:
                 f = open('retryqueue', 'r')
             except Exception as error:
+                # TODO: Do we want to exit here to prevent data loss?
                 log.error('Could not load retry queue: %s', error)
             else:
                 for line in f:
@@ -236,7 +242,7 @@ class RetryQueue:
         if len(self.queue) == 0:
             return
         self.queue.pop(0).download()
-        self.save()
+        self.save() #TODO: Handle exception
 
     def add(self, item):
         self.queue.append(item)
@@ -256,7 +262,7 @@ class Domain:
     
     def __init__(self, domain):
         if '/' in domain:
-            raise Exception('Domains cannot contain \'/\'') # May want to adress this differently.
+            raise RuntimeError('Domains cannot contain \'/\'') # May want to adress this differently.
         self.domain = domain
         self.history = {}
         self.searchString = ""
@@ -282,7 +288,7 @@ class Domain:
             except Exception:
                 raise
             else:
-                self.history = json.load(f)
+                self.history = json.load(f) #TODO: Add exception handling
                 logger.info('Loaded search history for %s', self.domain)
 
     def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
@@ -381,7 +387,7 @@ class Domain:
             position = 0
         elif type(self.history[archive.archiveID]) == bool:
             # This shouldn't ever happen here. But let's catch it anyway.
-            raise Exception('Attempted to download completed domain/archive combination: %s %s', self.domain, archive.archiveID)
+            raise RuntimeError('Attempted to download completed domain/archive combination: %s %s', self.domain, archive.archiveID)
         elif type(self.history[archive.archiveID]) == int:
             position = self.history[archive.archiveID] + 1
 
@@ -392,7 +398,7 @@ class Domain:
         else:
             filerange = '-' + str(fileInfo.offset) + '-' + str(fileInfo.offset+fileInfo.length-1)
 
-            filename = pywb_collection_dir + '/' + archive.archiveID + '-'
+            filename = config.pywb_collection_dir + '/' + archive.archiveID + '-'
             if fileInfo.filename.endswith('.arc.gz'):
                 for name in fileInfo.filename.split('/'):
                     filename += name
@@ -406,6 +412,7 @@ class Domain:
                 logger.info('Downloading from %s (range %i-%i) to %s', url, fileInfo.offset, fileInfo.offset+fileInfo.length-1, filename)
                 rf.download()
 
+        #TODO: Exception handling below
         if position == len(index)-1:
             self.updateHistory(archive.archiveID, True)
         else:
@@ -420,14 +427,14 @@ def main():
     try:
         f = open(config.domain_list_file, 'r')
     except Exception as error:
-        logger.error('Could not read \'%s\': %s', config.domain_list_file, error)
+        logger.critical('Could not read \'%s\': %s', config.domain_list_file, error)
         raise
     for line in f.read():
         domains.append(Domain(line))
     f.close()
 
     if len(domains) == 0:
-        logger.error('No domains loaded, exiting.')
+        logger.critical('No domains loaded, exiting.')
         raise Exception('No domains loaded.')
 
     retryqueue = RetryQueue()
