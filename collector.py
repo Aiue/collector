@@ -62,7 +62,7 @@ class Archives:
         self.archives = {}
         self.lastUpdate = 0
 
-    class HTMLParser:
+    class HTMLParser(html.parser.HTMLParser):
         # Catch everything from <tbody> to </tbody>.
         # Groups of 3 <a>:
         #  1: archiveID
@@ -72,14 +72,15 @@ class Archives:
             self.archives = []
             self.isScanningTableBody = False
             self.linkCounter = 0
+            super().__init__()
 
         def handle_starttag(self, tag, attributes):
             if tag == "tbody":
                 self.isScanningTableBody = True
             if self.isScanningTableBody:
                 if tag == "a":
-                    linkCounter += 1
-                    if linkCounter == 3:
+                    self.linkCounter += 1
+                    if self.linkCounter == 3:
                         # As of writing, only 'href' attributes are present.
                         # But in case this changes in the future, let's be vigilant.
                         for attribute in attributes:
@@ -98,7 +99,7 @@ class Archives:
                 self.close()
 
         def handle_data(self, data):
-            if linkCounter == 1:
+            if self.linkCounter == 1:
                 self.archiveID = data
             
         
@@ -113,7 +114,7 @@ class Archives:
             raise
         else:
             parser = self.HTMLParser()
-            parser.feed(contents)
+            parser.feed(contents.decode())
             if len(parser.archives) == 0:
                 raise ParserError('Could not parse archive list.')
             for archive in parser.archives:
