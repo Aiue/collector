@@ -49,9 +49,9 @@ class Archive:
         except Exception as error:
             logger.error('Could not read remote file %s: %s', self.indexPathsFile, error)
         else:
-            for line in contents:
+            for line in contents.decode().splitlines():
                 if line.endswith('cluster.idx'):
-                    self.clusterIndex = RemoteFile(line, '.cache/' + self.archiveID + '/cluster.idx')
+                    self.clusterIndex = RemoteFile(config.archive_host + '/' + line, '.cache/' + self.archiveID + '/cluster.idx')
                     i = line.rfind('cluster.idx')
                     self.indexPathsURI = line[0:i]
             if not self.clusterIndex:
@@ -80,7 +80,7 @@ class Archives:
                 self.isScanningTableBody = True
             if self.isScanningTableBody:
                 if tag == 'tr':
-                    self.archiveID = None # 
+                    self.archiveID = None
                     self.tdCount = 0
 
                 if tag == 'td':
@@ -171,17 +171,17 @@ class RemoteFile:
             except Exception as error:
                 raise
             else:
-                if self.filename: # We should cache file.
+                if hasattr(self, 'filename'): # We should cache file.
                     try:
                         self.write(contents)
                     except Exception as error:
-                        logger.warning('Could not write cache file \'%s\': %s', filename, error)
-        if self.bypass_decompression: # special case for main index
+                        logger.warning('Could not write cache file \'%s\': %s', self.filename, error)
+        if hasattr(self, 'bypass_decompression'): # special case for main index
             return contents
         return gzip.decompress(contents)
 
     def write(self, contents):
-        if not self.filename:
+        if not hasattr(self, 'filename'):
             raise RuntimeError('RemoteFile.write() called with no filename set: %s', url)
         if '/' in self.filename:
             left,right = self.filename.rsplit('/', 1)
@@ -207,7 +207,7 @@ class RemoteFile:
             self.lastRequests.pop(0)
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
-        if self.offset and self.length:
+        if hasattr(self, 'offset') and hasattr(self, 'length'):
             headers = {'Range': "bytes=" + str(offset) + "-" + str(offset+length-1)}
         try:
             r = requests.get(self.url, headers=headers)
@@ -234,7 +234,7 @@ class RetryQueue:
                     url,filename,offset,length,attempts = line.split('\t')
                     self.add(RemoteFile(url, filename, int(offset), int(length)))
                     self.queue.attempts = int(attempts) # Not the prettiest way of doing it, but this one case
-                                                    # does not warrant __init__ inclusion.
+                                                        # does not warrant __init__ inclusion.
                 f.close()
                 log.info('Loaded retry queue with %d items.', len(self.queue))
 
@@ -262,7 +262,7 @@ class Domain:
     
     def __init__(self, domain):
         if '/' in domain:
-            raise RuntimeError('Domains cannot contain \'/\'') # May want to adress this differently.
+            raise RuntimeError('Domains cannot contain \'/\'') # May (and with 'may', I mean 'will') want to adress this differently.
                                                                # The main reason would be how we save history.
                                                                # Strongly consider changing naming scheme to adress this.
         self.domain = domain
@@ -348,7 +348,7 @@ class Domain:
                 self.memoizeCache.search = (archive, results)
                 return results
 
-    def searchClusters(self, archive, clusters): # #TODO: Not happy with variable names here. Need to revisit and rename.
+    def searchClusters(self, archive, clusters): # TODO: Not happy with variable names here. Need to revisit and rename.
         if 'searchClusters' in self.memoizeCache and self.memoizeCache.searchClusters[0] == self and self.memoizeCache.searchClusters[1] == archive:
             return self.memoizeCache.searchClusters[2]
 
@@ -368,7 +368,7 @@ class Domain:
                 cluster[3],
                 cluster[4])
             try:
-                for line in indexFile.read():
+                for line in indexFile.read().splitlines():
                     searchable_string,timestamp,json = line.split(' ')
                     index.append((searchable_string, int(timestamp), json))
             except Exception:
@@ -387,7 +387,7 @@ class Domain:
 
     def getFile(self, archive, index):
         # First, determine what to fetch.
-        if not self.history[archive.archiveID]:
+        if archive.archiveID not in self.history:
             position = 0
         elif type(self.history[archive.archiveID]) == bool:
             # This shouldn't ever happen here. But let's catch it anyway.
