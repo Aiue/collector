@@ -205,9 +205,7 @@ class RemoteFile:
             self.lastRequests.pop(0)
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
-        if not self.offset or not self.length: # No need to error handle if only one is set.
-            # The below may be uglier than other formatting according to some standards, but
-            # in emacs it looks better this way!
+        if self.offset and self.length:
             headers = {'Range': "bytes=" + str(offset) + "-" + str(offset+length-1)}
         try:
             r = requests.get(self.url, headers=headers)
