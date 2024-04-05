@@ -458,7 +458,7 @@ def main():
             # Not the most elegant solution, but we'll want a double break somehow.
             if domain:
                 break
-            for a in archives:
+            for _,a in archives.archives: # TODO: Write a proper iterator for Archives?
                 if d.history[a.archiveID] != True:
                     domain = d
                     archive = a
@@ -466,7 +466,7 @@ def main():
 
         if not domain:
             # Sleep until next archive list update.
-            time_to_sleep = time.time() - archive.lastUpdate + 86400
+            time_to_sleep = time.time() - archives.lastUpdate + 86400
             logger.info('All searches currently finished, sleeping until next archive list update in %.2f seconds.', time_to_sleep)
             time.sleep(time_to_sleep)
             continue
