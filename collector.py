@@ -63,42 +63,40 @@ class Archives:
         self.lastUpdate = 0
 
     class HTMLParser(html.parser.HTMLParser):
-        # TODO: Parsing needs to be changed to adhere to the following:
-        # Each archive version is listed within one <tr> ... </tr> block.
-        # The archive id (or name) will be the (handle_data()) of the first <td> ... </td> block.
-        # This may follow either an <a> or <td> tag. This is going to require a little bit more special handling.
-        # Next, we don't care about what's inside the second and third <td> blocks.
-        # For the fourth <td> block, we want the href of the <a> tag within it.
+        # These needs to be initialised here.
+        # archiveID needs to be 'False' rather than 'None' to prevent errors.
+        archiveID = False
+        tdCount = 0
         def __init__(self):
             self.archives = []
             self.isScanningTableBody = False
-            self.linkCounter = 0
-            self.tag = ""
-            self.archiveID = False
             super().__init__()
 
         def handle_starttag(self, tag, attributes):
-            self.tag = tag
             if tag == "tbody":
                 self.isScanningTableBody = True
             if self.isScanningTableBody:
+                if tag == 'tr':
+                    self.archiveID = False # 
+                    self.tdCount = 0
+
+                if tag == 'td':
+                    self.tdCount += 1
+
                 if tag == "a":
-                    self.linkCounter += 1
-                    if self.linkCounter == 3:
+                    if self.tdCount == 4:
                         # As of writing, only 'href' attributes are present.
                         # But in case this changes in the future, let's be vigilant.
                         for attribute in attributes:
-                            if attribute[0] == "href":
-                                self.indexPathsFile = attribute[1]
-                                self.linkCounter = 0
-                                self.archives.append(Archive(self.archiveID, self.indexPathsFile))
-                                self.archiveID = False
-                                self.indexPathsFile = None
+                            if attribute[0] == 'href':
+                                self.archives.append(Archive(self.archiveID, attribute[1]))
                 
         def handle_data(self, data):
-            if self.tag == 'a' and self.linkCounter == 1 and not self.archiveID:
+            if self.tdCount == 1 and not self.archiveID:
+                # This is all the handling we need. The first trigger of this will be the archive ID.
+                # There will be a second trigger with a newline, for unknown reason. This is why we need this handling.
                 self.archiveID = data
-            
+
     def update(self):
         if time.time() - self.lastUpdate < 86400:
             return
@@ -114,7 +112,7 @@ class Archives:
             if len(parser.archives) == 0:
                 raise ParserError('Could not parse archive list.')
             for archive in parser.archives:
-                if not self.archives[archive.archiveID]:
+                if archive.archiveID not in self.archives:
                     logger.info('New archive: %s', archive.archiveID)
                     self.archives[archive.archiveID] = archive
 
