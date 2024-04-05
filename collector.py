@@ -4,6 +4,7 @@
 # Additional details will be available in README.md
 # Licensed under GPLv3, see license.txt
 
+import bisect
 import gzip
 import html.parser
 import json
@@ -53,6 +54,7 @@ class Archive:
             for line in contents.decode().splitlines():
                 if line.endswith('cluster.idx'):
                     self.clusterIndex = RemoteFile(config.archive_host + '/' + line, '.cache/' + self.archiveID + '/cluster.idx')
+                    self.clusterIndex.bypass_decompression = True # Special case, 1 out of 2 files without compression.
                     i = line.rfind('cluster.idx')
                     self.indexPathsURI = line[0:i]
             if not self.clusterIndex:
@@ -96,7 +98,7 @@ class Archives:
                                 self.archives.append(Archive(self.archiveID, attribute[1]))
                 
         def handle_data(self, data):
-            if self.tdCount == 1 and hasattr(self, 'archiveID'):
+            if self.tdCount == 1 and self.archiveID == None:
                 # This is all the handling we need. The first trigger of this will be the archive ID.
                 # There will be a second trigger with a newline, for unknown reason. This is why we need this handling.
                 self.archiveID = data
@@ -105,7 +107,7 @@ class Archives:
         if time.time() - self.lastUpdate < 86400:
             return
         index = RemoteFile(config.archive_host + config.archive_list_uri)
-        index.bypass_decompression = True # Hack for this one special case
+        index.bypass_decompression = True # Hack for this one special case (and one more)
         try:
             contents = index.read()
         except Exception as error:
@@ -326,7 +328,7 @@ class Domain:
             except Exception:
                 raise
         try:
-            for line in archive.clusterIndex.read():
+            for line in archive.clusterIndex.read().decode().splitlines():
                 searchable_string,rest = line.split(' ')
                 timestamp,filename,offset,length,cluster = rest.split('\t')
                 index.append(
@@ -479,8 +481,10 @@ def main():
 
         # TODO: These will all require exception handling.
         results = domain.search(archive)
-        results = domain.searchClusters(archive, results)
-        domain.getFile(archive, results)
+        if len(results) > 0:
+            results = domain.searchClusters(archive, results)
+            if len(results) > 0:
+                domain.getFile(archive, results)
 
 if __name__ == "__main__":
     main()
