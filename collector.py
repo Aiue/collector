@@ -62,6 +62,9 @@ class Archives:
         self.archives = {}
         self.lastUpdate = 0
 
+    def __iter__(self):
+        return iter(self.archives.items())
+
     class HTMLParser(html.parser.HTMLParser):
         # These needs to be initialised here.
         # archiveID needs to be 'False' rather than 'None' to prevent errors.
@@ -453,8 +456,8 @@ def main():
             # Not the most elegant solution, but we'll want a double break somehow.
             if domain:
                 break
-            for _,a in archives.archives: # TODO: Write a proper iterator for Archives?
-                if d.history[a.archiveID] != True:
+            for _,a in archives:
+                if a.archiveID in d.history and d.history[a.archiveID] != True:
                     domain = d
                     archive = a
                     break
