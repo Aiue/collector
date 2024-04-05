@@ -196,7 +196,7 @@ class RemoteFile:
         f.write(contents)
         f.close()
 
-    def get():
+    def get(self):
         if len(self.lastRequests) >= config.max_requests_limit:
             diff = time.time() - config.max_requests_time
             if self.lastRequests[0] < diff:
@@ -449,6 +449,7 @@ def main():
         except Exception as error: # TODO: Treat different exceptions .. differently. Will require some additional rewriting.
                                    # The key thing is that for some exceptions we'll want to continue after a call to sleep.
             logger.error('Could not update archives: %s', error)
+            raise
 
         retryqueue.process()
 
