@@ -37,7 +37,7 @@ class ParserError(Exception):
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
         self.archiveID = archiveID
-        self.indexPathsFile = RemoteFile(indexPathsFile)
+        self.indexPathsFile = RemoteFile(config.archive_host + indexPathsFile)
 
     def __repr__(self):
         return self.archiveID
