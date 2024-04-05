@@ -63,18 +63,22 @@ class Archives:
         self.lastUpdate = 0
 
     class HTMLParser(html.parser.HTMLParser):
-        # Catch everything from <tbody> to </tbody>.
-        # Groups of 3 <a>:
-        #  1: archiveID
-        #  2: we don't care about this one
-        #  3: cc-index.paths.gz
+        # TODO: Parsing needs to be changed to adhere to the following:
+        # Each archive version is listed within one <tr> ... </tr> block.
+        # The archive id (or name) will be the (handle_data()) of the first <td> ... </td> block.
+        # This may follow either an <a> or <td> tag. This is going to require a little bit more special handling.
+        # Next, we don't care about what's inside the second and third <td> blocks.
+        # For the fourth <td> block, we want the href of the <a> tag within it.
         def __init__(self):
             self.archives = []
             self.isScanningTableBody = False
             self.linkCounter = 0
+            self.tag = ""
+            self.archiveID = False
             super().__init__()
 
         def handle_starttag(self, tag, attributes):
+            self.tag = tag
             if tag == "tbody":
                 self.isScanningTableBody = True
             if self.isScanningTableBody:
@@ -88,11 +92,11 @@ class Archives:
                                 self.indexPathsFile = attribute[1]
                                 self.linkCounter = 0
                                 self.archives.append(Archive(self.archiveID, self.indexPathsFile))
-                                self.archiveID = None
+                                self.archiveID = False
                                 self.indexPathsFile = None
                 
         def handle_data(self, data):
-            if self.linkCounter == 1:
+            if self.tag == 'a' and self.linkCounter == 1 and not self.archiveID:
                 self.archiveID = data
             
     def update(self):
