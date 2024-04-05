@@ -95,9 +95,6 @@ class Archives:
                 self.archiveID = None
                 self.indexPathsFile = None
                 
-            elif tag == "tbody":
-                self.close()
-
         def handle_data(self, data):
             if self.linkCounter == 1:
                 self.archiveID = data
@@ -122,6 +119,7 @@ class Archives:
                     logger.info('New archive: %s', archive.archiveID)
                     self.archives[archive.archiveID] = archive
 
+            parser.close()
             self.lastUpdate = time.time()
         
 
