@@ -86,20 +86,15 @@ class Archives:
                         for attribute in attributes:
                             if attribute[0] == "href":
                                 self.indexPathsFile = attribute[1]
-
-        def handle_endtag(self, tag):
-            if tag == "a" and self.linkCounter == 3:
-                logger.debug('Parsed archive %s %s', self.archiveID, self.indexPathsFile)
-                self.linkCounter = 0
-                self.archives.append(Archive(self.archiveID, self.indexPathsFile))
-                self.archiveID = None
-                self.indexPathsFile = None
+                                self.linkCounter = 0
+                                self.archives.append(Archive(self.archiveID, self.indexPathsFile))
+                                self.archiveID = None
+                                self.indexPathsFile = None
                 
         def handle_data(self, data):
             if self.linkCounter == 1:
                 self.archiveID = data
             
-        
     def update(self):
         if time.time() - self.lastUpdate < 86400:
             return
