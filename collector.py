@@ -436,7 +436,7 @@ def main():
 
     if len(domains) == 0:
         logger.critical('No domains loaded, exiting.')
-        raise Exception('No domains loaded.')
+        raise RuntimeError('No domains loaded.')
 
     retryqueue = RetryQueue()
 
@@ -457,7 +457,7 @@ def main():
             if domain:
                 break
             for _,a in archives:
-                if a.archiveID in d.history and d.history[a.archiveID] != True:
+                if not a.archiveID in d.history or d.history[a.archiveID] != True:
                     domain = d
                     archive = a
                     break
