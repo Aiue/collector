@@ -80,7 +80,7 @@ class Archives:
                 self.isScanningTableBody = True
             if self.isScanningTableBody:
                 if tag == 'tr':
-                    self.archiveID = False # 
+                    self.archiveID = None # 
                     self.tdCount = 0
 
                 if tag == 'td':
@@ -95,7 +95,7 @@ class Archives:
                                 self.archives.append(Archive(self.archiveID, attribute[1]))
                 
         def handle_data(self, data):
-            if self.tdCount == 1 and not self.archiveID:
+            if self.tdCount == 1 and hasattr(self, 'archiveID'):
                 # This is all the handling we need. The first trigger of this will be the archive ID.
                 # There will be a second trigger with a newline, for unknown reason. This is why we need this handling.
                 self.archiveID = data
@@ -133,6 +133,9 @@ class RemoteFile:
         self.length = length
         self.attempts = 0
 
+    def __repr__(self):
+        return self.url
+        
     def download(self): #TODO: Add digest check.
         # Just a wrapper, but it simplifies things.
         if not self.filename:
@@ -307,12 +310,12 @@ class Domain:
     # Search functions are here rather than on the classes they operate on for cache purposes.
     # Rather than having their own classes*, actually.
     def search(self, archive):
-        if memoizeCache.search and memoizeCache.search[0] == archive:
-            return memoizeCache.search[1]
+        if 'search' in self.memoizeCache and self.memoizeCache.search[0] == archive:
+            return self.memoizeCache.search[1]
 
         results = []
         index = []
-        if not archive.clusterIndex: # Implies indexPathsURI is also empty
+        if not hasattr(archive, 'clusterIndex'): # Implies indexPathsURI is also empty
             try:
                 archive.updatePaths()
             except Exception:
@@ -342,12 +345,12 @@ class Domain:
                     position += 1
                 else:
                     break
-                memoizeCache.search = (archive, results)
+                self.memoizeCache.search = (archive, results)
                 return results
 
     def searchClusters(self, archive, clusters): # #TODO: Not happy with variable names here. Need to revisit and rename.
-        if memoizeCache.searchClusters and memoizeCache.searchClusters[0] == self and memoizeCache.searchClusters[1] == archive:
-            return memoizeCache.searchClusters[2]
+        if 'searchClusters' in self.memoizeCache and self.memoizeCache.searchClusters[0] == self and self.memoizeCache.searchClusters[1] == archive:
+            return self.memoizeCache.searchClusters[2]
 
         results = []
         # TODO: (maybe)
@@ -379,7 +382,7 @@ class Domain:
                         results.append(index[position][2])
                     else:
                         break
-        memoizeCache.searchClusters = (self, archive, results)
+        self.memoizeCache.searchClusters = (self, archive, results)
         return results
 
     def getFile(self, archive, index):
