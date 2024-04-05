@@ -48,6 +48,7 @@ class Archive:
             contents = f.read()
         except Exception as error:
             logger.error('Could not read remote file %s: %s', self.indexPathsFile, error)
+            raise
         else:
             for line in contents.decode().splitlines():
                 if line.endswith('cluster.idx'):
@@ -121,7 +122,6 @@ class Archives:
 
             parser.close()
             self.lastUpdate = time.time()
-        
 
 class RemoteFile:
     lastRequests = []
@@ -149,12 +149,14 @@ class RemoteFile:
                 # We do not need to raise it further.
                 logger.error('Could not download file from %s: %s', url, error)
                 # TODO: Add to retry queue. Needs a reference to it.
+                raise
             else:
                 try:
                     self.write(contents)
                 except Exception as error:
                     # TODO: This should also add it to the retry queue.
                     logger.error('Could not write file \'%s\': %s', self.filename, error)
+                    raise
 
     def read(self):
         if self.filename and os.path.exists(self.filename): # File is in cache.
@@ -171,11 +173,12 @@ class RemoteFile:
             except Exception as error:
                 raise
             else:
-                if hasattr(self, 'filename'): # We should cache file.
+                if hasattr(self, 'filename') and self.filename: # We should cache file.
                     try:
                         self.write(contents)
                     except Exception as error:
                         logger.warning('Could not write cache file \'%s\': %s', self.filename, error)
+                        raise
         if hasattr(self, 'bypass_decompression'): # special case for main index
             return contents
         return gzip.decompress(contents)
@@ -186,7 +189,7 @@ class RemoteFile:
         if '/' in self.filename:
             left,right = self.filename.rsplit('/', 1)
             if not os.path.exists(left):
-                log.info("Recursively creating directory '%s'.", left)
+                logger.info("Recursively creating directory '%s'.", left)
             try:
                 os.makedirs(left)
             except Exception:
@@ -207,8 +210,8 @@ class RemoteFile:
             self.lastRequests.pop(0)
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
-        if hasattr(self, 'offset') and hasattr(self, 'length'):
-            headers = {'Range': "bytes=" + str(offset) + "-" + str(offset+length-1)}
+        if self.offset and self.length:
+            headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
         try:
             r = requests.get(self.url, headers=headers)
         except Exception:
@@ -229,6 +232,7 @@ class RetryQueue:
             except Exception as error:
                 # TODO: Do we want to exit here to prevent data loss?
                 log.error('Could not load retry queue: %s', error)
+                raise
             else:
                 for line in f:
                     url,filename,offset,length,attempts = line.split('\t')
@@ -252,6 +256,7 @@ class RetryQueue:
             f = open('retryqueue', 'w')
         except Exception as error:
             log.error('Could not write retry queue: %s', error)
+            raise
         else:
             for item in self.queue:
                 f.write(item.url + '\t' + item.filename + '\t' + str(item.offset) + '\t' + str(item.length) + '\t' + str(item.attempts))
