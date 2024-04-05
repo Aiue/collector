@@ -263,20 +263,24 @@ class Domain:
     def __init__(self, domain):
         if '/' in domain:
             raise RuntimeError('Domains cannot contain \'/\'') # May want to adress this differently.
+                                                               # The main reason would be how we save history.
+                                                               # Strongly consider changing naming scheme to adress this.
         self.domain = domain
         self.history = {}
         self.searchString = ""
-        left,right = domain.split('/', 1)
-        left = left.split('.')
-        for i in range(len(left),0,-1):
-            self.searchString += left[i-1]
+        uri = ""
+        if '/' in domain:
+            domain,uri = domain.split('/', 1)
+        domain = domain.split('.')
+        for i in range(len(domain),0,-1):
+            self.searchString += domain[i-1]
             if i > 1:
                 self.searchString += ','
-        self.searchString += ')/' + right # TODO: Consider skipping this to include subdomains.
-                                          # May want additional steps to allow for wildcard matching.
-                                          # Caveat: only left-side wildcards (*.domain.com) would be
-                                          # workable with binary search, and simply removing this would
-                                          # make those implicit.
+        self.searchString += ')/' + uri # TODO: Consider skipping this to include subdomains.
+                                        # May want additional steps to allow for wildcard matching.
+                                        # Caveat: only left-side wildcards (*.domain.com) would be
+                                        # workable with binary search, and simply removing ')/'+uri would
+                                        # make those implicit.
 
     def __repr__(self):
         return self.domain
