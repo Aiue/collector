@@ -368,7 +368,7 @@ class Domain:
             # We do not need a call to Archive.updatePaths() here, we should only get here after Domain.search()
             index = []
             if config.cache_index_clusters:
-                cacheFileName = '.cache/' + archive.archiveID + '/' + cluster[2] + '-' + cluster[5]
+                cacheFileName = '.cache/' + archive.archiveID + '/' + cluster[2] + '-' + str(cluster[5])
             indexFile = RemoteFile(
                 archive.indexPathsURI + cluster[2],
                 cacheFileName,
