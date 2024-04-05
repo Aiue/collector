@@ -352,8 +352,8 @@ class Domain:
                     position += 1
                 else:
                     break
-                self.memoizeCache.search = (archive, results)
-                return results
+            self.memoizeCache.search = (archive, results)
+            return results
 
     def searchClusters(self, archive, clusters): # TODO: Not happy with variable names here. Need to revisit and rename.
         if 'searchClusters' in self.memoizeCache and self.memoizeCache.searchClusters[0] == self and self.memoizeCache.searchClusters[1] == archive:
