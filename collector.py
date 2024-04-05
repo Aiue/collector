@@ -317,8 +317,8 @@ class Domain:
     # Search functions are here rather than on the classes they operate on for cache purposes.
     # Rather than having their own classes*, actually.
     def search(self, archive):
-        if 'search' in self.memoizeCache and self.memoizeCache.search[0] == archive:
-            return self.memoizeCache.search[1]
+        if 'search' in self.memoizeCache and self.memoizeCache['search'][0] == archive:
+            return self.memoizeCache['search'][1]
 
         results = []
         index = []
@@ -352,12 +352,12 @@ class Domain:
                     position += 1
                 else:
                     break
-            self.memoizeCache.search = (archive, results)
+            self.memoizeCache['search'] = (archive, results)
             return results
 
     def searchClusters(self, archive, clusters): # TODO: Not happy with variable names here. Need to revisit and rename.
-        if 'searchClusters' in self.memoizeCache and self.memoizeCache.searchClusters[0] == self and self.memoizeCache.searchClusters[1] == archive:
-            return self.memoizeCache.searchClusters[2]
+        if 'searchClusters' in self.memoizeCache and self.memoizeCache['searchClusters'][0] == self and self.memoizeCache['searchClusters'][1] == archive:
+            return self.memoizeCache['searchClusters'][2]
 
         results = []
         # TODO: (maybe)
@@ -389,7 +389,7 @@ class Domain:
                         results.append(index[position][2])
                     else:
                         break
-        self.memoizeCache.searchClusters = (self, archive, results)
+        self.memoizeCache['searchClusters'] = (self, archive, results)
         return results
 
     def getFile(self, archive, index):
