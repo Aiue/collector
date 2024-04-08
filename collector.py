@@ -192,10 +192,10 @@ class RemoteFile:
             left,right = self.filename.rsplit('/', 1)
             if not os.path.exists(left):
                 logger.info("Recursively creating directory '%s'.", left)
-            try:
-                os.makedirs(left)
-            except Exception:
-                raise
+                try:
+                    os.makedirs(left)
+                except Exception:
+                    raise
         try:
             f = open(self.filename, 'wb')
         except Exception:
@@ -218,8 +218,8 @@ class RemoteFile:
             r = requests.get(self.url, headers=headers)
         except Exception:
             raise
-        if r.status_code != 200:
-            raise Exception('Failed to get %s: %i %s', url, r.status_code, r.reason)
+        if r.status_code != 200 and r.status_code != 206: # We need to also allow 206 'partial content'
+            raise Exception('Failed to get %s: %i %s', self.url, r.status_code, r.reason)
 
         self.lastRequests.append(time.time())
         return r.content
@@ -370,13 +370,13 @@ class Domain:
             if config.cache_index_clusters:
                 cacheFileName = '.cache/' + archive.archiveID + '/' + cluster[2] + '-' + str(cluster[5])
             indexFile = RemoteFile(
-                archive.indexPathsURI + cluster[2],
+                config.archive_host + '/' + archive.indexPathsURI + cluster[2],
                 cacheFileName,
                 cluster[3],
                 cluster[4])
             try:
-                for line in indexFile.read().splitlines():
-                    searchable_string,timestamp,json = line.split(' ')
+                for line in indexFile.read().decode().splitlines():
+                    searchable_string,timestamp,json = line.split(' ', 2)
                     index.append((searchable_string, int(timestamp), json))
             except Exception:
                 raise
