@@ -18,7 +18,7 @@ import time
 class config:
     archive_host = 'https://data.commoncrawl.org'
     archive_list_uri = '/cc-index/collections/index.html'
-    max_file_size = 104857600, # Max file size we'll download.
+    max_file_size = 104857600 # Max file size we'll download.
                                # Currently set to 100 MiB, which may seem ridiculously large in context.
                                # Only applies to [W]ARC files.
     max_requests_limit = 5
@@ -424,12 +424,14 @@ class Domain:
 
         logger.debug('Result found at %d', position)
 
+        logger.debug('Loading JSON: %s', index[position])
+        # Everything is treated as strings, so we will need to convert integers.
         fileInfo = json.loads(index[position])
 
-        if fileInfo['length'] > config.max_file_size:
-            logger.info('Skipping download of %s as file exceeds size limit at %d bytes.', fileInfo['filename'], fileInfo['length'])
+        if int(fileInfo['length']) > config.max_file_size:
+            logger.info('Skipping download of %s as file exceeds size limit at %s bytes.', fileInfo['filename'], fileInfo['length'])
         else:
-            filerange = '-' + str(fileInfo['offset']) + '-' + str(fileInfo['offset']+fileInfo['length']-1)
+            filerange = '-' + fileInfo['offset'] + '-' + str(int(fileInfo['offset'])+int(fileInfo['length'])-1)
 
             filename = config.pywb_collection_dir + '/' + archive.archiveID + '-'
             if fileInfo['filename'].endswith('.arc.gz'):
@@ -441,8 +443,8 @@ class Domain:
                 filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
 
                 url = config.archive_host + '/' + fileInfo['filename']
-                rf = RemoteFile(url, filename, fileInfo['offset'], fileInfo['length'])
-                logger.info('Downloading from %s (range %i-%i) to %s', url, fileInfo['offset'], fileInfo['offset']+fileInfo['length']-1, filename)
+                rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']))
+                logger.info('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
                 rf.download()
 
         #TODO: Exception handling below
