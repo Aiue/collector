@@ -30,7 +30,7 @@ class config:
 # Global variable initiation.
 logger = logging.getLogger('collector')
 import sys
-logging.basicConfig(level=10, stream=sys.stdout)
+#logging.basicConfig(level=10, stream=sys.stdout)
 
 # Exceptions
 class ParserError(Exception):
@@ -284,7 +284,7 @@ class Domain:
                                                                # The main reason would be how we save history.
                                                                # Strongly consider changing naming scheme to adress this.
         self.domain = domain
-        self.history = {}
+        self.loadHistory()
         self.searchString = ""
         uri = ""
         if '/' in domain:
@@ -313,6 +313,8 @@ class Domain:
             else:
                 self.history = json.load(f) #TODO: Add exception handling
                 logger.info('Loaded search history for %s', self.domain)
+        else:
+            self.history = {}
 
     def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
         logger.debug('Updating history for %s', self.domain)
@@ -492,7 +494,11 @@ def main():
             if domain:
                 break
             for _,a in archives:
+                print(a)
                 if not a.archiveID in d.history or d.history[a.archiveID] != True:
+                    print(d)
+                    print(a)
+                    print(d.history)
                     domain = d
                     archive = a
                     break
