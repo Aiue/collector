@@ -149,20 +149,20 @@ class RemoteFile:
             logger.warning('Attempted to download already existing file: %s', self.filename)
         else:
             try:
-                if self.attempts == 0:
-                    RetryQueue.add(self)
                 contents = self.get()
             except Exception as error:
                 # We do not need to raise it further.
                 logger.error('Could not download file from %s: %s', url, error)
-                RetryQueue.add(self)
-                raise
+                rq = RetryQueue()
+                rq.add(self)
+                raise # Raising it anyway. But we shouldn't. Leaving for now. TODO: 
             else:
                 # TODO: Add digest check here.
                 try:
                     self.write(contents)
                 except Exception as error:
-                    # TODO: This should also add it to the retry queue.
+                    rq = RetryQueue()
+                    rq.add(self)
                     logger.error('Could not write file \'%s\': %s', self.filename, error)
                     raise
 
@@ -246,6 +246,9 @@ class RetryQueue:
         return self._instance
 
     def __init__(self):
+        if hasattr(self, 'queue'):
+            return # This instance is already initialised.
+                   # I would prefer a cleaner way of doing this, but alas.
         self.queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
 
         if os.path.exists('retryqueue'):
@@ -259,17 +262,16 @@ class RetryQueue:
                 for line in f:
                     url,filename,offset,length,attempts = line.split('\t')
                     self.add(RemoteFile(url, filename, int(offset), int(length)))
-                    self.queue.attempts = int(attempts) # Not the prettiest way of doing it, but this one case
+                    self.queue[len(self.queue)-1].attempts = int(attempts) # Not the prettiest way of doing it, but this one case
                                                         # does not warrant __init__ inclusion.
                 f.close()
-                log.info('Loaded retry queue with %d items.', len(self.queue))
+                logger.info('Loaded retry queue with %d items.', len(self.queue))
 
     def process(self):
         if len(self.queue) == 0:
             return
-        print("We're doing a queue item!")
         self.queue.pop(0).download()
-        self.save() #TODO: Handle exception
+        self.save()
 
     def add(self, item):
         self.queue.append(item)
@@ -282,7 +284,7 @@ class RetryQueue:
             raise
         else:
             for item in self.queue:
-                f.write(item.url + '\t' + item.filename + '\t' + str(item.offset) + '\t' + str(item.length) + '\t' + str(item.attempts))
+                f.write(item.url + '\t' + item.filename + '\t' + str(item.offset) + '\t' + str(item.length) + '\t' + str(item.attempts) + '\n')
             f.close()
 
 class Domain:
@@ -486,7 +488,7 @@ def main():
         raise RuntimeError('No domains loaded.')
 
     logger.debug('Loading retry queue.')
-    retryqueue = RetryQueue() # Should not need to be instanced.
+    retryqueue = RetryQueue()
 
     while True:
         try:
