@@ -404,6 +404,7 @@ class Domain:
                     if index[position][0].startswith(self.searchString):
                         # Only the json data will be interesting from here on.
                         results.append(index[position][2])
+                        position += 1
                     else:
                         break
         self.memoizeCache['searchClusters'] = (self, archive, results)
@@ -462,7 +463,7 @@ def main():
     except Exception as error:
         logger.critical('Could not read \'%s\': %s', config.domain_list_file, error)
         raise
-    for line in f.readlines():
+    for line in f.read().splitlines():
         domains.append(Domain(line))
     f.close()
 
