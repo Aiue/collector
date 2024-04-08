@@ -384,7 +384,7 @@ class Domain:
                 position = bisect.bisect_left(index, (self.searchString, 0, ""))
                 # Unlike the cluster index, there should be no earlier result than position.
                 while position < len(index):
-                    if index[position][0].startswith(self.searchStringi):
+                    if index[position][0].startswith(self.searchString):
                         # Only the json data will be interesting from here on.
                         results.append(index[position][2])
                     else:
