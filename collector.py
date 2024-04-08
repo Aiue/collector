@@ -30,7 +30,7 @@ class config:
 # Global variable initiation.
 logger = logging.getLogger('collector')
 import sys
-#logging.basicConfig(level=10, stream=sys.stdout)
+logging.basicConfig(level=20, stream=sys.stdout)
 
 # Exceptions
 class ParserError(Exception):
@@ -140,22 +140,25 @@ class RemoteFile:
     def __repr__(self):
         return self.url
         
-    def download(self): #TODO: Add digest check.
+    def download(self):
         logger.debug('Downloading from %s', self.url)
-        # Just a wrapper, but it simplifies things.
+        # Essentially just a wrapper, but it simplifies things.
         if not self.filename:
             logger.error('Attempted to download file with no local filename set: %s', self.url)
         elif os.path.exists(self.filename):
             logger.warning('Attempted to download already existing file: %s', self.filename)
         else:
             try:
+                if self.attempts == 0:
+                    RetryQueue.add(self)
                 contents = self.get()
             except Exception as error:
                 # We do not need to raise it further.
                 logger.error('Could not download file from %s: %s', url, error)
-                # TODO: Add to retry queue. Needs a reference to it.
+                RetryQueue.add(self)
                 raise
             else:
+                # TODO: Add digest check here.
                 try:
                     self.write(contents)
                 except Exception as error:
@@ -217,7 +220,7 @@ class RemoteFile:
             diff = time.time() - self.lastRequests[0]
             if diff < config.max_requests_time:
                 diff = config.max_requests_time - diff
-                logger.info('request limit reached, sleeping for %f seconds.', diff)
+                logger.info('Request limit reached, sleeping for %f seconds.', diff)
                 time.sleep(diff)
             self.lastRequests.pop(0)
 
@@ -235,6 +238,13 @@ class RemoteFile:
         return r.content
 
 class RetryQueue:
+    _instance = None
+
+    def __new__(self):
+        if self._instance == None:
+            self._instance = super(RetryQueue, self).__new__(self)
+        return self._instance
+
     def __init__(self):
         self.queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
 
@@ -257,6 +267,7 @@ class RetryQueue:
     def process(self):
         if len(self.queue) == 0:
             return
+        print("We're doing a queue item!")
         self.queue.pop(0).download()
         self.save() #TODO: Handle exception
 
@@ -475,7 +486,7 @@ def main():
         raise RuntimeError('No domains loaded.')
 
     logger.debug('Loading retry queue.')
-    retryqueue = RetryQueue()
+    retryqueue = RetryQueue() # Should not need to be instanced.
 
     while True:
         try:
