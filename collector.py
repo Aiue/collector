@@ -404,6 +404,8 @@ class Domain:
                     else:
                         break
         self.memoizeCache['searchClusters'] = (self, archive, results)
+        if len(results) == 0:
+            self.updateHistory(archive.archiveID, True)
         return results
 
     def getFile(self, archive, index):
