@@ -168,6 +168,7 @@ class RemoteFile:
     def read(self):
         logger.debug('Reading from %s', self.url)
         if self.filename and os.path.exists(self.filename): # File is in cache.
+            logger.debug('File is cached, reading from %s', self.filename)
             try:
                 f = open(self.filename, 'rb')
             except Exception as error:
@@ -375,7 +376,6 @@ class Domain:
         if 'searchClusters' in self.memoizeCache and self.memoizeCache['searchClusters'][0] == self and self.memoizeCache['searchClusters'][1] == archive:
             return self.memoizeCache['searchClusters'][2]
 
-        logger.debug('(No cache)')
         results = []
         # TODO: (maybe)
         # This method has the potential to create very large lists. But unless we're matching against an entire
