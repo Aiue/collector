@@ -212,9 +212,12 @@ class RemoteFile:
 
     def get(self):
         logger.debug('Getting from %s', self.url)
+        if len(self.lastRequests) > 0:
+            logger.debug('Time difference from now and previous request #%d is %f seconds.', len(self.lastRequests), time.time() - self.lastRequests[0])
         if len(self.lastRequests) >= config.max_requests_limit:
-            diff = time.time() - config.max_requests_time
-            if self.lastRequests[0] < diff:
+            diff = time.time() - self.lastRequests[0]
+            if diff < config.max_requests_time:
+                diff = config.max_requests_time - diff
                 logger.info('request limit reached, sleeping for %f seconds.', diff)
                 time.sleep(diff)
             self.lastRequests.pop(0)
