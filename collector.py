@@ -494,11 +494,8 @@ def main():
             if domain:
                 break
             for _,a in archives:
-                print(a)
-                if not a.archiveID in d.history or d.history[a.archiveID] != True:
-                    print(d)
-                    print(a)
-                    print(d.history)
+                # 1 will equal True, so instead, we will have to do a type comparison.
+                if not a.archiveID in d.history or type(d.history[a.archiveID]) == int:
                     domain = d
                     archive = a
                     break
