@@ -426,23 +426,23 @@ class Domain:
 
         fileInfo = json.loads(index[position])
 
-        if fileInfo.length > config.max_file_size:
-            logger.info('Skipping download of %s as file exceeds size limit at %d bytes.', fileInfo.filename, fileInfo.length)
+        if fileInfo['length'] > config.max_file_size:
+            logger.info('Skipping download of %s as file exceeds size limit at %d bytes.', fileInfo['filename'], fileInfo['length'])
         else:
-            filerange = '-' + str(fileInfo.offset) + '-' + str(fileInfo.offset+fileInfo.length-1)
+            filerange = '-' + str(fileInfo['offset']) + '-' + str(fileInfo['offset']+fileInfo['length']-1)
 
             filename = config.pywb_collection_dir + '/' + archive.archiveID + '-'
-            if fileInfo.filename.endswith('.arc.gz'):
-                for name in fileInfo.filename.split('/'):
+            if fileInfo['filename'].endswith('.arc.gz'):
+                for name in fileInfo['filename'].split('/'):
                     filename += name
                     filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
-            elif fileInfo.filename.endswith('.warc.gz'):
-                _,_,_,partial_path,_,warcfile = fileInfo.filename.split('/')
+            elif fileInfo['filename'].endswith('.warc.gz'):
+                _,_,_,partial_path,_,warcfile = fileInfo['filename'].split('/')
                 filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
 
-                url = config.archive_host + '/' + fileInfo.filename
-                rf = RemoteFile(url, filename, fileInfo.offset, fileInfo.length)
-                logger.info('Downloading from %s (range %i-%i) to %s', url, fileInfo.offset, fileInfo.offset+fileInfo.length-1, filename)
+                url = config.archive_host + '/' + fileInfo['filename']
+                rf = RemoteFile(url, filename, fileInfo['offset'], fileInfo['length'])
+                logger.info('Downloading from %s (range %i-%i) to %s', url, fileInfo['offset'], fileInfo['offset']+fileInfo['length']-1, filename)
                 rf.download()
 
         #TODO: Exception handling below
