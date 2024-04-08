@@ -72,9 +72,7 @@ class Archives:
         return iter(self.archives.items())
 
     class HTMLParser(html.parser.HTMLParser):
-        # These needs to be initialised here.
-        # archiveID needs to be 'False' rather than 'None' to prevent errors.
-        archiveID = False
+        archiveID = None
         tdCount = 0
         def __init__(self):
             self.archives = []
