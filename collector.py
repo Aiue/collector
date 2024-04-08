@@ -61,7 +61,7 @@ class Archive:
                     i = line.rfind('cluster.idx')
                     self.indexPathsURI = line[0:i]
             if not self.clusterIndex:
-                raise ParserError('Could not update paths for archive %s (incomplete or otherwise malformed cluster index).', self.archiveID)
+                raise ParserError('Could not update paths for archive %s (incomplete or otherwise malformed paths file).', self.archiveID)
 
 class Archives:
     def __init__(self):
@@ -410,6 +410,7 @@ class Domain:
         self.memoizeCache['searchClusters'] = (self, archive, results)
         if len(results) == 0:
             self.updateHistory(archive.archiveID, True)
+        logger.debug('Found %d search results for %s/%s.', len(results), self.domain, archive.archiveID)
         return results
 
     def getFile(self, archive, index):
