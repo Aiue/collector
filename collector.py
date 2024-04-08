@@ -29,6 +29,8 @@ class config:
 
 # Global variable initiation.
 logger = logging.getLogger('collector')
+import sys
+logging.basicConfig(level=10, stream=sys.stdout)
 
 # Exceptions
 class ParserError(Exception):
@@ -44,6 +46,7 @@ class Archive:
         return self.archiveID
 
     def updatePaths(self):
+        logger.debug('Updating paths for %s.', self.archiveID)
         f = RemoteFile(self.indexPathsFile)
         try:
             contents = f.read()
@@ -106,6 +109,7 @@ class Archives:
     def update(self):
         if time.time() - self.lastUpdate < 86400:
             return
+        logger.debug('Updating archive list.')
         index = RemoteFile(config.archive_host + config.archive_list_uri)
         index.bypass_decompression = True # Hack for this one special case (and one more)
         try:
@@ -139,6 +143,7 @@ class RemoteFile:
         return self.url
         
     def download(self): #TODO: Add digest check.
+        logger.debug('Downloading from %s', self.url)
         # Just a wrapper, but it simplifies things.
         if not self.filename:
             logger.error('Attempted to download file with no local filename set: %s', self.url)
@@ -161,6 +166,7 @@ class RemoteFile:
                     raise
 
     def read(self):
+        logger.debug('Reading from %s', self.url)
         if self.filename and os.path.exists(self.filename): # File is in cache.
             try:
                 f = open(self.filename, 'rb')
@@ -188,6 +194,7 @@ class RemoteFile:
     def write(self, contents):
         if not hasattr(self, 'filename'):
             raise RuntimeError('RemoteFile.write() called with no filename set: %s', url)
+        logger.debug('Writing from %s to %s', self.url, self.filename)
         if '/' in self.filename:
             left,right = self.filename.rsplit('/', 1)
             if not os.path.exists(left):
@@ -204,6 +211,7 @@ class RemoteFile:
         f.close()
 
     def get(self):
+        logger.debug('Getting from %s', self.url)
         if len(self.lastRequests) >= config.max_requests_limit:
             diff = time.time() - config.max_requests_time
             if self.lastRequests[0] < diff:
@@ -268,6 +276,7 @@ class Domain:
     memoizeCache = {}
     
     def __init__(self, domain):
+        logger.debug('New domain: %s', domain)
         if '/' in domain:
             raise RuntimeError('Domains cannot contain \'/\'') # May (and with 'may', I mean 'will') want to adress this differently.
                                                                # The main reason would be how we save history.
@@ -293,6 +302,7 @@ class Domain:
         return self.domain
 
     def loadHistory(self):
+        logger.debug('Loading history for %s', self.domain)
         if os.path.exists('history/' + self.domain):
             try:
                 f = open('history/' + self.domain, 'r')
@@ -303,6 +313,7 @@ class Domain:
                 logger.info('Loaded search history for %s', self.domain)
 
     def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
+        logger.debug('Updating history for %s', self.domain)
         self.history[archiveID] = history
         if not os.path.exists('history'):
             os.mkdir('history')
@@ -317,6 +328,7 @@ class Domain:
     # Search functions are here rather than on the classes they operate on for cache purposes.
     # Rather than having their own classes*, actually.
     def search(self, archive):
+        logger.debug('Searching %s for %s', archive.archiveID, self.domain)
         if 'search' in self.memoizeCache and self.memoizeCache['search'][0] == archive:
             return self.memoizeCache['search'][1]
 
@@ -356,9 +368,11 @@ class Domain:
             return results
 
     def searchClusters(self, archive, clusters): # TODO: Not happy with variable names here. Need to revisit and rename.
+        logger.debug('Searching %s clusters for %s', archive.archiveID, self.domain)
         if 'searchClusters' in self.memoizeCache and self.memoizeCache['searchClusters'][0] == self and self.memoizeCache['searchClusters'][1] == archive:
             return self.memoizeCache['searchClusters'][2]
 
+        logger.debug('(No cache)')
         results = []
         # TODO: (maybe)
         # This method has the potential to create very large lists. But unless we're matching against an entire
@@ -402,6 +416,8 @@ class Domain:
         elif type(self.history[archive.archiveID]) == int:
             position = self.history[archive.archiveID] + 1
 
+        logger.debug('Result found at %d', position)
+
         fileInfo = json.loads(index[position])
 
         if fileInfo.length > config.max_file_size:
@@ -435,12 +451,13 @@ def main():
     logger.info('Collector running.')
     archives = Archives()
     domains = []
+    logger.debug('Reading domain list.')
     try:
         f = open(config.domain_list_file, 'r')
     except Exception as error:
         logger.critical('Could not read \'%s\': %s', config.domain_list_file, error)
         raise
-    for line in f.read():
+    for line in f.readlines():
         domains.append(Domain(line))
     f.close()
 
@@ -448,6 +465,7 @@ def main():
         logger.critical('No domains loaded, exiting.')
         raise RuntimeError('No domains loaded.')
 
+    logger.debug('Loading retry queue.')
     retryqueue = RetryQueue()
 
     while True:
