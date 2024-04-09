@@ -10,7 +10,7 @@ import html.parser
 import json
 import logging
 import os
-import os.path
+from pathlib import Path
 import requests
 import time
 
@@ -35,6 +35,14 @@ logging.basicConfig(level=20, stream=sys.stdout)
 # Exceptions
 class ParserError(Exception):
     pass
+
+def stop_if_unsafe(self):
+    # This should be sufficient. Pipes or other potentially hazardous characters will not invoke system calls.
+    # It could be a potential issue if files are handled unsafely by a third party, but shouldn't be an issue for our uses.
+    if '/../' in str(self) or str(self).startswith('../') or str(self).startswith('/'):
+        logger.warning('Unsafe path: %s', str(self))
+        raise ValueError('Unsafe path: %s', str(self))
+setattr(Path, "stop_if_unsafe", stop_if_unsafe)
 
 # Classes
 class Archive:
@@ -133,7 +141,11 @@ class RemoteFile:
 
     def __init__(self, url, filename=None, offset=None, length=None): #TODO: Add digest information.
         self.url = url
-        self.filename = filename # Local filename, doubles as cache indicator.
+        if filename: # Local filename, doubles as cache indicator.
+            Path(filename).stop_if_unsafe()
+            self.filename = Path(filename)
+        else:
+            self.filename = None
         self.offset = offset
         self.length = length
         self.attempts = 0
@@ -147,7 +159,7 @@ class RemoteFile:
         # Essentially just a wrapper, but it simplifies things.
         if not self.filename:
             logger.error('Attempted to download file with no local filename set: %s', self.url)
-        elif os.path.exists(self.filename):
+        elif self.filename.exists():
             logger.warning('Attempted to download already existing file: %s', self.filename)
         else:
             try:
@@ -170,7 +182,7 @@ class RemoteFile:
 
     def read(self):
         logger.debug('Reading from %s', self.url)
-        if self.filename and os.path.exists(self.filename): # File is in cache.
+        if self.filename and self.filename.exists(): # File is in cache.
             logger.debug('File is cached, reading from %s', self.filename)
             try:
                 f = open(self.filename, 'rb')
@@ -199,20 +211,11 @@ class RemoteFile:
         if not self.filename:
             raise RuntimeError('RemoteFile.write() called with no filename set: %s', url)
         logger.debug('Writing from %s to %s', self.url, self.filename)
-        if '/' in self.filename:
-            left,right = self.filename.rsplit('/', 1)
-            if not os.path.exists(left):
-                logger.info("Recursively creating directory '%s'.", left)
-                try:
-                    os.makedirs(left)
-                except Exception:
-                    raise
-        try:
-            f = open(self.filename, 'wb')
-        except Exception:
-            raise
-        f.write(contents)
-        f.close()
+        if not self.filename.parents[0].exists():
+            logger.info("Recursively creating directory '%s'.", self.filename.parents[0])
+            self.filename.parents[0].mkdir(parents=True)
+        with self.filename.open('wb') as f:
+            f.write(contents)
 
     def get(self):
         logger.debug('Getting from %s', self.url)
@@ -243,7 +246,7 @@ class RetryQueue:
     queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
 
     def load(self):
-        if os.path.exists('retryqueue'):
+        if Path('retryqueue').exists():
             try:
                 f = open('retryqueue', 'r')
             except Exception as error:
@@ -310,12 +313,12 @@ class Domain:
 
     def loadHistory(self):
         logger.debug('Loading history for %s', self.domain)
-        if os.path.exists('history/' + self.domain):
-            try:
-                f = open('history/' + self.domain, 'r')
-            except Exception:
-                raise
-            else:
+
+        p = Path('history/' + self.domain)
+        p.stop_if_unsafe()
+        
+        if p.exists():
+            with p.open('r') as f:
                 self.history = json.load(f) #TODO: Add exception handling
                 logger.info('Loaded search history for %s', self.domain)
         else:
@@ -324,13 +327,11 @@ class Domain:
     def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
         logger.debug('Updating history for %s', self.domain)
         self.history[archiveID] = history
-        if not os.path.exists('history'):
-            os.mkdir('history')
-        try:
-            f = open('history/' + self.domain, 'w')
-        except Exception:
-            raise
-        else:
+        p = Path('history' + self.domain)
+        p.stop_if_unsafe()
+        if not p.parents[0].exists():
+            p.parents[0].mkdir()
+        with p.open('w') as f:
             json.dump(self.history, f)
             # No log message, we might do this often.
 
@@ -448,10 +449,10 @@ class Domain:
                 _,_,_,partial_path,_,warcfile = fileInfo['filename'].split('/')
                 filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
 
-                url = config.archive_host + '/' + fileInfo['filename']
-                rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']))
-                logger.info('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
-                rf.download()
+            url = config.archive_host + '/' + fileInfo['filename']
+            rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']))
+            logger.info('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
+            rf.download()
 
         #TODO: Exception handling below
         if position == len(index)-1:
