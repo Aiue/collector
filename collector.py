@@ -137,6 +137,7 @@ class RemoteFile:
         self.offset = offset
         self.length = length
         self.attempts = 0
+        self.bypass_decompression = False
 
     def __repr__(self):
         return self.url
