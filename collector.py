@@ -41,6 +41,7 @@ class Archive:
     def __init__(self, archiveID, indexPathsFile):
         self.archiveID = archiveID
         self.indexPathsFile = RemoteFile(config.archive_host + indexPathsFile)
+        self.clusterIndex = None
 
     def __repr__(self):
         return self.archiveID
@@ -183,18 +184,18 @@ class RemoteFile:
             except Exception as error:
                 raise
             else:
-                if hasattr(self, 'filename') and self.filename: # We should cache file.
+                if self.filename: # We should cache file.
                     try:
                         self.write(contents)
                     except Exception as error:
                         logger.warning('Could not write cache file \'%s\': %s', self.filename, error)
                         raise
-        if hasattr(self, 'bypass_decompression'): # special case for main index
+        if self.bypass_decompression: # special case for main index
             return contents
         return gzip.decompress(contents)
 
     def write(self, contents):
-        if not hasattr(self, 'filename'):
+        if not self.filename:
             raise RuntimeError('RemoteFile.write() called with no filename set: %s', url)
         logger.debug('Writing from %s to %s', self.url, self.filename)
         if '/' in self.filename:
@@ -238,7 +239,7 @@ class RemoteFile:
         return r.content
 
 class RetryQueue:
-    _instance = None
+    queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
 
     def __new__(self):
         if self._instance == None:
@@ -246,10 +247,7 @@ class RetryQueue:
         return self._instance
 
     def __init__(self):
-        if hasattr(self, 'queue'):
-            return # This instance is already initialised.
-                   # I would prefer a cleaner way of doing this, but alas.
-        self.queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
+        self.queue = [] 
 
         if os.path.exists('retryqueue'):
             try:
@@ -351,7 +349,7 @@ class Domain:
 
         results = []
         index = []
-        if not hasattr(archive, 'clusterIndex'): # Implies indexPathsURI is also empty
+        if not archive.clusterIndex: # Implies indexPathsURI is also empty
             try:
                 archive.updatePaths()
             except Exception:
