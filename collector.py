@@ -154,7 +154,7 @@ class RemoteFile:
                 contents = self.get()
             except Exception as error:
                 # We do not need to raise it further.
-                logger.error('Could not download file from %s: %s', url, error)
+                logger.error('Could not download file from %s: %s', self.url, error)
                 rq = RetryQueue()
                 rq.add(self)
                 raise # Raising it anyway. But we shouldn't. Leaving for now. TODO: 
