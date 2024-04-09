@@ -55,7 +55,7 @@ class Archive:
             logger.error('Could not read remote file %s: %s', self.indexPathsFile, error)
             raise
         else:
-            for line in contents.decode().splitlines():
+            for line in contents.splitlines():
                 if line.endswith('cluster.idx'):
                     self.clusterIndex = RemoteFile(config.archive_host + '/' + line, '.cache/' + self.archiveID + '/cluster.idx')
                     self.clusterIndex.bypass_decompression = True # Special case, 1 out of 2 files without compression.
@@ -117,7 +117,7 @@ class Archives:
             raise
         else:
             parser = self.HTMLParser()
-            parser.feed(contents.decode())
+            parser.feed(contents)
             if len(parser.archives) == 0:
                 raise ParserError('Could not parse archive list.')
             for archive in parser.archives:
@@ -192,8 +192,8 @@ class RemoteFile:
                         logger.warning('Could not write cache file \'%s\': %s', self.filename, error)
                         raise
         if self.bypass_decompression: # special case for main index
-            return contents
-        return gzip.decompress(contents)
+            return contents.decode()
+        return gzip.decompress(contents).decode()
 
     def write(self, contents):
         if not self.filename:
@@ -349,7 +349,7 @@ class Domain:
             except Exception:
                 raise
         try:
-            for line in archive.clusterIndex.read().decode().splitlines():
+            for line in archive.clusterIndex.read().splitlines():
                 searchable_string,rest = line.split(' ')
                 timestamp,filename,offset,length,cluster = rest.split('\t')
                 index.append(
@@ -397,7 +397,7 @@ class Domain:
                 cluster[3],
                 cluster[4])
             try:
-                for line in indexFile.read().decode().splitlines():
+                for line in indexFile.read().splitlines():
                     searchable_string,timestamp,json = line.split(' ', 2)
                     index.append((searchable_string, int(timestamp), json))
             except Exception:
