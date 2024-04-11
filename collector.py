@@ -36,13 +36,17 @@ logging.basicConfig(level=20, stream=sys.stdout)
 class ParserError(Exception):
     pass
 
-def stop_if_unsafe(self):
-    # This should be sufficient. Pipes or other potentially hazardous characters will not invoke system calls.
-    # It could be a potential issue if files are handled unsafely by a third party, but shouldn't be an issue for our uses.
-    if '/../' in str(self) or str(self).startswith('../') or str(self).startswith('/'):
-        logger.warning('Unsafe path: %s', str(self))
-        raise ValueError('Unsafe path: %s', str(self))
-setattr(Path, "stop_if_unsafe", stop_if_unsafe)
+# Utility functions
+def path_is_safe(path, inst=None): # path is a Path.
+    if '/../' in str(path) or str(path).startswith('../') or str(path).startswith('/'):
+        msg = f"Unsafe path: {self}"
+        if inst and type(inst) == RemoteFile: # Type is either RemoteFile or Domain. Only RemoteFile has attributes we want to add.
+            msg += '(' + str(self.url) + ')'  # Only url is of real interest.
+            
+        logger.warning(msg)
+        raise ValueError(msg) # Yes, it could lead to a deadlock. But if we ever do end up here, we have bigger issues.
+        return False # Won't do anything, but if we remove the raise, this will need to be here.
+    return True
 
 # Classes
 class Archive:
@@ -141,8 +145,7 @@ class RemoteFile:
 
     def __init__(self, url, filename=None, offset=None, length=None): #TODO: Add digest information.
         self.url = url
-        if filename: # Local filename, doubles as cache indicator.
-            Path(filename).stop_if_unsafe()
+        if filename and path_is_safe(Path(filename), self): # Local filename, doubles as cache indicator.
             self.filename = Path(filename)
         else:
             self.filename = None
@@ -315,9 +318,8 @@ class Domain:
         logger.debug('Loading history for %s', self.domain)
 
         p = Path('history/' + self.domain)
-        p.stop_if_unsafe()
         
-        if p.exists():
+        if path_is_safe(p, self) and p.exists():
             with p.open('r') as f:
                 self.history = json.load(f) #TODO: Add exception handling
                 logger.info('Loaded search history for %s', self.domain)
@@ -328,12 +330,12 @@ class Domain:
         logger.debug('Updating history for %s', self.domain)
         self.history[archiveID] = history
         p = Path('history' + self.domain)
-        p.stop_if_unsafe()
-        if not p.parents[0].exists():
-            p.parents[0].mkdir()
-        with p.open('w') as f:
-            json.dump(self.history, f)
-            # No log message, we might do this often.
+        if path_is_safe(p, self):
+            if not p.parents[0].exists():
+                p.parents[0].mkdir()
+                with p.open('w') as f:
+                    json.dump(self.history, f)
+                    # No log message, we might do this often.
 
     # Search functions are here rather than on the classes they operate on for cache purposes.
     # Rather than having their own classes*, actually.
