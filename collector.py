@@ -42,7 +42,7 @@ class BadHTTPStatus(Exception):
 
 # Utility functions
 def path_is_safe(path, inst=None): # path is a Path.
-    if '/../' in str(path) or str(path).startswith('../') or str(path) == '..' or str(path).endswith('/..') or path.is_absolute() and (str(path.startswith(config.pywb_collection_dir)) or str(path.startswith(str(config.safe_path)))): # TODO: This is becoming long. I need a multiline approach.
+    if '/../' in str(path) or str(path).startswith('../') or str(path) == '..' or str(path).endswith('/..') or path.is_absolute() and not (str(path.startswith(config.pywb_collection_dir)) or str(path.startswith(str(config.safe_path)))): # TODO: This is becoming long. I need a multiline approach.
         msg = f"Unsafe path: {self}"
         if inst and type(inst) == RemoteFile: # Type is either RemoteFile or Domain. Only RemoteFile has attributes we want to add.
             msg += '(' + str(self.url) + ')'  # Only url is of real interest.
