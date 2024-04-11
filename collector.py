@@ -36,6 +36,9 @@ logging.basicConfig(level=20, stream=sys.stdout)
 class ParserError(Exception):
     pass
 
+class BadHTTPStatus(Exception):
+    pass
+
 # Utility functions
 def path_is_safe(path, inst=None): # path is a Path.
     if '/../' in str(path) or str(path).startswith('../') or str(path).startswith('/'):
@@ -63,9 +66,8 @@ class Archive:
         f = RemoteFile(self.indexPathsFile)
         try:
             contents = f.read()
-        except Exception as error:
+        except (requests.RequestException, BadHTTPStatus) as error:
             logger.error('Could not read remote file %s: %s', self.indexPathsFile, error)
-            raise
         else:
             for line in contents.splitlines():
                 if line.endswith('cluster.idx'):
@@ -237,10 +239,11 @@ class RemoteFile:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
         try:
             r = requests.get(self.url, headers=headers)
-        except Exception:
+        except requests.RequestException:
             raise
         if r.status_code != 200 and r.status_code != 206: # We need to also allow 206 'partial content'
-            raise Exception('Failed to get %s: %i %s', self.url, r.status_code, r.reason)
+            logger.warning('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
+            raise BadHTTPStatus('Failed to get %s: %i %s', self.url, r.status_code, r.reason)
 
         self.lastRequests.append(time.time())
         return r.content
