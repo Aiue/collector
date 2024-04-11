@@ -225,10 +225,10 @@ class RemoteFile:
         try:
             r = requests.get(self.url, headers=headers)
         except requests.RequestException as error:
-            logger.warning('Could not get %s - %s', self.url, error)
+            logger.error('Could not get %s - %s', self.url, error)
             raise
         if r.status_code != 200 and r.status_code != 206: # We need to also allow 206 'partial content'
-            logger.warning('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
+            logger.error('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
 
         return r.content
@@ -453,10 +453,16 @@ def main():
     retryqueue = RetryQueue()
     retryqueue.load()
 
+    failcounter = 0
+
     while True:
+        if failcounter > 0 and failcounter % 360 == 0:
+            #TODO: Do we at all want to keep running here? Also, should we use different intervals? Should it be configurable?
+            logger.critical('Unable to retrieve data for the past %d hours, please see error log for details.', int(failcounter/60))
         try:
             archives.update()
         except (requests.RequestException, BadHTTPStatus):
+            failcounter += 1
             time.sleep(60)
             continue
 
@@ -486,16 +492,21 @@ def main():
         try:
             results = domain.search(archive)
         except (requests.RequestException, BadHTTPStatus):
+            failcounter += 1
             time.sleep(60)
             continue
         if len(results) > 0:
             try:
                 results = domain.searchClusters(archive, results)
             except (requests.RequestException, BadHTTPStatus):
+                failcounter += 1
                 time.sleep(60)
                 continue
             if len(results) > 0:
                 domain.getFile(archive, results)
+
+        # If we get this far, this cycle has been successful. Reset fail counter.
+        failcounter = 0
 
 if __name__ == "__main__":
     main()
