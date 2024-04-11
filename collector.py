@@ -237,6 +237,7 @@ class RemoteFile:
         headers = None # Should not need to be initialized/emptied, but do it anyway.
         if self.offset and self.length:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
+        self.lastRequests.append(time.time())
         try:
             r = requests.get(self.url, headers=headers)
         except requests.RequestException:
@@ -245,7 +246,6 @@ class RemoteFile:
             logger.warning('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
             raise BadHTTPStatus('Failed to get %s: %i %s', self.url, r.status_code, r.reason)
 
-        self.lastRequests.append(time.time())
         return r.content
 
 class RetryQueue:
