@@ -41,7 +41,7 @@ class BadHTTPStatus(Exception):
 
 # Utility functions
 def path_is_safe(path, inst=None): # path is a Path.
-    if '/../' in str(path) or str(path).startswith('../') or str(path).startswith('/'):
+    if '/../' in str(path) or str(path).startswith('../') or str(path).startswith('/') or str(path) == '..' or str(path).endswith('/..'):
         msg = f"Unsafe path: {self}"
         if inst and type(inst) == RemoteFile: # Type is either RemoteFile or Domain. Only RemoteFile has attributes we want to add.
             msg += '(' + str(self.url) + ')'  # Only url is of real interest.
@@ -266,7 +266,7 @@ class Domain:
     def __init__(self, domain):
         logger.debug('New domain: %s', domain)
         if '/' in domain:
-            raise RuntimeError('Domains cannot contain \'/\'') # May (and with 'may', I mean 'will') want to adress this differently.
+            raise RuntimeError('Domains cannot contain \'/\'') # TODO: May (and with 'may', I mean 'will') want to adress this differently.
                                                                # The main reason would be how we save history.
                                                                # Strongly consider changing naming scheme to adress this.
         self.domain = domain
