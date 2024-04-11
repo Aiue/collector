@@ -145,7 +145,7 @@ class Archives:
 class RemoteFile:
     lastRequests = []
 
-    def __init__(self, url, filename=None, offset=None, length=None): #TODO: Add digest information.
+    def __init__(self, url, filename=None, offset=None, length=None):
         self.url = url
         if filename and path_is_safe(Path(filename), self): # Local filename, doubles as cache indicator.
             self.filename = Path(filename)
@@ -175,7 +175,6 @@ class RemoteFile:
                 rq = RetryQueue()
                 rq.add(self)
             else:
-                # TODO: Add digest check here. Maybe.
                 self.write(contents)
 
     def read(self):
@@ -297,7 +296,7 @@ class Domain:
         
         if path_is_safe(p, self) and p.exists():
             with p.open('r') as f:
-                self.history = json.load(f) #TODO: Add exception handling
+                self.history = json.load(f) #TODO: Add exception handling. Maybe.
                 logger.info('Loaded search history for %s', self.domain)
         else:
             self.history = {}
@@ -488,7 +487,6 @@ def main():
             time.sleep(time_to_sleep)
             continue
 
-        # TODO: These will all require exception handling.
         try:
             results = domain.search(archive)
         except (requests.RequestException, BadHTTPStatus):
