@@ -67,7 +67,7 @@ class Archive:
         try:
             contents = f.read()
         except (requests.RequestException, BadHTTPStatus) as error:
-            logger.error('Could not read remote file %s: %s', self.indexPathsFile, error)
+            raise
         else:
             for line in contents.splitlines():
                 if line.endswith('cluster.idx'):
@@ -127,7 +127,7 @@ class Archives:
         index.bypass_decompression = True # Hack for this one special case (and one more)
         try:
             contents = index.read()
-        except Exception as error:
+        except (requests.RequestException, BadHTTPStatus) as error:
             raise
         else:
             parser = self.HTMLParser()
@@ -169,45 +169,29 @@ class RemoteFile:
         else:
             try:
                 contents = self.get()
-            except Exception as error:
+            except (requests.RequestException, BadHTTPStatus) as error:
                 # We do not need to raise it further.
-                logger.error('Could not download file from %s: %s', self.url, error)
+                # TODO: However, we may want to do different things depending on the exception.
                 rq = RetryQueue()
                 rq.add(self)
-                raise # Raising it anyway. But we shouldn't. Leaving for now. TODO: 
             else:
-                # TODO: Add digest check here.
-                try:
-                    self.write(contents)
-                except Exception as error:
-                    rq = RetryQueue()
-                    rq.add(self)
-                    logger.error('Could not write file \'%s\': %s', self.filename, error)
-                    raise
+                # TODO: Add digest check here. Maybe.
+                self.write(contents)
 
     def read(self):
         logger.debug('Reading from %s', self.url)
         if self.filename and self.filename.exists(): # File is in cache.
             logger.debug('File is cached, reading from %s', self.filename)
-            try:
-                f = open(self.filename, 'rb')
-            except Exception as error:
-                raise
-            else:
+            with open(self.filename, 'rb') as f:
                 contents = f.read()
-                f.close()
         else:
             try:
                 contents = self.get()
-            except Exception as error:
+            except (requests.RequestException, BadHTTPStatus):
                 raise
             else:
                 if self.filename: # We should cache file.
-                    try:
-                        self.write(contents)
-                    except Exception as error:
-                        logger.warning('Could not write cache file \'%s\': %s', self.filename, error)
-                        raise
+                    self.write(contents)
         if self.bypass_decompression: # special case for main index
             return contents.decode()
         return gzip.decompress(contents).decode()
@@ -240,11 +224,12 @@ class RemoteFile:
         self.lastRequests.append(time.time())
         try:
             r = requests.get(self.url, headers=headers)
-        except requests.RequestException:
+        except requests.RequestException as error:
+            logger.warning('Could not get %s - %s', self.url, error)
             raise
         if r.status_code != 200 and r.status_code != 206: # We need to also allow 206 'partial content'
             logger.warning('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
-            raise BadHTTPStatus('Failed to get %s: %i %s', self.url, r.status_code, r.reason)
+            raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
 
         return r.content
 
@@ -253,19 +238,12 @@ class RetryQueue:
 
     def load(self):
         if Path('retryqueue').exists():
-            try:
-                f = open('retryqueue', 'r')
-            except Exception as error:
-                # TODO: Do we want to exit here to prevent data loss?
-                log.error('Could not load retry queue: %s', error)
-                raise
-            else:
+            with open('retryqueue', 'r') as f:
                 for line in f:
                     url,filename,offset,length,attempts = line.split('\t')
                     self.add(RemoteFile(url, filename, int(offset), int(length)))
                     self.queue[len(self.queue)-1].attempts = int(attempts) # Not the prettiest way of doing it, but this one case
                                                                            # does not warrant __init__ inclusion.
-                f.close()
                 logger.info('Loaded retry queue with %d items.', len(self.queue))
 
     def process(self):
@@ -278,12 +256,7 @@ class RetryQueue:
         self.queue.append(item)
         
     def save(self):
-        try:
-            f = open('retryqueue', 'w')
-        except Exception as error:
-            log.error('Could not write retry queue: %s', error)
-            raise
-        else:
+        with open('retryqueue', 'w') as f:
             for item in self.queue:
                 f.write(item.url + '\t' + item.filename + '\t' + str(item.offset) + '\t' + str(item.length) + '\t' + str(item.attempts) + '\n')
             f.close()
@@ -350,10 +323,7 @@ class Domain:
         results = []
         index = []
         if not archive.clusterIndex: # Implies indexPathsURI is also empty
-            try:
-                archive.updatePaths()
-            except Exception:
-                raise
+            archive.updatePaths()
         try:
             for line in archive.clusterIndex.read().splitlines():
                 searchable_string,rest = line.split(' ')
@@ -366,7 +336,7 @@ class Domain:
                      int(length),       # 4
                      int(cluster)       # 5
                     ))
-        except Exception:
+        except (requests.RequestException, BadHTTPStatus) as error:
             raise
         else:
             # This search format should mean we're always left of anything matching our search string.
@@ -406,7 +376,7 @@ class Domain:
                 for line in indexFile.read().splitlines():
                     searchable_string,timestamp,json = line.split(' ', 2)
                     index.append((searchable_string, int(timestamp), json))
-            except Exception:
+            except (requests.RequestException, BadHTTPStatus) as error:
                 raise
             else:
                 position = bisect.bisect_left(index, (self.searchString, 0, ""))
@@ -459,7 +429,6 @@ class Domain:
             logger.info('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
             rf.download()
 
-        #TODO: Exception handling below
         if position == len(index)-1:
             self.updateHistory(archive.archiveID, True)
         else:
@@ -472,14 +441,9 @@ def main():
     archives = Archives()
     domains = []
     logger.debug('Reading domain list.')
-    try:
-        f = open(config.domain_list_file, 'r')
-    except Exception as error:
-        logger.critical('Could not read \'%s\': %s', config.domain_list_file, error)
-        raise
-    for line in f.read().splitlines():
-        domains.append(Domain(line))
-    f.close()
+    with open(config.domain_list_file, 'r') as f:
+        for line in f:
+            domains.append(Domain(line))
 
     if len(domains) == 0:
         logger.critical('No domains loaded, exiting.')
@@ -492,10 +456,9 @@ def main():
     while True:
         try:
             archives.update()
-        except Exception as error: # TODO: Treat different exceptions .. differently. Will require some additional rewriting.
-                                   # The key thing is that for some exceptions we'll want to continue after a call to sleep.
-            logger.error('Could not update archives: %s', error)
-            raise
+        except (requests.RequestException, BadHTTPStatus):
+            time.sleep(60)
+            continue
 
         retryqueue.process()
 
@@ -520,9 +483,17 @@ def main():
             continue
 
         # TODO: These will all require exception handling.
-        results = domain.search(archive)
+        try:
+            results = domain.search(archive)
+        except (requests.RequestException, BadHTTPStatus):
+            time.sleep(60)
+            continue
         if len(results) > 0:
-            results = domain.searchClusters(archive, results)
+            try:
+                results = domain.searchClusters(archive, results)
+            except (requests.RequestException, BadHTTPStatus):
+                time.sleep(60)
+                continue
             if len(results) > 0:
                 domain.getFile(archive, results)
 
