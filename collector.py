@@ -170,22 +170,25 @@ class RemoteFile:
         return self.url
         
     def download(self):
-        logger.debug('Downloading from %s', self.url)
+        logger.debug('Downloading from %s to %s', self.url, str(self.filename))
         # Essentially just a wrapper, but it simplifies things.
         if not self.filename:
             logger.error('Attempted to download file with no local filename set: %s', self.url)
         elif self.filename.exists():
-            logger.warning('Attempted to download already existing file: %s', self.filename)
-        else:
-            try:
-                contents = self.get()
-            except (requests.RequestException, BadHTTPStatus) as error:
-                # We do not need to raise it further.
-                # TODO: However, we may want to do different things depending on the exception.
-                rq = RetryQueue()
-                rq.add(self)
+            if self.length and self.filename.stat().st_size < self.length:
+                logger.info('Restarting incomplete download from %s to %s', self.url, self.filename)
             else:
-                self.write(contents)
+                logger.warning('Attempted to download already existing file: %s', self.filename)
+                return
+        try:
+            contents = self.get()
+        except (requests.RequestException, BadHTTPStatus) as error:
+            # We do not need to raise it further.
+            # TODO: However, we may want to do different things depending on the exception.
+            rq = RetryQueue()
+            rq.add(self)
+        else:
+            self.write(contents)
 
     def read(self):
         logger.debug('Reading from %s', self.url)
@@ -303,24 +306,25 @@ class Domain:
         logger.debug('Loading history for %s', self.domain)
 
         p = Path('history/' + self.domain)
-        
+
         if path_is_safe(p, self) and p.exists():
             with p.open('r') as f:
                 self.history = json.load(f) #TODO: Add exception handling. Maybe.
                 logger.info('Loaded search history for %s', self.domain)
+                logger.debug(str(self.history))
         else:
             self.history = {}
 
     def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
-        logger.debug('Updating history for %s', self.domain)
+        logger.debug('Updating history for %s (%s: %s)', self.domain, archiveID, str(history))
         self.history[archiveID] = history
-        p = Path('history' + self.domain)
+        p = Path('history', self.domain)
         if path_is_safe(p, self):
             if not p.parents[0].exists():
                 p.parents[0].mkdir()
-                with p.open('w') as f:
-                    json.dump(self.history, f)
-                    # No log message, we might do this often.
+            with p.open('w') as f:
+                json.dump(self.history, f)
+                # No log message, we might do this often.
 
     # Search functions are here rather than on the classes they operate on for cache purposes.
     # Rather than having their own classes*, actually.
