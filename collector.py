@@ -409,7 +409,7 @@ class Domain:
         else:
             filerange = '-' + fileInfo['offset'] + '-' + str(int(fileInfo['offset'])+int(fileInfo['length'])-1)
 
-            filename = config.pywb_collection_dir + '/' + archive.archiveID + '-'
+            filename = config.pywb_collection_dir + '/'
             if fileInfo['filename'].endswith('.arc.gz'):
                 for name in fileInfo['filename'].split('/'):
                     filename += name
