@@ -31,7 +31,7 @@ class config:
 # Global variable initiation.
 logger = logging.getLogger('collector')
 import sys
-logging.basicConfig(level=20, stream=sys.stdout)
+logging.basicConfig(level=10, stream=sys.stdout)
 
 # Exceptions
 class ParserError(Exception):
@@ -51,7 +51,7 @@ def path_is_safe(path, inst=None): # path is a Path.
             and not (
                 str(path.startswith(config.pywb_collection_dir))
              or str(path.startswith(str(config.safe_path)))
-        )):
+    )):
         msg = f"Unsafe path: {self}"
         if inst and type(inst) == RemoteFile: # Type is either RemoteFile or Domain. Only RemoteFile has attributes we want to add.
             msg += '(' + str(self.url) + ')'  # Only url is of real interest.
@@ -451,7 +451,7 @@ def main():
     domains = []
     logger.debug('Reading domain list.')
     with open(config.domain_list_file, 'r') as f:
-        for line in f:
+        for line in f.read().splitlines():
             domains.append(Domain(line))
 
     if len(domains) == 0:
