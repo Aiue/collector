@@ -74,19 +74,15 @@ class Archive:
     def updatePaths(self):
         logger.debug('Updating paths for %s.', self.archiveID)
         f = RemoteFile(self.indexPathsFile)
-        try:
-            contents = f.read()
-        except (requests.RequestException, BadHTTPStatus) as error:
-            raise
-        else:
-            for line in contents.splitlines():
-                if line.endswith('cluster.idx'):
-                    self.clusterIndex = RemoteFile(config.archive_host + '/' + line, '.cache/' + self.archiveID + '/cluster.idx')
-                    self.clusterIndex.bypass_decompression = True # Special case, 1 out of 2 files without compression.
-                    i = line.rfind('cluster.idx')
-                    self.indexPathsURI = line[0:i]
-            if not self.clusterIndex:
-                raise ParserError('Could not update paths for archive %s (incomplete or otherwise malformed paths file).', self.archiveID)
+        contents = f.read()
+        for line in contents.splitlines():
+            if line.endswith('cluster.idx'):
+                self.clusterIndex = RemoteFile(config.archive_host + '/' + line, '.cache/' + self.archiveID + '/cluster.idx')
+                self.clusterIndex.bypass_decompression = True # Special case, 1 out of 2 files without compression.
+                i = line.rfind('cluster.idx')
+                self.indexPathsURI = line[0:i]
+        if not self.clusterIndex:
+            raise ParserError('Could not update paths for archive %s (incomplete or otherwise malformed paths file).', self.archiveID)
 
 class Archives:
     def __init__(self):
@@ -135,22 +131,18 @@ class Archives:
         logger.debug('Updating archive list.')
         index = RemoteFile(config.archive_host + config.archive_list_uri)
         index.bypass_decompression = True # Hack for this one special case (and one more)
-        try:
-            contents = index.read()
-        except (requests.RequestException, BadHTTPStatus) as error:
-            raise
-        else:
-            parser = self.HTMLParser()
-            parser.feed(contents)
-            if len(parser.archives) == 0:
-                raise ParserError('Could not parse archive list.')
-            for archive in parser.archives:
-                if archive.archiveID not in self.archives:
-                    logger.info('New archive: %s', archive.archiveID)
-                    self.archives[archive.archiveID] = archive
+        contents = index.read()
+        parser = self.HTMLParser()
+        parser.feed(contents)
+        if len(parser.archives) == 0:
+            raise ParserError('Could not parse archive list.')
+        for archive in parser.archives:
+            if archive.archiveID not in self.archives:
+                logger.info('New archive: %s', archive.archiveID)
+                self.archives[archive.archiveID] = archive
 
-            parser.close()
-            self.lastUpdate = time.time()
+        parser.close()
+        self.lastUpdate = time.time()
 
 class RemoteFile:
     lastRequests = []
@@ -197,13 +189,9 @@ class RemoteFile:
             with open(self.filename, 'rb') as f:
                 contents = f.read()
         else:
-            try:
-                contents = self.get()
-            except (requests.RequestException, BadHTTPStatus):
-                raise
-            else:
-                if self.filename: # We should cache file.
-                    self.write(contents)
+            contents = self.get()
+            if self.filename: # We should cache file.
+                self.write(contents)
         if self.bypass_decompression: # special case for main index
             return contents.decode()
         return gzip.decompress(contents).decode()
@@ -337,33 +325,30 @@ class Domain:
         index = []
         if not archive.clusterIndex: # Implies indexPathsURI is also empty
             archive.updatePaths()
-        try:
-            for line in archive.clusterIndex.read().splitlines():
-                searchable_string,rest = line.split(' ')
-                timestamp,filename,offset,length,cluster = rest.split('\t')
-                index.append(
-                    (searchable_string, # 0
-                     int(timestamp),    # 1
-                     filename,          # 2
-                     int(offset),       # 3
-                     int(length),       # 4
-                     int(cluster)       # 5
-                    ))
-        except (requests.RequestException, BadHTTPStatus) as error:
-            raise
-        else:
-            # This search format should mean we're always left of anything matching our search string.
-            position = bisect.bisect_left(index, (self.searchString, 0, "", 0, 0, 0))
-            # We may (and likely will) have matches in the index cluster prior to our match.
-            results.append(index[position-1])
-            while position < len(index):
-                if index[position][0].startswith(self.searchString):
-                    results.append(index[position])
-                    position += 1
-                else:
-                    break
-            self.memoizeCache['search'] = (archive, results)
-            return results
+        for line in archive.clusterIndex.read().splitlines():
+            searchable_string,rest = line.split(' ')
+            timestamp,filename,offset,length,cluster = rest.split('\t')
+            index.append(
+                (searchable_string, # 0
+                 int(timestamp),    # 1
+                 filename,          # 2
+                 int(offset),       # 3
+                 int(length),       # 4
+                 int(cluster)       # 5
+                ))
+
+        # This search format should mean we're always left of anything matching our search string.
+        position = bisect.bisect_left(index, (self.searchString, 0, "", 0, 0, 0))
+        # We may (and likely will) have matches in the index cluster prior to our match.
+        results.append(index[position-1])
+        while position < len(index):
+            if index[position][0].startswith(self.searchString):
+                results.append(index[position])
+                position += 1
+            else:
+                break
+        self.memoizeCache['search'] = (archive, results)
+        return results
 
     def searchClusters(self, archive, clusters): # TODO: Not happy with variable names here. Need to revisit and rename.
         logger.debug('Searching %s clusters for %s', archive.archiveID, self.domain)
@@ -385,22 +370,18 @@ class Domain:
                 cacheFileName,
                 cluster[3],
                 cluster[4])
-            try:
-                for line in indexFile.read().splitlines():
-                    searchable_string,timestamp,json = line.split(' ', 2)
-                    index.append((searchable_string, int(timestamp), json))
-            except (requests.RequestException, BadHTTPStatus) as error:
-                raise
-            else:
-                position = bisect.bisect_left(index, (self.searchString, 0, ""))
-                # Unlike the cluster index, there should be no earlier result than position.
-                while position < len(index):
-                    if index[position][0].startswith(self.searchString):
-                        # Only the json data will be interesting from here on.
-                        results.append(index[position][2])
-                        position += 1
-                    else:
-                        break
+            for line in indexFile.read().splitlines():
+                searchable_string,timestamp,json = line.split(' ', 2)
+                index.append((searchable_string, int(timestamp), json))
+            position = bisect.bisect_left(index, (self.searchString, 0, ""))
+            # Unlike the cluster index, there should be no earlier result than position.
+            while position < len(index):
+                if index[position][0].startswith(self.searchString):
+                    # Only the json data will be interesting from here on.
+                    results.append(index[position][2])
+                    position += 1
+                else:
+                    break
         self.memoizeCache['searchClusters'] = (self, archive, results)
         if len(results) == 0:
             self.updateHistory(archive.archiveID, True)
