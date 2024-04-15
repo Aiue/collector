@@ -184,11 +184,24 @@ class RemoteFile:
 
     def read(self):
         logger.debug('Reading from %s', self.url)
+        contents = None
         if self.filename and self.filename.exists(): # File is in cache.
-            logger.debug('File is cached, reading from %s', self.filename)
-            with open(self.filename, 'rb') as f:
-                contents = f.read()
-        else:
+            if self.length:
+                size = self.length
+            else:
+                r = requests.head(self.url)
+                size = int(r.headers['Content-Length'])
+
+            fsize = self.filename.stat().st_size
+            if fsize == size:
+                logger.debug('File is cached, reading from %s', self.filename)
+                with self.filename.open('rb') as f:
+                    contents = f.read()
+            else:
+                logger.debug('Cache file is %d bytes, remote file is %d bytes. Redownloading.', fsize, size)
+                self.filename.unlink()
+
+        if not contents:
             contents = self.get()
             if self.filename: # We should cache file.
                 self.write(contents)
