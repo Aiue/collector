@@ -285,15 +285,14 @@ class Domain:
             raise ValueError('Domains are expected to contain dots (.), read \'%s\'.', domain)
 
         self.domain = domain
-        searchString = ""
+        self.searchString = ""
         domainParts = domain.split('.')
         for i in range(len(domainParts),0,-1):
             if not domainParts[i-1].isalnum():
                 raise ValueError('Domains can only contain alphanumeric characters and dots, read \'%s\'.', domain)
-            searchString += domain[i-1]
+            self.searchString += domain[i-1]
             if i > 1:
-                searchString += ','
-        self.searchString = (searchString + ')/', searchString + ',') # One matches domain exactly, the other matches any subdomains.
+                self.searchString += ','
         self.loadHistory()
 
     def __repr__(self):
