@@ -31,7 +31,7 @@ class config:
 # Global variable initiation.
 logger = logging.getLogger('collector')
 import sys
-logging.basicConfig(level=10, stream=sys.stdout)
+logging.basicConfig(level=20, stream=sys.stdout)
 
 # Exceptions
 class ParserError(Exception):
@@ -62,7 +62,7 @@ def path_is_safe(path, inst=None): # path is a Path.
     return True
 
 def is_match(entry, search):
-    return entry.startswith(search + '(') or entry.startswith(search + ',')
+    return entry.startswith(search + ')') or entry.startswith(search + ',')
 
 # Classes
 class Archive:
@@ -293,7 +293,7 @@ class Domain:
         for i in range(len(domainParts),0,-1):
             if not domainParts[i-1].isalnum():
                 raise ValueError('Domains can only contain alphanumeric characters and dots, read \'%s\'.', domain)
-            self.searchString += domain[i-1]
+            self.searchString += domainParts[i-1]
             if i > 1:
                 self.searchString += ','
         self.loadHistory()
@@ -310,7 +310,6 @@ class Domain:
             with p.open('r') as f:
                 self.history = json.load(f) #TODO: Add exception handling. Maybe.
                 logger.info('Loaded search history for %s', self.domain)
-                logger.debug(str(self.history))
         else:
             self.history = {}
 
