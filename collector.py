@@ -64,6 +64,11 @@ def path_is_safe(path, inst=None): # path is a Path.
 def is_match(entry, search):
     return entry.startswith(search + ')') or entry.startswith(search + ',')
 
+def get_domain(domain):
+    for d in Domain.domains:
+        if d.domain == domain:
+            return d
+
 # Classes
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
@@ -150,7 +155,7 @@ class Archives:
 class RemoteFile:
     lastRequests = []
 
-    def __init__(self, url, filename=None, offset=None, length=None):
+    def __init__(self, url, filename=None, offset=None, length=None, domain=None, archiveID=None):
         self.url = url
         if filename and path_is_safe(Path(filename), self): # Local filename, doubles as cache indicator.
             self.filename = Path(filename)
@@ -160,6 +165,9 @@ class RemoteFile:
         self.length = length
         self.attempts = 0
         self.bypass_decompression = False
+        # The following two are for status tracking
+        self.domain=domain
+        self.archiveID = archiveID
 
     def __repr__(self):
         return self.url
@@ -250,14 +258,15 @@ class RemoteFile:
         return r.content
 
 class RetryQueue:
+    # Overall, very hack quality. But it will do.
     queue = [] # [RemoteFile(file1), RemoteFile(file2), ...]
 
     def load(self):
         if Path('retryqueue').exists():
             with open('retryqueue', 'r') as f:
                 for line in f:
-                    url,filename,offset,length,attempts = line.split('\t')
-                    self.add(RemoteFile(url, filename, int(offset), int(length)))
+                    url,filename,offset,length,domain,archiveID,attempts = line.split('\t')
+                    self.add(RemoteFile(url, filename, int(offset), int(length), domain, archiveID), True)
                     self.queue[len(self.queue)-1].attempts = int(attempts) # Not the prettiest way of doing it, but this one case
                                                                            # does not warrant __init__ inclusion.
                 logger.info('Loaded retry queue with %d items.', len(self.queue))
@@ -265,20 +274,31 @@ class RetryQueue:
     def process(self):
         if len(self.queue) == 0:
             return
+        domain = get_domain(self.queue[0].domain)
+        if not domain:
+            raise RuntimeError('Unknown domain in retry queue: %s %s %s', item.url, item.filename, item.domain)
+        domain.updateHistory(item.archiveID, 'failed', domain.history[archiveID]['failed'] - 1)
         self.queue.pop(0).download()
         self.save()
 
-    def add(self, item):
+    def add(self, item, no_history=None):
+        if not no_history:
+            domain = get_domain(item.domain)
+            if not domain:
+                return # This domain is no longer on our list.
+            # A slightly convoluted construction.
+            domain.updateHistory(item.archiveID, 'failed', domain.history[archiveID]['failed'] + 1)
         self.queue.append(item)
         
     def save(self):
         with open('retryqueue', 'w') as f:
             for item in self.queue:
-                f.write(item.url + '\t' + item.filename + '\t' + str(item.offset) + '\t' + str(item.length) + '\t' + str(item.attempts) + '\n')
+                f.write(item.url + '\t' + item.filename + '\t' + str(item.offset) + '\t' + str(item.length) + '\t' + item.domain + '\t' + item.archiveID + '\t' + str(item.attempts) + '\n')
             f.close()
 
 class Domain:
     memoizeCache = {}
+    domains = []
     
     def __init__(self, domain):
         logger.debug('New domain: %s', domain)
@@ -297,6 +317,7 @@ class Domain:
             if i > 1:
                 self.searchString += ','
         self.loadHistory()
+        Domain.domains.append(self)
 
     def __repr__(self):
         return self.domain
@@ -313,9 +334,11 @@ class Domain:
         else:
             self.history = {}
 
-    def updateHistory(self, archiveID, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
+    def updateHistory(self, archiveID, key, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
         logger.debug('Updating history for %s (%s: %s)', self.domain, archiveID, str(history))
-        self.history[archiveID] = history
+        if not archiveID in self.history:
+            self.history[archiveID] = {'completed': 0, 'failed': 0, 'results': 0}
+        self.history[archiveID][key] = history
         p = Path('history', self.domain)
         if path_is_safe(p, self):
             if not p.parents[0].exists():
@@ -394,7 +417,8 @@ class Domain:
                     break
         self.memoizeCache['searchClusters'] = (self, archive, results)
         if len(results) == 0:
-            self.updateHistory(archive.archiveID, True)
+            self.updateHistory(archive.archiveID, 'completed', True)
+        self.updateHistory(archive.archiveID, 'results', len(results))
         logger.debug('Found %d search results for %s/%s.', len(results), self.domain, archive.archiveID)
         return results
 
@@ -402,11 +426,11 @@ class Domain:
         # First, determine what to fetch.
         if archive.archiveID not in self.history:
             position = 0
-        elif type(self.history[archive.archiveID]) == bool:
+        elif type(self.history[archive.archiveID]['completed']) == bool:
             # This shouldn't ever happen here. But let's catch it anyway.
             raise RuntimeError('Attempted to download completed domain/archive combination: %s %s', self.domain, archive.archiveID)
-        elif type(self.history[archive.archiveID]) == int:
-            position = self.history[archive.archiveID] + 1
+        elif type(self.history[archive.archiveID]['completed']) == int:
+            position = self.history[archive.archiveID]['completed'] + 1
 
         logger.debug('Result found at %d', position)
 
@@ -429,14 +453,14 @@ class Domain:
                 filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
 
             url = config.archive_host + '/' + fileInfo['filename']
-            rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']))
+            rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']), self.domain, archive.archiveID)
             logger.info('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
             rf.download()
 
         if position == len(index)-1:
-            self.updateHistory(archive.archiveID, True)
+            self.updateHistory(archive.archiveID, 'completed', True)
         else:
-            self.updateHistory(archive.archiveID, position)
+            self.updateHistory(archive.archiveID, 'completed', position)
 
 #
 
@@ -480,7 +504,7 @@ def main():
                 break
             for _,a in archives:
                 # 1 will equal True, so instead, we will have to do a type comparison.
-                if not a.archiveID in d.history or type(d.history[a.archiveID]) == int:
+                if not a.archiveID in d.history or type(d.history[a.archiveID]['completed']) == int:
                     domain = d
                     archive = a
                     break
