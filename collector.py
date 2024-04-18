@@ -61,6 +61,9 @@ def path_is_safe(path, inst=None): # path is a Path.
         return False # Won't do anything, but if we remove the raise, this will need to be here.
     return True
 
+def is_match(entry, search):
+    return entry.startswith(search + '(') or entry.startswith(search + ',')
+
 # Classes
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
@@ -346,11 +349,11 @@ class Domain:
                 ))
 
         # This search format should mean we're always left of anything matching our search string.
-        position = bisect.bisect_left(index, (self.searchString, 0, "", 0, 0, 0))
+        position = bisect.bisect_left(index, (self.searchString + '(', 0, "", 0, 0, 0))
         # We may (and likely will) have matches in the index cluster prior to our match.
         results.append(index[position-1])
         while position < len(index):
-            if index[position][0].startswith(self.searchString):
+            if is_match(index[position][0], self.searchString):
                 results.append(index[position])
                 position += 1
             else:
@@ -384,7 +387,7 @@ class Domain:
             position = bisect.bisect_left(index, (self.searchString, 0, ""))
             # Unlike the cluster index, there should be no earlier result than position.
             while position < len(index):
-                if index[position][0].startswith(self.searchString):
+                if is_match(index[position][0], self.searchString):
                     # Only the json data will be interesting from here on.
                     results.append(index[position][2])
                     position += 1
