@@ -279,26 +279,22 @@ class Domain:
     
     def __init__(self, domain):
         logger.debug('New domain: %s', domain)
-        if '/' in domain:
-            raise RuntimeError('Domains cannot contain \'/\'') # TODO: May (and with 'may', I mean 'will') want to adress this differently.
-                                                               # The main reason would be how we save history.
-                                                               # Strongly consider changing naming scheme to adress this.
+        if not '.' in domain: # Additional validation will follow when building the search string.
+                              # We don't need to be super strict with the verification, as long as
+                              # we only have dots and alphanumeric characters. More for lining up^
+            raise ValueError('Domains are expected to contain dots (.), read \'%s\'.', domain)
+
         self.domain = domain
-        self.loadHistory()
-        self.searchString = ""
-        uri = ""
-        if '/' in domain:
-            domain,uri = domain.split('/', 1)
-        domain = domain.split('.')
-        for i in range(len(domain),0,-1):
-            self.searchString += domain[i-1]
+        searchString = ""
+        domainParts = domain.split('.')
+        for i in range(len(domainParts),0,-1):
+            if not domainParts[i-1].isalnum():
+                raise ValueError('Domains can only contain alphanumeric characters and dots, read \'%s\'.', domain)
+            searchString += domain[i-1]
             if i > 1:
-                self.searchString += ','
-        self.searchString += ')/' + uri # TODO: Consider skipping this to include subdomains.
-                                        # May want additional steps to allow for wildcard matching.
-                                        # Caveat: only left-side wildcards (*.domain.com) would be
-                                        # workable with binary search, and simply removing ')/'+uri would
-                                        # make those implicit.
+                searchString += ','
+        self.searchString = (searchString + ')/', searchString + ',') # One matches domain exactly, the other matches any subdomains.
+        self.loadHistory()
 
     def __repr__(self):
         return self.domain
