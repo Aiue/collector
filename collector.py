@@ -148,6 +148,8 @@ class Archives:
             if archive.archiveID not in self.archives:
                 logger.info('New archive: %s', archive.archiveID)
                 self.archives[archive.archiveID] = archive
+                with Path('archive_count').open('w') as f:
+                    f.write(str(len(self.archives)))
 
         parser.close()
         self.lastUpdate = time.time()
@@ -417,7 +419,7 @@ class Domain:
                     break
         self.memoizeCache['searchClusters'] = (self, archive, results)
         if len(results) == 0:
-            self.updateHistory(archive.archiveID, 'completed', True)
+            self.updateHistory(archive.archiveID, 'completed', 0)
         self.updateHistory(archive.archiveID, 'results', len(results))
         logger.debug('Found %d search results for %s/%s.', len(results), self.domain, archive.archiveID)
         return results
@@ -426,9 +428,6 @@ class Domain:
         # First, determine what to fetch.
         if archive.archiveID not in self.history:
             position = 0
-        elif type(self.history[archive.archiveID]['completed']) == bool:
-            # This shouldn't ever happen here. But let's catch it anyway.
-            raise RuntimeError('Attempted to download completed domain/archive combination: %s %s', self.domain, archive.archiveID)
         elif type(self.history[archive.archiveID]['completed']) == int:
             position = self.history[archive.archiveID]['completed'] + 1
 
@@ -457,10 +456,7 @@ class Domain:
             logger.info('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
             rf.download()
 
-        if position == len(index)-1:
-            self.updateHistory(archive.archiveID, 'completed', True)
-        else:
-            self.updateHistory(archive.archiveID, 'completed', position)
+        self.updateHistory(archive.archiveID, 'completed', position)
 
 #
 
@@ -504,7 +500,7 @@ def main():
                 break
             for _,a in archives:
                 # 1 will equal True, so instead, we will have to do a type comparison.
-                if not a.archiveID in d.history or type(d.history[a.archiveID]['completed']) == int:
+                if not a.archiveID in d.history or d.history[a.archiveID]['completed'] < d.history[a.archiveID]['results']:
                     domain = d
                     archive = a
                     break
