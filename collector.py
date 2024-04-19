@@ -55,7 +55,7 @@ def path_is_safe(path, inst=None): # path is a Path.
     )):
         msg = f"Unsafe path: {self}"
         if inst and type(inst) == RemoteFile: # Type is either RemoteFile or Domain. Only RemoteFile has attributes we want to add.
-            msg += '(' + str(self.url) + ')'  # Only url is of real interest.
+            msg += ' (' + str(self.url) + ')'  # Only url is of real interest.
             
         logger.warning(msg)
         raise ValueError(msg) # Yes, it could lead to a deadlock. But if we ever do end up here, we have bigger issues.
