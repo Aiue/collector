@@ -24,9 +24,7 @@ def main():
     completed_archives = 0
     output = ""
     for archive,hist in history.items():
-        if hist['results'] == 0:
-            print(archive + ': No search results')
-        elif hist['completed'] == hist['results'] and hist['failed'] != 0:
+        if hist['results'] == 0 or hist['completed'] == hist['results'] and hist['failed'] != 0:
             completed_archives += 1
         else:
             completed = hist['completed'] - hist['failed']
