@@ -31,7 +31,7 @@ class config:
 # Global variable initiation.
 logger = logging.getLogger('collector')
 import sys
-logging.basicConfig(level=20, stream=sys.stdout)
+logging.basicConfig(level=10, stream=sys.stdout)
 
 # Exceptions
 class ParserError(Exception):
@@ -189,7 +189,6 @@ class RemoteFile:
             contents = self.get()
         except (requests.RequestException, BadHTTPStatus) as error:
             # We do not need to raise it further.
-            # TODO: However, we may want to do different things depending on the exception.
             rq = RetryQueue()
             rq.add(self)
         else:
@@ -338,7 +337,7 @@ class Domain:
         else:
             self.history = {}
 
-    def updateHistory(self, archiveID, key, history): # TODO: Possibly use Archive object instead. Requires some additional rewriting.
+    def updateHistory(self, archiveID, key, history):
         logger.debug('Updating history for %s (%s: %s)', self.domain, archiveID, str(history))
         if not archiveID in self.history:
             self.history[archiveID] = {'completed': 0, 'failed': 0, 'results': 0}
@@ -393,10 +392,6 @@ class Domain:
             return self.memoizeCache['searchClusters'][2]
 
         results = []
-        # TODO: (maybe)
-        # This method has the potential to create very large lists. But unless we're matching against an entire
-        # top domain, we shouldn't get anywhere near the size of a cluster index. Even so, it may be worth
-        # considering a rewrite.
         for cluster in clusters:
             # We do not need a call to Archive.updatePaths() here, we should only get here after Domain.search()
             index = []
