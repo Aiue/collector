@@ -287,6 +287,7 @@ class RetryQueue:
         if not no_history:
             domain = get_domain(item.domain)
             if not domain:
+                logger.warning('\'%s\' is no longer in domain list, removing item from retry queue: %s -> %s', item.domain, item.url, item.filename)
                 return # This domain is no longer on our list.
             # A slightly convoluted construction.
             domain.updateHistory(item.archiveID, 'failed', domain.history[archiveID]['failed'] + 1)
@@ -302,7 +303,7 @@ class Domain:
     memoizeCache = {}
     domains = []
     
-    def __init__(self, domain):
+    def __init__(self, domain): # TODO: Check that it's not a duplicate.
         logger.debug('New domain: %s', domain)
         if not '.' in domain: # Additional validation will follow when building the search string.
                               # We don't need to be super strict with the verification, as long as
@@ -313,7 +314,7 @@ class Domain:
         self.searchString = ""
         domainParts = domain.split('.')
         for i in range(len(domainParts),0,-1):
-            if not domainParts[i-1].isalnum():
+            if not domainParts[i-1].isalnum(): # TODO: This is too narrow. We need to also allow hyphens. Consider also forcing them to lowercase.
                 raise ValueError('Domains can only contain alphanumeric characters and dots, read \'%s\'.', domain)
             self.searchString += domainParts[i-1]
             if i > 1:
@@ -331,7 +332,7 @@ class Domain:
 
         if path_is_safe(p, self) and p.exists():
             with p.open('r') as f:
-                self.history = json.load(f) #TODO: Add exception handling. Maybe.
+                self.history = json.load(f)
                 logger.info('Loaded search history for %s', self.domain)
         else:
             self.history = {}
