@@ -9,6 +9,7 @@ import gzip
 import html.parser
 import json
 import logging
+import logging.config
 import os
 from pathlib import Path
 import requests
@@ -29,9 +30,9 @@ class config:
     safe_path = Path.cwd()
 
 # Global variable initiation.
-logger = logging.getLogger('collector')
-import sys
-logging.basicConfig(level=10, stream=sys.stdout)
+logger = logging.getLogger()
+logger.addHandler('stdout')
+logging.config.fileConfig('logger.conf')
 
 # Exceptions
 class ParserError(Exception):
