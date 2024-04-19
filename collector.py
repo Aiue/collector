@@ -314,8 +314,9 @@ class Domain:
         self.searchString = ""
         domainParts = domain.split('.')
         for i in range(len(domainParts),0,-1):
-            if not domainParts[i-1].isalnum(): # TODO: This is too narrow. We need to also allow hyphens. Consider also forcing them to lowercase.
-                raise ValueError('Domains can only contain alphanumeric characters and dots, read \'%s\'.', domain)
+            if not domainParts[i-1].replace('-', '').isalnum(): # Not the prettiest or most strictly accurate way of doing this,
+                                                                # but will be sufficient for our purposes.
+                raise ValueError('Domains can only contain alphanumeric characters, hyphens, and dots, read \'{domain}\'.'.format(domain=domain))
             self.searchString += domainParts[i-1]
             if i > 1:
                 self.searchString += ','
