@@ -31,7 +31,6 @@ class config:
 
 # Global variable initiation.
 logger = logging.getLogger()
-logger.addHandler('stdout')
 logging.config.fileConfig('logger.conf')
 
 # Exceptions
@@ -91,6 +90,7 @@ class Archive:
                 i = line.rfind('cluster.idx')
                 self.indexPathsURI = line[0:i]
         if not self.clusterIndex:
+            logger.critical('Could not update paths for archive %s (incomplete or otherwise malformed paths file).', self.archiveID)
             raise ParserError('Could not update paths for archive %s (incomplete or otherwise malformed paths file).', self.archiveID)
 
 class Archives:
@@ -144,6 +144,7 @@ class Archives:
         parser = self.HTMLParser()
         parser.feed(contents)
         if len(parser.archives) == 0:
+            logger.critical('Could not parse archive list.')
             raise ParserError('Could not parse archive list.')
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
@@ -468,7 +469,7 @@ def main():
             domains.append(Domain(line))
 
     if len(domains) == 0:
-        logger.critical('No domains loaded, exiting.')
+        logger.error('No domains loaded, exiting.')
         raise RuntimeError('No domains loaded.')
 
     logger.debug('Loading retry queue.')
