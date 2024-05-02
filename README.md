@@ -8,7 +8,10 @@ When running alongside pywb, it is assumed that pywb has been configured to use 
 
 A few basic configuration options are housed at the beginning of the script. I will choose not to describe them here for the time being, as they should hopefully do that well enough themselves.
 
-The domains to be searched should be listed in [domains.txt](domains.txt), which will be expected to be a plaintext file. Separate domain entries with a newline. By request, the script will prioritise finish searching all archives for one domain, letting the domain's history be completed.
+The domains to be searched should be listed in [domains.txt](domains.txt), which will be expected to be a plaintext file. Separate domain entries with a newline. By request, the script will prioritise finish searching all archives for one domain, letting the domain's history be completed. Only domains will be accepted, and will implicitly include all subdomains. Full URLs are not supported, because when combined with the implicit inclusion of subdomains, this would be less optimal.
+
+### status.py
+`status.py` can be used to get completion information on individual domains. Usage is simple: `status.py <domain>`. 
 
 ## Exceptions
 The script comes with two custom exceptions. Both inherit from Exception with no additional changes. The exceptions are `ParserError` and `BadHTTPStatus`.
