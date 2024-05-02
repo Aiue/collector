@@ -25,6 +25,8 @@ rhel-opt-package:
   script:
     - dnf update
     - rpmbuild rpm.spec
+    - mkdir -p pkgs/rhel9
+    - mv rpms/noarch/*.rpm pkgs/rhel9
 
 collect-pkgs:
   stage: collect
@@ -32,6 +34,9 @@ collect-pkgs:
     untracked: true
   dependencies:
     - rhel-opt-package
+  script:
+    - "mv pkgs/* ."
+    - "find . | grep .rpm"
 
 upload-pkgs:
   extends: .upload-el-pkgs
