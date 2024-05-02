@@ -1,0 +1,42 @@
+stages:
+  - package
+  - collect
+  - upload
+
+include:
+  - project: 'DRS/linux-packages/shared-ci-pipeline'
+    file: '.upload_rhel-gitlab-ci.yml'
+
+variables:
+  PKG_NAME: liuopt-cccollector
+  # Set manually each run: PKG_PROG_VER
+
+rhel-opt-package:
+  stage: package
+  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
+  when: manual
+  variables:
+    INSTALL_PATH: /opt/liu
+    PKG_PREFIX: liuopt
+    PKG_VERSION: $PKG_PROG_VER
+  artifacts:
+    paths:
+      - pkgs
+  script:
+    - dnf update
+    - rpmbuild rpm.spec
+
+collect-pkgs:
+  stage: collect
+  artifacts:
+    untracked: true
+  dependencies:
+    - rhel-opt-package
+
+upload-pkgs:
+  extends: .upload-el-pkgs
+  dependencies:
+    - collect-pkgs
+  variables:
+    target_dir: rhel9
+    upload_script: './upload-Plow-test.sh'
