@@ -26,7 +26,7 @@ class config:
     max_requests_time = 5
     cache_index_clusters = True
     pywb_collection_dir = 'path/to/pywb/collection'
-    domain_list_file = 'domains.txt'
+    domain_list_file = 'domains.conf'
     safe_path = Path.cwd()
 
 # Global variable initiation.
