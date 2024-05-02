@@ -13,7 +13,7 @@ variables:
 
 rhel-opt-package:
   stage: package
-  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
+  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
   when: manual
   if: $PK_PROG_VER
   variables:
