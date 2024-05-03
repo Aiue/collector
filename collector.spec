@@ -18,5 +18,3 @@ Common Crawl data collector.
 cp *.md %{buildroot}/%{installroot}
 cp *.py %{buildroot}/%{installroot}
 cp *.conf %{buildroot}/%{installroot}
-
-

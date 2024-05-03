@@ -26,7 +26,7 @@ rhel-opt-package:
       - pkgs
   script:
     - dnf update
-    - rpmbuild rpm.spec
+    - rpmbuild collector.spec
     - mkdir -p pkgs/rhel9
     - mv rpms/noarch/*.rpm pkgs/rhel9
 
