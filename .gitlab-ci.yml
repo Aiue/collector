@@ -14,8 +14,9 @@ variables:
 rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
-  when: manual
-  if: $PK_PROG_VER
+  rules:
+    - if: $PK_PROG_VER
+    - when: manual
   variables:
     INSTALL_PATH: /opt/liu
     PKG_PREFIX: liuopt
