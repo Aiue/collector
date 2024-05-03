@@ -15,7 +15,7 @@ from pathlib import Path
 import requests
 import time
 
-# Configuration, using a dict for verbosity purposes.
+# Configuration, using a class for verbosity purposes.
 class config:
     archive_host = 'https://data.commoncrawl.org'
     archive_list_uri = '/cc-index/collections/index.html'
