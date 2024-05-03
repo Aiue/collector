@@ -6,12 +6,14 @@ stages:
 include:
   - project: 'DRS/linux-packages/shared-ci-pipeline'
     file: '.upload_rhel-gitlab-ci.yml'
+  - project: 'DRS/linux-packages/templated-python-venv/shared-pipelines'
+    file: '.el-venv-gitlab-ci.yml'
 
 variables:
   PKG_NAME: liuopt-cccollector
   # Set manually each run: PKG_PROG_VER
 
-rhel-opt-package:
+ccc-rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
   rules:
@@ -30,13 +32,28 @@ rhel-opt-package:
     - mkdir -p pkgs/rhel9
     - mv rpms/noarch/*.rpm pkgs/rhel9
 
+pywb-rhel-opt-package:
+  extends: .el-venv-opt-package
+  stage: package
+  when: manual
+  variables:
+    PKG_NAME: 'liuopt-ccc-pywb-venv'
+    PKG_PROG_VER: '1-1'
+    PKG_PREFIX: 'liuopt'
+    PKG_INSTALLPATH: 'opt/liu'
+    PKG_VERSION: '1'
+    PKG_RELEASE: '1'
+    build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
+    target_distro: rhel9
+
 collect-pkgs:
   stage: collect
   when: manual
   artifacts:
     untracked: true
   dependencies:
-    - rhel-opt-package
+    - ccc-rhel-opt-package
+    - pywb-rhel-opt-package
   script:
     - "mv pkgs/* ."
     - "find . | grep .rpm"
