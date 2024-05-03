@@ -10,19 +10,18 @@ include:
     file: '.el-venv-gitlab-ci.yml'
 
 variables:
-  PKG_NAME: liuopt-cccollector
-  # Set manually each run: PKG_PROG_VER
+  PKG_PREFIX: 'liuopt'
+  PKG_INSTALLPATH: '/opt/liu'
+  PKG_VERSION: '1'
+  PKG_RELEASE: '1'
 
 ccc-rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
-  rules:
-    - if: $PK_PROG_VER
-    - when: manual
+  when: manual
   variables:
-    INSTALL_PATH: /opt/liu
-    PKG_PREFIX: liuopt
-    PKG_VERSION: $PKG_PROG_VER
+    PKG_NAME: 'liuopt-cccollector'
+    PKG_PROG_VER: '1'
   artifacts:
     paths:
       - pkgs
@@ -34,15 +33,10 @@ ccc-rhel-opt-package:
 
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package
-  stage: package
   when: manual
   variables:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
     PKG_PROG_VER: '1-1'
-    PKG_PREFIX: 'liuopt'
-    PKG_INSTALLPATH: 'opt/liu'
-    PKG_VERSION: '1'
-    PKG_RELEASE: '1'
     build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
     target_distro: rhel9
 
