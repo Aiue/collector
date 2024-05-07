@@ -11,7 +11,6 @@ include:
 
 variables:
   PKG_PREFIX: 'liuopt'
-  PKG_INSTALLPATH: '/opt/liu'
   PKG_VERSION: '1'
   PKG_RELEASE: '1'
 
@@ -21,6 +20,7 @@ ccc-rhel-opt-package:
   when: manual
   variables:
     PKG_NAME: 'liuopt-cccollector'
+    PKG_INSTALLPATH: '/opt/liu'
     PKG_PROG_VER: '1'
   artifacts:
     paths:
@@ -30,12 +30,14 @@ ccc-rhel-opt-package:
     - rpmbuild collector.spec
     - mkdir -p pkgs/rhel9
     - mv rpms/noarch/*.rpm pkgs/rhel9
+    #           ^ Elsewhere?
 
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package
   when: manual
   variables:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
+    PKG_INSTALLPATH: 'opt/liu'
     PKG_PROG_VER: '1-1'
     build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
     target_distro: rhel9
