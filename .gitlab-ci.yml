@@ -68,9 +68,6 @@ collect-pkgs:
   when: manual
   artifacts:
     untracked: true
-  dependencies:
-    - ccc-rhel-opt-package
-    - pywb-rhel-opt-package
   script:
     - "mv pkgs/* ."
     - "find . | grep .rpm"
