@@ -43,7 +43,7 @@ ccc-rhel9-opt-package:
   variables:
     dist_ver: 9
 
-pywb-rhel-opt-package:
+.pywb-rhel-opt-package:
   extends: .el-venv-opt-package
   when: manual
   variables:
