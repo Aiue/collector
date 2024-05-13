@@ -52,13 +52,13 @@ pywb-rhel-opt-package:
     PKG_PROG_VER: '1-1'
 
 pywb-rhel8-opt-package:
-  extends: .pywb-rhel-opt-package:
+  extends: .pywb-rhel-opt-package
   variables:
     target_distro: rhel8
     build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
 
 pywb-rhel9-opt-package:
-  extends: .pywb-rhel-opt-package:
+  extends: .pywb-rhel-opt-package
   variables:
     target_distro: rhel9
     build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
