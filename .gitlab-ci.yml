@@ -14,9 +14,8 @@ variables:
   PKG_VERSION: '1'
   PKG_RELEASE: '1'
 
-ccc-rhel-opt-package:
+.ccc-rhel-opt-package:
   stage: package
-  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
   when: manual
   variables:
     PKG_NAME: 'liuopt-cccollector'
@@ -28,9 +27,21 @@ ccc-rhel-opt-package:
   script:
     - dnf update
     - rpmbuild collector.spec
-    - mkdir -p pkgs/rhel9
-    - mv rpms/noarch/*.rpm pkgs/rhel9
+    - mkdir -p pkgs/rhel${dist_ver}
+    - mv rpms/noarch/*.rpm pkgs/rhel${dist_ver}
     #           ^ Elsewhere?
+
+ccc-rhel8-opt-package:
+  extends: .ccc-rhel-opt-package
+  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
+  variables:
+    dist_ver: 8
+
+ccc-rhel9-opt-package:
+  extends: .ccc-rhel-opt-package
+  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
+  variables:
+    dist_ver: 9
 
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package
@@ -39,8 +50,18 @@ pywb-rhel-opt-package:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
     PKG_INSTALLPATH: 'opt/liu'
     PKG_PROG_VER: '1-1'
-    build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
+
+pywb-rhel8-opt-package:
+  extends: .pywb-rhel-opt-package:
+  variables:
+    target_distro: rhel8
+    build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
+
+pywb-rhel9-opt-package:
+  extends: .pywb-rhel-opt-package:
+  variables:
     target_distro: rhel9
+    build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
 
 collect-pkgs:
   stage: collect
@@ -54,7 +75,15 @@ collect-pkgs:
     - "mv pkgs/* ."
     - "find . | grep .rpm"
 
-upload-pkgs:
+upload-rhel8-pkgs:
+  extends: .upload-el-pkgs
+  dependencies:
+    - collect-pkgs
+  variables:
+    target_dir: rhel8
+    upload_script: './upload-Ootpa-test.sh'
+
+upload-rhel9-pkgs:
   extends: .upload-el-pkgs
   dependencies:
     - collect-pkgs
