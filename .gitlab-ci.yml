@@ -45,7 +45,6 @@ pywb-rhel-opt-package:
 
 collect-pkgs:
   stage: collect
-  when: manual
   artifacts:
     untracked: true
   script:
