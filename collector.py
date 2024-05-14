@@ -25,7 +25,7 @@ class Config:
                                # Only applies to [W]ARC files.
     max_requests_limit = 5
     max_requests_time = 5
-    cache_index_clusters = True
+    cache_index_clusters = False
     pywb_collection_dir = 'path/to/pywb/collection'
     domain_list_file = 'domains.conf'
     safe_path = Path.cwd()
