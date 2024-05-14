@@ -15,37 +15,51 @@ Collector allows for an optional configuration file to overwrite default values.
 
 #### archive_host
 **string**
+
 Default: https://data.commoncrawl.org
+
 The protocol and host of the archive server.
 
 #### archive_list_uri
 **string**
+
 Default: /cc-index/collections/index.html
+
 The request uri we want to send to get the list of archives.
 
 #### max_file_size
 **integer**
+
 Default: 104857600
+
 Largest file size allowed. Files above this size will be skipped. Only applies to archive files, as index files will generally be very large.
 
 #### max_requests_limit, max_requests_time
 **integer**
+
 Default: 5
+
 Two values controlling the frequency at which we will send requests. We will send no more than `max_requests_limit` requests every `max_requests_time seconds`.
 
 #### cache_index_clusters
 **boolean**
+
 Default: False
+
 Whether or not we should cache index clusters. Normally, this can be left off, since it's fairly unlikely we'll ever need to search the same cluster more than once.
 
 #### pywb_collection_dir
 **string**
+
 Default: path/to/pywb/collection
+
 This will need to be set to wherever your pywb collection is located.
 
 #### safe_path
 **string**
+
 Default: `Path.cwd()`
+
 A path that is considered safe, should point to where collector is located.
 
 ### status.py
