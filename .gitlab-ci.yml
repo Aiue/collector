@@ -21,7 +21,7 @@ variables:
     PKG_NAME: 'liuopt-cccollector'
     PKG_INSTALLPATH: '/opt/liu'
     PKG_PROG_VER: '1'
-    PKG_SUMMARY: 'Collective Crawl Collector'
+    PKG_SUMMARY: 'Common Crawl Collector'
   artifacts:
     paths:
       - pkgs
