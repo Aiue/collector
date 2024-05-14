@@ -1,4 +1,4 @@
-estages:
+stages:
   - package
   - collect
   - upload
