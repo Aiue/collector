@@ -14,9 +14,10 @@ variables:
   PKG_VERSION: '1'
   PKG_RELEASE: '1'
 
-.ccc-rhel-opt-package:
+ccc-rhel-opt-package:
   stage: package
   when: manual
+  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
   variables:
     PKG_NAME: 'liuopt-cccollector'
     PKG_INSTALLPATH: '/opt/liu'
@@ -29,26 +30,16 @@ variables:
     - dnf update
     - rpmbuild collector.spec
     - mkdir -p pkgs/rhel${dist_ver}
-    - mv rpms/noarch/*.rpm pkgs/rhel${dist_ver}
+    - mv rpms/noarch/*.rpm pkgs/rhel8
     #           ^ Elsewhere?
 
-ccc-rhel8-opt-package:
-  extends: .ccc-rhel-opt-package
-  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
-  variables:
-    dist_ver: 8
-
-.pywb-rhel-opt-package:
+pywb-rhel-opt-package:
   extends: .el-venv-opt-package
   when: manual
   variables:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
     PKG_INSTALLPATH: 'opt/liu'
     PKG_PROG_VER: '1-1'
-
-pywb-rhel8-opt-package:
-  extends: .pywb-rhel-opt-package
-  variables:
     target_distro: rhel8
     build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
 
@@ -61,7 +52,7 @@ collect-pkgs:
     - "mv pkgs/* ."
     - "find . | grep .rpm"
 
-upload-rhel8-pkgs:
+upload-rhel-pkgs:
   extends: .upload-el-pkgs
   dependencies:
     - collect-pkgs
