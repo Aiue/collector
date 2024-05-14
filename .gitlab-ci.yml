@@ -1,4 +1,4 @@
-stages:
+estages:
   - package
   - collect
   - upload
@@ -21,6 +21,7 @@ variables:
     PKG_NAME: 'liuopt-cccollector'
     PKG_INSTALLPATH: '/opt/liu'
     PKG_PROG_VER: '1'
+    PKG_SUMMARY: 'Collective Crawl Collector'
   artifacts:
     paths:
       - pkgs
