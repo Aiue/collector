@@ -15,8 +15,9 @@ from pathlib import Path
 import requests
 import time
 
-# Configuration, using a class for verbosity purposes.
-class config:
+# I don't like the configuration file alternatives python offers. I'll write my own.
+class Config:
+    # Set defaults
     archive_host = 'https://data.commoncrawl.org'
     archive_list_uri = '/cc-index/collections/index.html'
     max_file_size = 104857600 # Max file size we'll download.
@@ -29,7 +30,23 @@ class config:
     domain_list_file = 'domains.conf'
     safe_path = Path.cwd()
 
-# Global variable initiation.
+    def __init__(self, configFile):
+        if configFile.exists():
+            with configFile.open('r') as f:
+                for line in f.read().splitlines():
+                    # This isn't pretty, but it will ensure the preferred format is viable.
+                    key,value = line.split('=')
+                    if key == 'cache_index_clusters':
+                        value = bool(value)
+                    elif key == 'safe_path':
+                        value = Path(value)
+                    elif key in ['max_file_size', 'max_requests_limit', 'max_requests_time']:
+                        value = int(value)
+                    setattr(self, key, value)
+
+config = Config(Path('collector.conf'))
+
+# Init logger
 logger = logging.getLogger()
 logging.config.fileConfig('logger.conf')
 
