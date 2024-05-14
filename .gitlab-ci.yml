@@ -38,12 +38,6 @@ ccc-rhel8-opt-package:
   variables:
     dist_ver: 8
 
-ccc-rhel9-opt-package:
-  extends: .ccc-rhel-opt-package
-  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
-  variables:
-    dist_ver: 9
-
 .pywb-rhel-opt-package:
   extends: .el-venv-opt-package
   when: manual
@@ -57,12 +51,6 @@ pywb-rhel8-opt-package:
   variables:
     target_distro: rhel8
     build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
-
-pywb-rhel9-opt-package:
-  extends: .pywb-rhel-opt-package
-  variables:
-    target_distro: rhel9
-    build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel9:latest'
 
 collect-pkgs:
   stage: collect
@@ -80,11 +68,3 @@ upload-rhel8-pkgs:
   variables:
     target_dir: rhel8
     upload_script: './upload-Ootpa-test.sh'
-
-upload-rhel9-pkgs:
-  extends: .upload-el-pkgs
-  dependencies:
-    - collect-pkgs
-  variables:
-    target_dir: rhel9
-    upload_script: './upload-Plow-test.sh'
