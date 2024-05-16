@@ -31,7 +31,7 @@ ccc-rhel-opt-package:
     - dnf update
     - rpmbuild collector.spec
     - mkdir -p pkgs/rhel${dist_ver}
-    - tree rpms
+    - ls rpms
     - mv rpms/noarch/*.rpm pkgs/rhel8
     #           ^ Elsewhere?
 
