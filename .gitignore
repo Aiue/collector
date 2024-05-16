@@ -1,3 +1,7 @@
 .cache/*
 *~
 .#*
+.gitignore
+history/
+path/
+retryqueue
