@@ -23,7 +23,7 @@ ccc-rhel-opt-package:
     PKG_INSTALLPATH: '/opt/liu'
     PKG_PROG_VER: '1'
     PKG_SUMMARY: 'Common Crawl Collector'
-    PKG_LICENSE: 'TBD'
+    PKG_LICENSE: 'GPLv3'
   artifacts:
     paths:
       - pkgs
