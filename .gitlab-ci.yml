@@ -31,8 +31,7 @@ ccc-rhel-opt-package:
     - dnf update
     - rpmbuild --define "_rpmdir $(pwd)/rpms" -bb collector.spec
     - mkdir -p pkgs/rhel8
-    - mv rpms/noarch/*.rpm pkgs/rhel8
-    #           ^ Elsewhere?
+    - mv rpms/x86_64/*.rpm pkgs/rhel8
 
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package

@@ -5,6 +5,7 @@ Summary: %{getenv:PKG_SUMMARY}
 License: %{getenv:PKG_LICENSE}
 
 %global installroot %{getenv:PKG_INSTALLPATH}/%{getenv:PKG_NAME}/%{getenv:PKG_VERSION}%{getenv:PKG_POSTFIX}
+%undefine __brp_mangle_shebangs
 
 %files
 %{installroot}
@@ -20,4 +21,4 @@ cp /builds/DRS/common-crawl-collector/*.md %{buildroot}%{installroot}
 cp /builds/DRS/common-crawl-collector/*.py %{buildroot}%{installroot}
 cp /builds/DRS/common-crawl-collector/*.conf %{buildroot}%{installroot}
 cp /builds/DRS/common-crawl-collector/license.txt %{buildroot}%{installroot}
-ls
+
