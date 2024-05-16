@@ -29,7 +29,7 @@ ccc-rhel-opt-package:
       - pkgs
   script:
     - dnf update
-    - rpmbuild --define "_rpmdir $(pwd)/rpms" collector.spec
+    - rpmbuild --define "_rpmdir $(pwd)/rpms" -bb collector.spec
     - mkdir -p pkgs/rhel8
     - ls -a rpms
     - mv rpms/noarch/*.rpm pkgs/rhel8
