@@ -11,7 +11,7 @@ A few basic configuration options are housed at the beginning of the script. I w
 The domains to be searched should be listed in [domains.txt](domains.txt), which will be expected to be a plaintext file. Separate domain entries with a newline. By request, the script will prioritise finish searching all archives for one domain, letting the domain's history be completed. Only domains will be accepted, and will implicitly include all subdomains. Full URLs are not supported, because when combined with the implicit inclusion of subdomains, this would be less optimal.
 
 ### Configuration
-Collector allows for an optional configuration file to overwrite default values. The format is very a very strict `key=value` combination. You should not use quotes for strings. The available configuration options are:
+Collector allows for an optional configuration file, `collector.conf`, to overwrite default values. The format is very a very strict `key=value` combination. You should not use quotes for strings. The available configuration options are:
 
 #### archive_host *(string)*
 Default: https://data.commoncrawl.org
