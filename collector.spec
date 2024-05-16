@@ -6,7 +6,8 @@ License: %{getenv:PKG_LICENSE}
 
 %global installroot %{getenv:PKG_INSTALLPATH}/%{getenv:PKG_NAME}/%{getenv:PKG_VERSION}%{getenv:PKG_POSTFIX}
 
-%files %{installroot}
+%files
+%{installroot}
 
 #--
 
