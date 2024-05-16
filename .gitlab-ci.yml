@@ -30,7 +30,7 @@ ccc-rhel-opt-package:
   script:
     - dnf update
     - rpmbuild --define "_rpmdir $(pwd)/rpms" collector.spec
-    - mkdir -p pkgs/rhel${dist_ver}
+    - mkdir -p pkgs/rhel8
     - ls rpms
     - mv rpms/noarch/*.rpm pkgs/rhel8
     #           ^ Elsewhere?
