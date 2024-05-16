@@ -15,8 +15,11 @@ License: %{getenv:PKG_LICENSE}
 Common Crawl data collector.
 
 %install
+echo %{buildroot}%{installroot}
 mkdir -p %{buildroot}%{installroot}
 cp *.md %{buildroot}%{installroot}
 cp *.py %{buildroot}%{installroot}
 cp *.conf %{buildroot}%{installroot}
 cp license.txt %{buildroot}%{installroot}
+ls
+ls %{buildroot}%{installroot}
