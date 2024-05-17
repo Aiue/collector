@@ -26,8 +26,9 @@ class Config:
     max_requests_limit = 5
     max_requests_time = 5
     cache_index_clusters = False
-    pywb_collection_dir = 'path/to/pywb/collection'
-    domain_list_file = 'domains.conf'
+    pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
+                                                    # However, this would require more extensive rewrites.
+    domain_list_file = Path('domains.conf')
     safe_path = Path.cwd()
 
     def __init__(self, configFile):
@@ -38,7 +39,7 @@ class Config:
                     key,value = line.split('=')
                     if key == 'cache_index_clusters':
                         value = bool(value)
-                    elif key == 'safe_path':
+                    elif key in ['domain_list_file', 'safe_path']:
                         value = Path(value)
                     elif key in ['max_file_size', 'max_requests_limit', 'max_requests_time']:
                         value = int(value)
@@ -344,6 +345,9 @@ class Domain:
     def __repr__(self):
         return self.domain
 
+    def __eq__(self, other):
+        return str(self) == str(other)
+
     def loadHistory(self):
         logger.debug('Loading history for %s', self.domain)
 
@@ -416,6 +420,8 @@ class Domain:
             index = []
             if config.cache_index_clusters:
                 cacheFileName = '.cache/' + archive.archiveID + '/' + cluster[2] + '-' + str(cluster[5])
+            else:
+                cacheFileName = None
             indexFile = RemoteFile(
                 config.archive_host + '/' + archive.indexPathsURI + cluster[2],
                 cacheFileName,
@@ -480,22 +486,41 @@ def main():
     logger.info('Collector running.')
     archives = Archives()
     domains = []
-    logger.debug('Reading domain list.')
-    with open(config.domain_list_file, 'r') as f:
-        for line in f.read().splitlines():
-            domains.append(Domain(line))
-
-    if len(domains) == 0:
-        logger.error('No domains loaded, exiting.')
-        raise RuntimeError('No domains loaded.')
 
     logger.debug('Loading retry queue.')
     retryqueue = RetryQueue()
     retryqueue.load()
 
     failcounter = 0
+    domains_last_modified = 0
 
     while True:
+        if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
+            if domains_last_modified == 0:
+                logger.info('Reading domain list.')
+            else:
+                logger.info('Domain list changed, reloading.')
+
+            # The cheapest way would be to clear the lists we have, then rebuild them.
+            # It also ensures we will honor the order they are listed in, should it have changed,
+            # without any extra steps. It will, however, lack in elegance. It also means we'll have
+            # to reload any history we have saved.
+            # If I get spare time, I may rewrite this.
+
+            domains = []
+            Domain.domains = [] # This bit is ugly.
+
+            with config.domain_list_file.open('r') as f:
+                line_number = 0
+                for line in f.read().splitlines():
+                    line_number += 1
+                    if line in domains:
+                        logger.warning('Duplicate domain: %s (line %d in %s)', line, line_number, str(config.domain_list_file))
+                    else:
+                        domains.append(Domain(line))
+
+            domains_last_modified = Path(config.domain_list_file).stat().st_mtime
+
         if failcounter > 0 and failcounter % 360 == 0:
             #TODO: Do we at all want to keep running here? Also, should we use different intervals? Should it be configurable?
             logger.critical('Unable to retrieve data for the past %d hours, please see error log for details.', int(failcounter/60))
