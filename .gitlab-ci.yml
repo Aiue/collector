@@ -16,7 +16,6 @@ variables:
 
 ccc-rhel-opt-package:
   stage: package
-  when: manual
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
   variables:
     PKG_NAME: 'liuopt-cccollector'
@@ -35,7 +34,6 @@ ccc-rhel-opt-package:
 
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package
-  when: manual
   variables:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
     PKG_INSTALLPATH: 'opt/liu'
@@ -45,7 +43,9 @@ pywb-rhel-opt-package:
 
 collect-pkgs:
   stage: collect
-  when: manual
+  dependencies:
+    - ccc-rhel-opt-package
+    - pywb-rhel-opt-package
   artifacts:
     untracked: true
   script:
