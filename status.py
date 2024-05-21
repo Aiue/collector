@@ -8,40 +8,88 @@ import json
 from pathlib import Path
 import sys
 
-def main():
-    if len(sys.argv) != 2:
-        print('Usage: ' + sys.argv[0] + ' <domain>')
-        return
-    domain = sys.argv[1]
+def get_status(domain):
     history_file = Path('history/', domain)
     if not history_file.exists():
-        print('No history found for ' + domain)
         return
     with history_file.open('r') as f:
         history = json.load(f)
-    with Path('archive_count').open('r') as f:
-        archive_count = int(f.read())
     completed_archives = 0
-    output = ""
+    results = {}
     for archive,hist in history.items():
         if hist['results'] == 0 or hist['completed'] == hist['results'] and hist['failed'] != 0:
             completed_archives += 1
         else:
-            completed = hist['completed'] - hist['failed']
-            output += '{archive}: {completed}/{results} ({percentage:.1f}%) results downloaded, {failed} failed.\n'.format(
-                archive = archive,
-                completed=hist['completed'] - hist['failed'],
-                results = hist['results'],
-                percentage = 100*(hist['completed'] - hist['failed']) / hist['results'],
-                failed = hist['failed'])
+            results[archive] = {
+                'completed' : hist['completed'] - hist['failed'],
+                'results' : hist['results'],
+                'failed' : hist['failed']
+            }
+    return {
+        'completed_archives' : completed_archives,
+        'partial' : len(history)-completed_archives,
+        'per_archive' : results
+    }
 
-    print('{domain} has been fully processed in {completed} archives and partially processed in {partial}, out of {total} archives in total.'.format(
-        domain=domain,
-        completed = completed_archives,
-        partial=len(history)-completed_archives,
-        total=archive_count))
-    if len(output) > 0:
-        print(output)
+def main():
+    if not Path('status.py').exists():
+        print('status.py should be run from the directory where it is located.')
+        return
+    if len(sys.argv) != 2:
+        print('Usage: ' + sys.argv[0] + ' <domain|all>')
+        return
+    with Path('archive_count').open('r') as f:
+        archive_count = int(f.read())
+    if sys.argv[1] == 'all':
+        if not Path('domains.conf').exists(): # This could potentially have been reconfigured, though.
+            print('domains.conf not found')   # But pretend otherwise for now.
+            return
+        with Path('domains.conf').open('r') as f:
+            domains = {
+                'completed' : 0,
+                'partial' : 0,
+                'total' : 0,
+            }
+            partial_list = []
+            for domain in f.read().splitlines():
+                domains['total'] += 1
+                status = get_status(domain)
+                if status:
+                    if status['completed_archives'] > 0 or status['partial'] > 0:
+                        if status['completed_archives'] == archive_count:
+                            domains['completed'] += 1
+                        else:
+                            domains['partial'] += 1
+                            partial_list.append(domain + ' (' + str(status['completed_archives']) + '/' + str(archive_count) + ')')
+            print('{completed} domains have been fully processed, and {partial} have been partially processed, out of {total} domains in total.'.format(
+                completed = domains['completed'],
+                partial = domains['partial'],
+                total = domains['total'])
+            )
+            if len(partial_list) > 0:
+                print('Partially processed domains (completed/total archives): {partial}'.format(
+                    partial = str(partial_list)) # TODO: Improve formatting.
+                )
+
+    else:
+        status = get_status(sys.argv[1])
+        if not status:
+            print('No history found for ' + sys.argv[1])
+            return
+        print('{domain} has been fully processed in {completed} archives, and partially processed in {partial}, out of {total} archives in total.'.format(
+            domain = sys.argv[1],
+            completed = status['completed_archives'],
+            partial = status['partial'],
+            total = archive_count)
+        )
+        for archive,stat in status['per_archive'].items():
+            print('{archive}: {completed}/{results} ({percentage:.1f}%) results downloaded, {failed} failed.'.format(
+                archive = archive,
+                completed = stat['completed'],
+                results = stat['results'],
+                percentage = 100*stat['completed']/stat['results'],
+                failed = stat['failed'])
+            )
 
 if __name__ == "__main__":
     main()
