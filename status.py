@@ -73,7 +73,7 @@ def main():
                 total = domains['total'])
             )
             # TODO: Very bad wording for the partial bit.
-            print('An average of {average:.1f} out of {archives} have been fully processed for each domain. {partial} archives have been partially processed.'.format(
+            print('An average of {average:.1f} out of {archives} archives have been fully processed for each domain. {partial} archives have been partially processed.'.format(
                 average = archives['completed'] / domains['total'] * archive_count,
                 archives = archive_count,
                 partial = archives['partial'])
