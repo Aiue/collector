@@ -18,7 +18,7 @@ ccc-rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
   variables:
-    PKG_NAME: 'liuopt-cccollector'
+    PKG_NAME: 'cccollector'
     PKG_INSTALLPATH: '/opt/liu'
     PKG_PROG_VER: '1'
     PKG_SUMMARY: 'Common Crawl Collector'
