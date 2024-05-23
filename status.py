@@ -35,7 +35,7 @@ def main():
     if not Path('status.py').exists():
         print('status.py should be run from the directory where it is located.')
         return
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 2: # TODO: Use no arguments for 'all' instead.
         print('Usage: ' + sys.argv[0] + ' <domain|all>')
         return
     with Path('archive_count').open('r') as f:
@@ -50,11 +50,17 @@ def main():
                 'partial' : 0,
                 'total' : 0,
             }
+            archives = {
+                'completed' : 0,
+                'partial' : 0,
+            }
             partial_list = []
             for domain in f.read().splitlines():
                 domains['total'] += 1
                 status = get_status(domain)
                 if status:
+                    archives['completed'] += status['completed_archives']
+                    archives['partial'] += status['partial']
                     if status['completed_archives'] > 0 or status['partial'] > 0:
                         if status['completed_archives'] == archive_count:
                             domains['completed'] += 1
@@ -65,6 +71,12 @@ def main():
                 completed = domains['completed'],
                 partial = domains['partial'],
                 total = domains['total'])
+            )
+            # TODO: Very bad wording for the partial bit.
+            print('An average of {average:.1f} out of {archives} have been fully processed for each domain. {partial} archives have been partially processed.'.format(
+                average = archives['completed'] / domains['total'] * archive_count,
+                archives = archive_count,
+                partial = archives['partial'])
             )
             if len(partial_list) > 0:
                 print('Partially processed domains (completed/total archives): {partial}'.format(
