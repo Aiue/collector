@@ -20,7 +20,7 @@ ccc-rhel-opt-package:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       variables:
-        PKG_RELEASE = $CI_MERGE_REQUEST_IID
+        PKG_RELEASE: $CI_MERGE_REQUEST_IID
   variables:
     PKG_NAME: 'cccollector'
     PKG_INSTALLPATH: '/opt/liu'
@@ -41,7 +41,7 @@ pywb-rhel-opt-package:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       variables:
-        PKG_RELEASE = $CI_MERGE_REQUEST_IID
+        PKG_RELEASE: $CI_MERGE_REQUEST_IID
   variables:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
     PKG_INSTALLPATH: 'opt/liu'
@@ -60,18 +60,11 @@ collect-pkgs:
     - "mv pkgs/* ."
     - "find . | grep .rpm"
 
-upload-rhel-test-pkgs:
+# TODO: set upload_script to -test.sh or -prod.sh depending on branch (not packaging for devel)
+upload-rhel-pkgs:
   extends: .upload-el-pkgs
   dependencies:
     - collect-pkgs
   variables:
     target_dir: rhel8
     upload_script: './upload-Ootpa-test.sh'
-
-upload-rhel-prod-pkgs:
-  extends: .upload-el-pkgs
-  dependencies:
-    - collect-pkgs
-  variables:
-    target_dir: rhel8
-    upload_script: './upload-Ootpa-prod.sh'
