@@ -62,13 +62,17 @@ collect-pkgs:
     - "mv pkgs/* ."
     - "find . | grep .rpm"
 
-# TODO: set upload_script to -test.sh or -prod.sh depending on branch (not packaging for devel)
 upload-rhel-pkgs:
   extends: .upload-el-pkgs
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "test"
+      variables:
+        upload_script: './upload-Ootpa-test.sh'
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "production"
+      variables:
+        upload_script: './upload-Ootpa-prod.sh'
   dependencies:
     - collect-pkgs
   variables:
     target_dir: rhel8
-    upload_script: './upload-Ootpa-test.sh'
+
