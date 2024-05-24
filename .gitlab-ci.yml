@@ -51,6 +51,8 @@ pywb-rhel-opt-package:
 
 collect-pkgs:
   stage: collect
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   dependencies:
     - ccc-rhel-opt-package
     - pywb-rhel-opt-package
@@ -63,6 +65,8 @@ collect-pkgs:
 # TODO: set upload_script to -test.sh or -prod.sh depending on branch (not packaging for devel)
 upload-rhel-pkgs:
   extends: .upload-el-pkgs
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   dependencies:
     - collect-pkgs
   variables:
