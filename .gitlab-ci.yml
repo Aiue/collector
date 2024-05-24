@@ -18,7 +18,7 @@ ccc-rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       variables:
         PKG_RELEASE = $CI_MERGE_REQUEST_IID
   variables:
@@ -38,7 +38,7 @@ ccc-rhel-opt-package:
 
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       variables:
         PKG_RELEASE = $CI_MERGE_REQUEST_IID
   variables:
