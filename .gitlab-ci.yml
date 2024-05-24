@@ -23,6 +23,7 @@ ccc-rhel-opt-package:
     PKG_PROG_VER: '1'
     PKG_SUMMARY: 'Common Crawl Collector'
     PKG_LICENSE: 'GPLv3'
+    PKG_RELEASE: '2'
   artifacts:
     paths:
       - pkgs
