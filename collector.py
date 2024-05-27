@@ -10,6 +10,7 @@ import html.parser
 import json
 import logging
 import logging.config
+import logging.handlers # Not used by default, but allows additional config options.
 import os
 from pathlib import Path
 import requests
