@@ -17,7 +17,7 @@ def get_status(domain):
     completed_archives = 0
     results = {}
     for archive,hist in history.items():
-        if hist['results'] == 0 or hist['completed'] == hist['results'] and hist['failed'] != 0:
+        if hist['results'] == 0 or hist['completed'] == hist['results'] and hist['failed'] == 0:
             completed_archives += 1
         else:
             results[archive] = {
