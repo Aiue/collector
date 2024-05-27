@@ -18,7 +18,8 @@ ccc-rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
   rules:
-    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH != "devel"
+      when: never
   variables:
     PKG_NAME: 'cccollector'
     PKG_INSTALLPATH: '/opt/liu'
@@ -37,7 +38,8 @@ ccc-rhel-opt-package:
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package
   rules:
-    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH != "devel
+      when: never
   variables:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
     PKG_INSTALLPATH: 'opt/liu'
