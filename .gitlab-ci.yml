@@ -49,6 +49,9 @@ pywb-rhel-opt-package:
 
 collect-pkgs:
   stage: collect
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH != "devel"
+      when: never
   dependencies:
     - ccc-rhel-opt-package
     - pywb-rhel-opt-package
