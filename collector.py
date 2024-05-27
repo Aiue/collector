@@ -451,7 +451,7 @@ class Domain:
         if archive.archiveID not in self.history:
             position = 0
         elif type(self.history[archive.archiveID]['completed']) == int:
-            position = self.history[archive.archiveID]['completed'] + 1
+            position = self.history[archive.archiveID]['completed']
 
         logger.debug('Result found at %d', position)
 
@@ -478,7 +478,7 @@ class Domain:
             logger.info('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
             rf.download()
 
-        self.updateHistory(archive.archiveID, 'completed', position)
+        self.updateHistory(archive.archiveID, 'completed', position+1)
 
 #
 
