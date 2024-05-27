@@ -64,6 +64,8 @@ collect-pkgs:
 upload-rhel-pkgs:
   extends: .upload-el-pkgs
   rules:
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+      when: never
     - if: $CI_COMMIT_BRANCH == "test"
       variables:
         upload_script: './upload-Ootpa-test.sh'
