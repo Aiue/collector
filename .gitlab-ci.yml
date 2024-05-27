@@ -20,7 +20,7 @@ ccc-rhel-opt-package:
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
   when: manual
   rules:
-    if: $CI_COMMIT_BRANCH != "devel"
+    - if: $CI_COMMIT_BRANCH != "devel"
       when: never
   variables:
     PKG_NAME: 'cccollector'
