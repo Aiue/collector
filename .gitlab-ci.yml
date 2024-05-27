@@ -19,9 +19,6 @@ ccc-rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
   when: manual
-  rules:
-    - if: $CI_COMMIT_BRANCH != "devel"
-      when: never
   variables:
     PKG_NAME: 'cccollector'
     PKG_INSTALLPATH: '/opt/liu'
@@ -40,9 +37,6 @@ ccc-rhel-opt-package:
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package
   when: manual
-  rules:
-    - if: $CI_COMMIT_BRANCH != "devel"
-      when: never
   variables:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
     PKG_INSTALLPATH: 'opt/liu'
@@ -53,9 +47,6 @@ pywb-rhel-opt-package:
 collect-pkgs:
   stage: collect
   when: manual
-  rules:
-    - if: $CI_COMMIT_BRANCH != "devel"
-      when: never
   dependencies:
     - ccc-rhel-opt-package
     - pywb-rhel-opt-package
@@ -68,8 +59,6 @@ collect-pkgs:
 upload-rhel-pkgs:
   extends: .upload-el-pkgs
   rules:
-    - if: $CI_COMMIT_BRANCH != "devel"
-      when: never
     - if: $BUILD_BRANCH == "test"
       variables:
         upload_script: './upload-Ootpa-test.sh'
