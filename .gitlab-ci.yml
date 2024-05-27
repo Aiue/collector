@@ -13,11 +13,12 @@ variables:
   PKG_PREFIX: 'liuopt'
   PKG_VERSION: '1'
   PKG_RELEASE: $CI_PIPELINE_IID
-  BUILD_BRANCH = 'test'
+  BUILD_BRANCH: 'test'
 
 ccc-rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
+  when: manual
   rules:
     if: $CI_COMMIT_BRANCH != "devel"
       when: never
@@ -38,6 +39,7 @@ ccc-rhel-opt-package:
 
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package
+  when: manual
   rules:
     - if: $CI_COMMIT_BRANCH != "devel"
       when: never
@@ -50,6 +52,7 @@ pywb-rhel-opt-package:
 
 collect-pkgs:
   stage: collect
+  when: manual
   rules:
     - if: $CI_COMMIT_BRANCH != "devel"
       when: never
