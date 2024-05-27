@@ -13,20 +13,13 @@ variables:
   PKG_PREFIX: 'liuopt'
   PKG_VERSION: '1'
   PKG_RELEASE: $CI_PIPELINE_IID
-
-test:
-  stage: package
-  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
-  script:
-    - echo $CI_COMMIT_BRANCH
-    - echo $CI_COMMIT_REF_NAME
+  BUILD_BRANCH = 'test'
 
 ccc-rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
-  when: manual
   rules:
-    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH == "devel"
+    if: $CI_COMMIT_BRANCH != "devel"
       when: never
   variables:
     PKG_NAME: 'cccollector'
@@ -46,7 +39,7 @@ ccc-rhel-opt-package:
 pywb-rhel-opt-package:
   extends: .el-venv-opt-package
   rules:
-    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH == "devel"
+    - if: $CI_COMMIT_BRANCH != "devel"
       when: never
   variables:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
@@ -58,7 +51,7 @@ pywb-rhel-opt-package:
 collect-pkgs:
   stage: collect
   rules:
-    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH == "devel"
+    - if: $CI_COMMIT_BRANCH != "devel"
       when: never
   dependencies:
     - ccc-rhel-opt-package
@@ -72,12 +65,12 @@ collect-pkgs:
 upload-rhel-pkgs:
   extends: .upload-el-pkgs
   rules:
-    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+    - if: $CI_COMMIT_BRANCH != "devel"
       when: never
-    - if: $CI_COMMIT_BRANCH == "test"
+    - if: $BUILD_BRANCH == "test"
       variables:
         upload_script: './upload-Ootpa-test.sh'
-    - if: $CI_COMMIT_BRANCH == "production"
+    - if: $BUILD_BRANCH == "production"
       variables:
         upload_script: './upload-Ootpa-prod.sh'
   dependencies:
