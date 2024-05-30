@@ -67,13 +67,13 @@ def main():
                         else:
                             domains['partial'] += 1
                             partial_list.append(domain + ' (' + str(status['completed_archives']) + '/' + str(archive_count) + ')')
-            print('{completed} domains have been fully processed, and {partial} have been partially processed, out of {total} domains in total.'.format(
+            print('{completed}/{total} domains have been fully processed, and {partial} have been partially processed.'.format(
                 completed = domains['completed'],
                 partial = domains['partial'],
                 total = domains['total'])
             )
             # TODO: Very bad wording for the partial bit.
-            print('An average of {average:.1f} out of {archives} archives have been fully processed for each domain. {partial} archives have been partially processed.'.format(
+            print('An average of {average:.1f}/{archives} archives have been fully processed for each domain. {partial} archives have been partially processed.'.format(
                 average = archives['completed'] / domains['total'],
                 archives = archive_count,
                 partial = archives['partial'])
@@ -88,7 +88,7 @@ def main():
         if not status:
             print('No history found for ' + sys.argv[1])
             return
-        print('{domain} has been fully processed in {completed} archives, and partially processed in {partial}, out of {total} archives in total.'.format(
+        print('{domain} has been fully processed in {completed}/{total} archives (+{partial} in progress).'.format(
             domain = sys.argv[1],
             completed = status['completed_archives'],
             partial = status['partial'],
