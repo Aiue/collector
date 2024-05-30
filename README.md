@@ -6,7 +6,7 @@ The script is intended to run as a daemon over a long period of time. Other uses
 
 When running alongside pywb, it is assumed that pywb has been configured to use automatic index updating. The purpose is twofold: stay out of pywb's venv, and don't trigger index rebuilds too frequently.
 
-The domains to be searched should be listed in [domains.txt](domains.txt), which will be expected to be a plaintext file. Separate domain entries with a newline. By request, the script will prioritise finish searching all archives for one domain, letting the domain's history be completed. Only domains will be accepted, and will implicitly include all subdomains. Full URLs are not supported, because when combined with the implicit inclusion of subdomains, this would be less optimal.
+The domains to be searched should be listed in [domains.conf](domains.conf), (can be reconfigured by setting `domain_list_file`) which will be expected to be a plaintext file. Separate domain entries with a newline. By request, the script will prioritise finish searching all archives for one domain, letting the domain's history be completed. Only domains will be accepted, and will implicitly include all subdomains. Full URLs are not supported, because when combined with the implicit inclusion of subdomains, this would be less optimal.
 
 ### Configuration
 Collector allows for an optional configuration file, `collector.conf`, to overwrite default values. The format is a very strict `key=value` combination. You should not use quotes for strings. The available configuration options are:
