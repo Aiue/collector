@@ -41,7 +41,7 @@ pywb-rhel-opt-package:
     PKG_NAME: 'liuopt-ccc-pywb-venv'
     PKG_INSTALLPATH: 'opt/liu'
     PKG_PROG_VER: '1-1'
-    PKG_RELEASE: '75'
+    PKG_RELEASE: '1'
     target_distro: rhel8
     build_image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
 
