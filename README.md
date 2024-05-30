@@ -48,7 +48,7 @@ Default: `Path.cwd()`
 A path that is considered safe, should point to where collector is located.
 
 ### status.py
-`status.py` can be used to get completion information on individual domains. Usage is simple: `status.py <domain>`. 
+`status.py` can be used to get completion information on individual domains. Usage is simple: `status.py <all|domain>`. 
 
 ## Exceptions
 The script comes with two custom exceptions. Both inherit from Exception with no additional changes. The exceptions are `ParserError` and `BadHTTPStatus`.
