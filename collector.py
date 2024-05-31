@@ -310,7 +310,7 @@ class RetryQueue:
                 logger.warning('\'%s\' is no longer in domain list, removing item from retry queue: %s -> %s', item.domain, item.url, item.filename)
                 return # This domain is no longer on our list.
             # A slightly convoluted construction.
-            domain.updateHistory(item.archiveID, 'failed', domain.history[archiveID]['failed'] + 1)
+            domain.updateHistory(item.archiveID, 'failed', domain.history[item.archiveID]['failed'] + 1)
         self.queue.append(item)
         
     def save(self):
