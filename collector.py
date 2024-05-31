@@ -288,7 +288,7 @@ class RetryQueue:
             with open('retryqueue', 'r') as f:
                 for line in f:
                     url,filename,offset,length,domain,archiveID,attempts = line.split('\t')
-                    self.add(RemoteFile(url, filename, int(offset), int(length), domain, archiveID), True)
+                    self.add(RemoteFile(url, Path(filename), int(offset), int(length), domain, archiveID), True)
                     self.queue[len(self.queue)-1].attempts = int(attempts) # Not the prettiest way of doing it, but this one case
                                                                            # does not warrant __init__ inclusion.
                 logger.info('Loaded retry queue with %d items.', len(self.queue))
