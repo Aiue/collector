@@ -313,6 +313,7 @@ class RetryQueue:
             # A slightly convoluted construction.
             domain.updateHistory(item.archiveID, 'failed', domain.history[item.archiveID]['failed'] + 1)
         self.queue.append(item)
+        self.save()
         
     def save(self):
         with open('retryqueue', 'w') as f:
