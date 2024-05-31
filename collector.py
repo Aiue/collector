@@ -318,7 +318,7 @@ class RetryQueue:
     def save(self):
         with open('retryqueue', 'w') as f:
             for item in self.queue:
-                f.write(item.url + '\t' + item.filename + '\t' + str(item.offset) + '\t' + str(item.length) + '\t' + item.domain + '\t' + item.archiveID + '\t' + str(item.attempts) + '\n')
+                f.write(item.url + '\t' + str(item.filename) + '\t' + str(item.offset) + '\t' + str(item.length) + '\t' + item.domain + '\t' + item.archiveID + '\t' + str(item.attempts) + '\n')
             f.close()
 
 class Domain:
