@@ -194,7 +194,7 @@ class RemoteFile:
 
     def __repr__(self):
         return self.url
-        
+
     def download(self):
         logger.debug('Downloading from %s to %s', self.url, str(self.filename))
         # Essentially just a wrapper, but it simplifies things.
@@ -296,7 +296,8 @@ class RetryQueue:
     def process(self):
         if len(self.queue) == 0:
             return
-        domain = get_domain(self.queue[0].domain)
+        item = self.queue[0]
+        domain = get_domain(item.domain)
         if not domain:
             raise RuntimeError('Unknown domain in retry queue: %s %s %s', item.url, item.filename, item.domain)
         domain.updateHistory(item.archiveID, 'failed', domain.history[archiveID]['failed'] - 1)
