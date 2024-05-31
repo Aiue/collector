@@ -300,7 +300,7 @@ class RetryQueue:
         domain = get_domain(item.domain)
         if not domain:
             raise RuntimeError('Unknown domain in retry queue: %s %s %s', item.url, item.filename, item.domain)
-        domain.updateHistory(item.archiveID, 'failed', domain.history[archiveID]['failed'] - 1)
+        domain.updateHistory(item.archiveID, 'failed', domain.history[item.archiveID]['failed'] - 1)
         self.queue.pop(0).download()
         self.save()
 
