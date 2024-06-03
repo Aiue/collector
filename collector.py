@@ -196,7 +196,7 @@ class RemoteFile:
         return self.url
 
     def download(self):
-        logger.debug('Downloading from %s to %s', self.url, str(self.filename))
+        #logger.debug('Downloading from %s to %s', self.url, str(self.filename))
         # Essentially just a wrapper, but it simplifies things.
         if not self.filename:
             logger.error('Attempted to download file with no local filename set: %s', self.url)
@@ -260,7 +260,7 @@ class RemoteFile:
             diff = time.time() - self.lastRequests[0]
             if diff < config.max_requests_time:
                 diff = config.max_requests_time - diff
-                logger.info('Request limit reached, sleeping for %f seconds.', diff)
+                logger.debug('Request limit reached, sleeping for %f seconds.', diff)
                 time.sleep(diff)
             self.lastRequests.pop(0)
 
@@ -478,7 +478,7 @@ class Domain:
 
             url = config.archive_host + '/' + fileInfo['filename']
             rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']), self.domain, archive.archiveID)
-            logger.info('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
+            logger.debug('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
             rf.download()
 
         self.updateHistory(archive.archiveID, 'completed', position+1)
