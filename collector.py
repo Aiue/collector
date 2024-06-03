@@ -209,9 +209,9 @@ class RemoteFile:
         try:
             contents = self.get()
         except (requests.RequestException, BadHTTPStatus) as error:
-            # We do not need to raise it further.
             rq = RetryQueue()
             rq.add(self)
+            raise
         else:
             self.write(contents)
 
