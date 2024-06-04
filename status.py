@@ -80,7 +80,7 @@ def main():
             )
             if len(partial_list) > 0:
                 print('Partially processed domains (completed/total archives): {partial}'.format(
-                    partial = str(partial_list)) # TODO: Improve formatting.
+                    partial = ", ".join(partial_list))
                 )
 
     else:
