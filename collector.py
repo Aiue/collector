@@ -560,21 +560,16 @@ def main():
             time.sleep(time_to_sleep)
             continue
 
-        try:
-            results = domain.search(archive)
-        except (requests.RequestException, BadHTTPStatus):
-            failcounter += 1
-            time.sleep(60)
-            continue
+        results = domain.search(archive)
         if len(results) > 0:
-            try:
-                results = domain.searchClusters(archive, results)
-            except (requests.RequestException, BadHTTPStatus):
-                failcounter += 1
-                time.sleep(60)
-                continue
+            results = domain.searchClusters(archive, results)
             if len(results) > 0:
-                domain.getFile(archive, results)
+                try:
+                    domain.getFile(archive, results)
+                except (requests.RequestException, BadHTTPStatus):
+                    failcounter += 1
+                    time.sleep(60)
+                    continue
 
         # If we get this far, this cycle has been successful. Reset fail counter.
         failcounter = 0
