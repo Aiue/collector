@@ -155,6 +155,9 @@ class Archives:
                 self.archiveID = data
 
     def update(self):
+        initial = False
+        if len(self.archives) == 0:
+            initial = True
         if time.time() - self.lastUpdate < 86400:
             return
         logger.debug('Updating archive list.')
@@ -168,13 +171,16 @@ class Archives:
             raise ParserError('Could not parse archive list.')
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
-                logger.info('New archive: %s', archive.archiveID)
+                if not initial:
+                    logger.info('New archive: %s', archive.archiveID)
                 self.archives[archive.archiveID] = archive
                 with Path('archive_count').open('w') as f:
                     f.write(str(len(self.archives)))
 
         parser.close()
         self.lastUpdate = time.time()
+        if initial:
+            logger.info('Found %d archives.', len(self.archives))
 
 class RemoteFile:
     lastRequests = []
@@ -364,7 +370,7 @@ class Domain:
         if path_is_safe(p, self) and p.exists():
             with p.open('r') as f:
                 self.history = json.load(f)
-                logger.info('Loaded search history for %s', self.domain)
+                logger.debug('Loaded search history for %s', self.domain)
         else:
             self.history = {}
 
