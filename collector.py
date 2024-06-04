@@ -204,7 +204,11 @@ class RemoteFile:
             if self.length and self.filename.stat().st_size < self.length:
                 logger.info('Restarting incomplete download from %s to %s', self.url, self.filename)
             else:
-                logger.warning('Attempted to download already existing file: %s', self.filename)
+                logger.warning('Attempted to download already existing file:')
+                logger.warning('  Filename: %s', self.filename)
+                logger.warning('  URL: %s', self.url)
+                logger.warning('  Size (local): %d bytes', self.filename.stat().st_size)
+                logger.warning('  Size (remote): %d bytes', self.length)
                 return
         try:
             contents = self.get()
