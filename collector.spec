@@ -23,5 +23,6 @@ mkdir -p %{buildroot}%{installroot}
 cp /builds/DRS/common-crawl-collector/*.md %{buildroot}%{installroot}
 cp /builds/DRS/common-crawl-collector/*.py %{buildroot}%{installroot}
 cp /builds/DRS/common-crawl-collector/*.conf %{buildroot}%{installroot}
+chmod 666 %{buildroot}%{installroot}/domains.conf
 cp /builds/DRS/common-crawl-collector/license.txt %{buildroot}%{installroot}
 
