@@ -37,7 +37,6 @@ Default: False
 Whether or not we should cache index clusters. Normally, this can be left off, since it's fairly unlikely we'll ever need to search the same cluster more than once.
 
 #### pywb_collection_dir *(string)*
-
 Default: path/to/pywb/collection
 
 This will need to be set to wherever your pywb collection is located.
@@ -46,6 +45,11 @@ This will need to be set to wherever your pywb collection is located.
 Default: `Path.cwd()`
 
 A path that is considered safe, should point to where collector is located.
+
+#### critical_warn_interval *(integer)*
+Default: 8
+
+Logs a critical warning every (approximately) n hours without any successful http retrievals.
 
 ### status.py
 `status.py` can be used to get completion information on individual domains. Usage is simple: `status.py <all|domain>`. 

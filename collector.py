@@ -30,6 +30,7 @@ class Config:
     pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
                                                     # However, this would require more extensive rewrites.
     domain_list_file = Path('domains.conf')
+    critical_warn_interval = 8 # Warns (critical log) every n hours if everything keeps failing.
     safe_path = Path.cwd()
 
     def __init__(self, configFile):
@@ -528,7 +529,7 @@ def main():
 
             domains_last_modified = Path(config.domain_list_file).stat().st_mtime
 
-        if failcounter > 0 and failcounter % 360 == 0:
+        if failcounter > 0 and failcounter % (config.critical_warn_interval * 60) == 0:
             #TODO: Do we at all want to keep running here? Also, should we use different intervals? Should it be configurable?
             logger.critical('Unable to retrieve data for the past %d hours, please see error log for details.', int(failcounter/60))
         try:
