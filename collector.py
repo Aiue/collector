@@ -474,7 +474,7 @@ class Domain:
         fileInfo = json.loads(index[position])
 
         if int(fileInfo['length']) > config.max_file_size:
-            logger.info('Skipping download of %s as file exceeds size limit at %s bytes.', fileInfo['filename'], fileInfo['length'])
+            logger.warning('Skipping download of %s as file exceeds size limit at %s bytes.', fileInfo['filename'], fileInfo['length'])
         else:
             filerange = '-' + fileInfo['offset'] + '-' + str(int(fileInfo['offset'])+int(fileInfo['length'])-1)
 
