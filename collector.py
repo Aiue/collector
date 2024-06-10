@@ -545,7 +545,12 @@ def main():
             time.sleep(60)
             continue
 
-        retryqueue.process()
+        try:
+            retryqueue.process()
+        except (requests.RequestException, BadHTTPStatus):
+            failcounter += 1
+            time.sleep(60)
+            continue
 
         archive = None
         domain = None
