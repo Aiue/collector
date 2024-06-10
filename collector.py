@@ -24,7 +24,7 @@ class Config:
     max_file_size = 104857600 # Max file size we'll download.
                                # Currently set to 100 MiB, which may seem ridiculously large in context.
                                # Only applies to [W]ARC files.
-    max_requests_limit = 5
+    max_requests_limit = 1
     max_requests_time = 5
     cache_index_clusters = False
     pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
