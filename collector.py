@@ -43,7 +43,7 @@ class Config:
                         value = bool(value)
                     elif key in ['domain_list_file', 'safe_path']:
                         value = Path(value)
-                    elif key in ['max_file_size', 'max_requests_limit', 'max_requests_time']:
+                    elif key in ['max_file_size', 'max_requests_limit', 'max_requests_time', 'critical_warn_interval']:
                         value = int(value)
                     setattr(self, key, value)
 
