@@ -475,6 +475,7 @@ class Domain:
 
         if int(fileInfo['length']) > config.max_file_size:
             logger.warning('Skipping download of %s as file exceeds size limit at %s bytes.', fileInfo['filename'], fileInfo['length'])
+            self.updateHistory(archive.archiveID, 'completed', position+1)
         else:
             filerange = '-' + fileInfo['offset'] + '-' + str(int(fileInfo['offset'])+int(fileInfo['length'])-1)
 
@@ -490,9 +491,12 @@ class Domain:
             url = config.archive_host + '/' + fileInfo['filename']
             rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']), self.domain, archive.archiveID)
             logger.debug('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
-            rf.download()
-
-        self.updateHistory(archive.archiveID, 'completed', position+1)
+            try:
+                rf.download()
+            except (requests.RequestException, BadHTTPStatus):
+                raise
+            finally:
+                self.updateHistory(archive.archiveID, 'completed', position+1)
 
 #
 
