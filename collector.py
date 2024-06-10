@@ -545,13 +545,6 @@ def main():
             time.sleep(60)
             continue
 
-        try:
-            retryqueue.process()
-        except (requests.RequestException, BadHTTPStatus):
-            failcounter += 1
-            time.sleep(60)
-            continue
-
         archive = None
         domain = None
         for d in domains:
@@ -582,6 +575,13 @@ def main():
                     failcounter += 1
                     time.sleep(60)
                     continue
+
+        try:
+            retryqueue.process()
+        except (requests.RequestException, BadHTTPStatus):
+            failcounter += 1
+            time.sleep(60)
+            continue
 
         # If we get this far, this cycle has been successful. Reset fail counter.
         failcounter = 0
