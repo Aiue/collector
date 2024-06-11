@@ -341,7 +341,7 @@ class Domain:
         if not '.' in domain: # Additional validation will follow when building the search string.
                               # We don't need to be super strict with the verification, as long as
                               # we only have dots and alphanumeric characters. More for lining up^
-            raise ValueError('Domains are expected to contain dots (.), read \'%s\'.', domain)
+            raise ValueError('Domains are expected to contain dots (.), read \'{domain}\'.'.format(domain=domain))
 
         self.domain = domain
         self.searchString = ""
