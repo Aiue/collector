@@ -567,7 +567,7 @@ def main():
 
         if not domain:
             # Sleep until next archive list update.
-            time_to_sleep = time.time() - archives.lastUpdate + 86400
+            time_to_sleep = 86400 - (time.time() - archives.lastUpdate)
             logger.info('All searches currently finished, sleeping until next archive list update in %.2f seconds.', time_to_sleep)
             time.sleep(time_to_sleep)
             continue
