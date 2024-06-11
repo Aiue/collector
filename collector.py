@@ -531,6 +531,9 @@ def main():
             with config.domain_list_file.open('r') as f:
                 line_number = 0
                 for line in f.read().splitlines():
+                    if len(line) == 0:
+                        logger.debug('Empty line in {dconf}, skipping.'.format(dconf=config.domain_list_file))
+                        break
                     line_number += 1
                     if line in domains:
                         logger.warning('Duplicate domain: %s (line %d in %s)', line, line_number, str(config.domain_list_file))
