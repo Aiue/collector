@@ -572,7 +572,12 @@ def main():
             time.sleep(time_to_sleep)
             continue
 
-        results = domain.search(archive)
+        try:
+            results = domain.search(archive)
+        except (requests.RequestException, BadHTTPStatus):
+            failcounter += 1
+            time.sleep(60)
+            continue
         if len(results) > 0:
             results = domain.searchClusters(archive, results)
             if len(results) > 0:
