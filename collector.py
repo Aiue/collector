@@ -512,6 +512,8 @@ def main():
     failcounter = 0
     domains_last_modified = 0
 
+    finished_message = False
+
     while True:
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
             if domains_last_modified == 0:
@@ -566,11 +568,13 @@ def main():
                     break
 
         if not domain:
-            # Sleep until next archive list update.
-            time_to_sleep = 86400 - (time.time() - archives.lastUpdate)
-            logger.info('All searches currently finished, sleeping until next archive list update in %.2f seconds.', time_to_sleep)
-            time.sleep(time_to_sleep)
+            if not finished_message:
+                logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
+                finished_message = True
+                time.sleep(10)
             continue
+
+        finished_message = False
 
         try:
             results = domain.search(archive)
