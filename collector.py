@@ -61,7 +61,6 @@ class Config:
     pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
                                                     # However, this would require more extensive rewrites.
     domain_list_file = Path('domains.conf')
-    critical_warn_interval = 8 # Warns (critical log) every n hours if everything keeps failing.
     safe_path = Path.cwd()
     prometheus_port = 1234
 
@@ -75,7 +74,7 @@ class Config:
                         value = bool(value)
                     elif key in ['domain_list_file', 'safe_path']:
                         value = Path(value)
-                    elif key in ['max_file_size', 'max_requests_limit', 'max_requests_time', 'critical_warn_interval', 'prometheus_port']:
+                    elif key in ['max_file_size', 'max_requests_limit', 'max_requests_time', 'prometheus_port']:
                         value = int(value)
                     setattr(self, key, value)
 
@@ -268,7 +267,6 @@ class RemoteFile:
         except (requests.RequestException, BadHTTPStatus) as error:
             rq = RetryQueue()
             rq.add(self)
-            raise
         else:
             self.write(contents)
 
@@ -559,7 +557,6 @@ def main():
     retryqueue = RetryQueue()
     retryqueue.load()
 
-    failcounter = 0
     domains_last_modified = 0
 
     finished_message = False
@@ -596,15 +593,7 @@ def main():
 
             domains_last_modified = Path(config.domain_list_file).stat().st_mtime
 
-        if failcounter > 0 and failcounter % (config.critical_warn_interval * 60) == 0:
-            #TODO: Do we at all want to keep running here? Also, should we use different intervals? Should it be configurable?
-            logger.critical('Unable to retrieve data for the past %d hours, please see error log for details.', int(failcounter/60))
-        try:
-            archives.update()
-        except (requests.RequestException, BadHTTPStatus):
-            failcounter += 1
-            time.sleep(60)
-            continue
+        archives.update()
 
         archive = None
         domain = None
@@ -630,31 +619,13 @@ def main():
         monitor.state.state('collecting')
         finished_message = False
 
-        try:
-            results = domain.search(archive)
-        except (requests.RequestException, BadHTTPStatus):
-            failcounter += 1
-            time.sleep(60)
-            continue
+        results = domain.search(archive)
         if len(results) > 0:
             results = domain.searchClusters(archive, results)
             if len(results) > 0:
-                try:
-                    domain.getFile(archive, results)
-                except (requests.RequestException, BadHTTPStatus):
-                    failcounter += 1
-                    time.sleep(60)
-                    continue
+                domain.getFile(archive, results)
 
-        try:
-            retryqueue.process()
-        except (requests.RequestException, BadHTTPStatus):
-            failcounter += 1
-            time.sleep(60)
-            continue
-
-        # If we get this far, this cycle has been successful. Reset fail counter.
-        failcounter = 0
+        retryqueue.process()
 
 if __name__ == "__main__":
     main()
