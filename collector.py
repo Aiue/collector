@@ -16,6 +16,37 @@ from pathlib import Path
 import requests
 import time
 
+try:
+    from prometheus_client import start_http_server, Gauge, Counter, Enum
+except ModuleNotFoundError:
+    # Create dummy references instead of the above.
+    def start_http_server(port):
+        pass
+
+    class Counter:
+        def __init__(*args):
+            pass
+        def inc(*args):
+            pass
+
+    class Gauge:
+        def __init__(*args):
+            pass
+        def inc(*args):
+            pass
+        def dec(*args):
+            pass
+        def set(*args):
+            pass
+        def set_function(*args):
+            pass
+
+    class Enum:
+        def __init__(*args, **kwargs):
+            pass
+        def state(*args):
+            pass
+
 # I don't like the configuration file alternatives python offers. I'll write my own.
 class Config:
     # Set defaults
@@ -32,6 +63,7 @@ class Config:
     domain_list_file = Path('domains.conf')
     critical_warn_interval = 8 # Warns (critical log) every n hours if everything keeps failing.
     safe_path = Path.cwd()
+    prometheus_port = 1234
 
     def __init__(self, configFile):
         if configFile.exists():
@@ -43,7 +75,7 @@ class Config:
                         value = bool(value)
                     elif key in ['domain_list_file', 'safe_path']:
                         value = Path(value)
-                    elif key in ['max_file_size', 'max_requests_limit', 'max_requests_time', 'critical_warn_interval']:
+                    elif key in ['max_file_size', 'max_requests_limit', 'max_requests_time', 'critical_warn_interval', 'prometheus_port']:
                         value = int(value)
                     setattr(self, key, value)
 
@@ -90,6 +122,20 @@ def get_domain(domain):
             return d
 
 # Classes
+class Monitor:
+    monitors = {}
+    def __init__(self, monitor):
+        self.monitors[monitor] = self
+        start_http_server(config.prometheus_port)
+        self.retryqueue = Gauge('retryqueue', 'Retry queue entries')
+        self.requests = Counter('requests', 'Requests send')
+        self.failed = Counter('failed', 'Failed requests')
+        self.state = Enum('state', 'Current state', states=['collecting', 'idle'])
+
+    def get(name):
+        if name in Monitor.monitors: return Monitor.monitors[name]
+        return Monitor(name)
+
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
         self.archiveID = archiveID
@@ -279,15 +325,19 @@ class RemoteFile:
         if self.offset and self.length:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
         self.lastRequests.append(time.time())
+        monitor = Monitor.get('monitor')
         try:
             r = requests.get(self.url, headers=headers)
         except requests.RequestException as error:
+            monitor.failed.inc()
             logger.error('Could not get %s - %s', self.url, error)
             raise
         if r.status_code != 200 and r.status_code != 206: # We need to also allow 206 'partial content'
+            monitor.failed.inc()
             logger.error('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
 
+        monitor.requests.inc()
         return r.content
 
 class RetryQueue:
@@ -514,6 +564,8 @@ def main():
 
     finished_message = False
 
+    monitor = Monitor.get('monitor')
+
     while True:
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
             if domains_last_modified == 0:
@@ -572,8 +624,10 @@ def main():
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
                 time.sleep(10)
+            monitor.state.state('idle')
             continue
 
+        monitor.state.state('collecting')
         finished_message = False
 
         try:
