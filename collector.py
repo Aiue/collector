@@ -62,6 +62,7 @@ class Config:
     domain_list_file = Path('domains.conf')
     safe_path = Path.cwd()
     prometheus_port = 1234
+    cache_dir = Path('.cache')
 
     def __init__(self, configFile):
         if configFile.exists():
@@ -73,7 +74,7 @@ class Config:
                         value = bool(value)
                     elif key == 'min_request_interval':
                         value = float(value)
-                    elif key in ['domain_list_file', 'safe_path']:
+                    elif key in ['domain_list_file', 'safe_path', 'cache_dir']:
                         value = Path(value)
                     elif key in ['max_file_size', 'prometheus_port']:
                         value = int(value)
@@ -151,7 +152,7 @@ class Archive:
         contents = f.read()
         for line in contents.splitlines():
             if line.endswith('cluster.idx'):
-                self.clusterIndex = RemoteFile(config.archive_host + '/' + line, '.cache/' + self.archiveID + '/cluster.idx')
+                self.clusterIndex = RemoteFile(config.archive_host + '/' + line, str(config.cache_dir) + '/' + self.archiveID + '/cluster.idx')
                 self.clusterIndex.bypass_decompression = True # Special case, 1 out of 2 files without compression.
                 i = line.rfind('cluster.idx')
                 self.indexPathsURI = line[0:i]
@@ -476,7 +477,7 @@ class Domain:
             # We do not need a call to Archive.updatePaths() here, we should only get here after Domain.search()
             index = []
             if config.cache_index_clusters:
-                cacheFileName = '.cache/' + archive.archiveID + '/' + cluster[2] + '-' + str(cluster[5])
+                cacheFileName = str(config.cache_dir) + '/' + archive.archiveID + '/' + cluster[2] + '-' + str(cluster[5])
             else:
                 cacheFileName = None
             indexFile = RemoteFile(
