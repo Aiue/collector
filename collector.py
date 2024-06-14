@@ -330,7 +330,7 @@ class RemoteFile:
             monitor.failed.inc()
             logger.error('Could not get %s - %s', self.url, error)
             raise
-        if r.status_code != 200 and r.status_code != 206: # We need to also allow 206 'partial content'
+        if not (r.status_code >= 200 and r.status_code < 300):
             monitor.failed.inc()
             logger.error('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
