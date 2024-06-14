@@ -55,8 +55,7 @@ class Config:
     max_file_size = 104857600 # Max file size we'll download.
                                # Currently set to 100 MiB, which may seem ridiculously large in context.
                                # Only applies to [W]ARC files.
-    max_requests_limit = 1
-    max_requests_time = 5
+    min_request_interval = 1.0
     cache_index_clusters = False
     pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
                                                     # However, this would require more extensive rewrites.
@@ -72,9 +71,11 @@ class Config:
                     key,value = line.split('=')
                     if key == 'cache_index_clusters':
                         value = bool(value)
+                    elif key == 'min_request_interval':
+                        value = float(value)
                     elif key in ['domain_list_file', 'safe_path']:
                         value = Path(value)
-                    elif key in ['max_file_size', 'max_requests_limit', 'max_requests_time', 'prometheus_port']:
+                    elif key in ['max_file_size', 'prometheus_port']:
                         value = int(value)
                     setattr(self, key, value)
 
@@ -228,7 +229,7 @@ class Archives:
             logger.info('Found %d archives.', len(self.archives))
 
 class RemoteFile:
-    lastRequests = []
+    lastRequest = [0] # Using a list for reference retention.
 
     def __init__(self, url, filename=None, offset=None, length=None, domain=None, archiveID=None):
         self.url = url
@@ -309,20 +310,14 @@ class RemoteFile:
 
     def get(self):
         logger.debug('Getting from %s', self.url)
-        if len(self.lastRequests) > 0:
-            logger.debug('Time difference from now and previous request #%d is %f seconds.', len(self.lastRequests), time.time() - self.lastRequests[0])
-        if len(self.lastRequests) >= config.max_requests_limit:
-            diff = time.time() - self.lastRequests[0]
-            if diff < config.max_requests_time:
-                diff = config.max_requests_time - diff
-                logger.debug('Request limit reached, sleeping for %f seconds.', diff)
-                time.sleep(diff)
-            self.lastRequests.pop(0)
+        if (time.time() - self.lastRequest[0]) < config.min_request_interval:
+            logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.lastRequest[0])
+            time.sleep(time.time() - self.lastRequest[0])
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
         if self.offset and self.length:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
-        self.lastRequests.append(time.time())
+        self.lastRequest = time.time()
         monitor = Monitor.get('monitor')
         try:
             r = requests.get(self.url, headers=headers)

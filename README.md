@@ -26,10 +26,10 @@ Default: 104857600
 
 Largest file size allowed. Files above this size will be skipped. Only applies to archive files, as index files will generally be very large.
 
-#### max_requests_limit, max_requests_time *(integer)*
-Default: 5
+#### min_request_interval *(float)*
+Default: 1.0
 
-Two values controlling the frequency at which we will send requests. We will send no more than `max_requests_limit` requests every `max_requests_time seconds`.
+Minimum time between sent HTTP requests.
 
 #### cache_index_clusters *(boolean)*
 Default: False
