@@ -51,10 +51,15 @@ Default: 8
 
 Logs a critical warning every (approximately) n hours without any successful http retrievals.
 
-#### Prometheus port *(integer)*
+#### prometheus_port *(integer)*
 Default: 1234
 
 Which port to use for [Prometheus](https://prometheus.io) scraping.
+
+#### cache_dir *(string)*
+Default: .cache
+
+Directory cache is stored in.
 
 ### status.py
 `status.py` can be used to get completion information on individual domains. Usage is simple: `status.py <all|domain>`. 
