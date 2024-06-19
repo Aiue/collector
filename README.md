@@ -46,11 +46,6 @@ Default: `Path.cwd()`
 
 A path that is considered safe, should point to where collector is located.
 
-#### critical_warn_interval *(integer)*
-Default: 8
-
-Logs a critical warning every (approximately) n hours without any successful http retrievals.
-
 #### prometheus_port *(integer)*
 Default: 1234
 
