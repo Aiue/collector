@@ -13,7 +13,6 @@ variables:
   PKG_PREFIX: 'liuopt'
   PKG_VERSION: '1'
   PKG_RELEASE: $CI_PIPELINE_IID
-  BUILD_ENVIRONMENT: 'test'
 
 ccc-rhel-opt-package:
   stage: package
@@ -59,14 +58,8 @@ collect-pkgs:
 
 upload-rhel-pkgs:
   extends: .upload-el-pkgs
-  rules:
-    - if: $BUILD_ENVIRONMENT == "test"
-      variables:
-        upload_script: './upload-Ootpa-test.sh'
-    - if: $BUILD_ENVIRONMENT == "production"
-      variables:
-        upload_script: './upload-Ootpa-prod.sh'
   dependencies:
     - collect-pkgs
   variables:
     target_dir: rhel8
+    upload_script: './upload-Ootpa-prod.sh'
