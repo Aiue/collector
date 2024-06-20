@@ -71,4 +71,5 @@ upload-rhel-pkgs:
   variables:
     target_dir: rhel8
   before_script:
+    - "echo $BUILD_ENVIRONMENT"
     - "echo $upload_script"
