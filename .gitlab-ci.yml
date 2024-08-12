@@ -56,13 +56,19 @@ collect-pkgs:
     - "mv pkgs/* ."
     - "find . | grep .rpm"
 
-upload-rhel-pkgs:
+upload-rhel-test-pkgs:
+  extends: .upload-el-pkgs
+  dependencies:
+    - collect-pkgs
+  variables:
+    target_dir: rhel8
+    upload_script: './upload-Ootpa-test.sh'
+
+upload-rhel-prod-pkgs:
   extends: .upload-el-pkgs
   dependencies:
     - collect-pkgs
   variables:
     target_dir: rhel8
     upload_script: './upload-Ootpa-prod.sh'
-  before_script:
-    - "echo $BUILD_ENVIRONMENT"
-    - "echo $upload_script"
+
