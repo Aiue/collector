@@ -531,6 +531,8 @@ class Domain:
             elif fileInfo['filename'].endswith('.warc.gz'):
                 _,_,_,partial_path,_,warcfile = fileInfo['filename'].split('/')
                 filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
+            else:
+                raise RuntimeError('Unknown file ending for %s', fileInfo['filename'])
 
             url = config.archive_host + '/' + fileInfo['filename']
             rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']), self.domain, archive.archiveID)
