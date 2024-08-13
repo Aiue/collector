@@ -527,7 +527,7 @@ class Domain:
             filename = config.pywb_collection_dir + '/'
             if fileInfo['filename'].endswith('.arc.gz'):
                 filename += fileInfo['filename'].replace('/', '-')
-                filename = filename[0:len(filename)-7] + '-' + filerange + '.arc.gz'
+                filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
             elif fileInfo['filename'].endswith('.warc.gz'):
                 _,_,_,partial_path,_,warcfile = fileInfo['filename'].split('/')
                 filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
