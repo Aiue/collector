@@ -5,6 +5,7 @@
 # Licensed under GPLv3, see license.txt
 
 import bisect
+import gc
 import gzip
 import html.parser
 import json
@@ -561,6 +562,8 @@ def main():
 
     monitor = Monitor.get('monitor')
 
+    last_forced_gc = time.time()
+
     while True:
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
             if domains_last_modified == 0:
@@ -624,6 +627,10 @@ def main():
                 domain.getFile(archive, results)
 
         retryqueue.process()
+
+        if (time.time() - last_forced_gc) > 60:
+            gc.collect()
+            last_forced_gc = time.time()
 
 if __name__ == "__main__":
     main()
