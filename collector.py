@@ -646,7 +646,7 @@ def main():
             snapshot2.dump('latest_snapshot')
             cycle = 0
             snapshot_cur = tracemalloc.take_snapshot()
-            top_stats = snapshot_cur.compare_to(snapshot_init, 'lineno')
+            top_stats = snapshot2.compare_to(snapshot1, 'lineno')
             for stat in top_stats[:25]:
                 logger.info(stat)
 
