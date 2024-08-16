@@ -16,6 +16,9 @@ import os
 from pathlib import Path
 import requests
 import time
+import tracemalloc
+
+tracemalloc.start(25)
 
 try:
     from prometheus_client import start_http_server, Gauge, Counter, Enum
@@ -551,6 +554,8 @@ def main():
     logger.info('Collector running.')
     archives = Archives()
     domains = []
+    snapshot1 = tracemalloc.take_snapshot()
+    snapshot1.dump('init_snapshot')
 
     logger.debug('Loading retry queue.')
     retryqueue = RetryQueue()
@@ -563,6 +568,8 @@ def main():
     monitor = Monitor.get('monitor')
 
     last_forced_gc = time.time()
+
+    cycle = 0
 
     while True:
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
@@ -583,10 +590,10 @@ def main():
             with config.domain_list_file.open('r') as f:
                 line_number = 0
                 for line in f.read().splitlines():
+                    line_number += 1
                     if len(line) == 0:
                         logger.debug('Empty line in {dconf}, skipping.'.format(dconf=config.domain_list_file))
                         break
-                    line_number += 1
                     if line in domains:
                         logger.warning('Duplicate domain: %s (line %d in %s)', line, line_number, str(config.domain_list_file))
                     else:
@@ -631,6 +638,20 @@ def main():
         if (time.time() - last_forced_gc) > 60:
             gc.collect()
             last_forced_gc = time.time()
+
+        snapshot2 = tracemalloc.take_snapshot()
+        snapshot1.dump('penultimate_snapshot')
+        snapshot2.dump('latest_snapshot')
+        cycle += 1
+        if cycle > 100:
+            cycle = 0
+            snapshot_cur = tracemalloc.take_snapshot()
+            top_stats = snapshot_cur.compare_to(snapshot_init, 'lineno')
+            for stat in top_stats[:25]:
+                logger.info(stat)
+
+            logger.info(tracemalloc.get_traced_memory()[0])
+        snopshot1 = snapshot2
 
 if __name__ == "__main__":
     main()
