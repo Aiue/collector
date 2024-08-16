@@ -639,11 +639,11 @@ def main():
             gc.collect()
             last_forced_gc = time.time()
 
-        snapshot2 = tracemalloc.take_snapshot()
-        snapshot1.dump('penultimate_snapshot')
-        snapshot2.dump('latest_snapshot')
         cycle += 1
         if cycle > 100:
+            snapshot2 = tracemalloc.take_snapshot()
+            snapshot1.dump('penultimate_snapshot')
+            snapshot2.dump('latest_snapshot')
             cycle = 0
             snapshot_cur = tracemalloc.take_snapshot()
             top_stats = snapshot_cur.compare_to(snapshot_init, 'lineno')
@@ -651,7 +651,7 @@ def main():
                 logger.info(stat)
 
             logger.info(tracemalloc.get_traced_memory()[0])
-        snopshot1 = snapshot2
+            snapshot1 = snapshot2
 
 if __name__ == "__main__":
     main()
