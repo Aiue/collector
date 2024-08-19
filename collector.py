@@ -519,7 +519,7 @@ class Domain:
         if len(results) == 0:
             self.updateHistory(archive.archiveID, 'completed', 0)
         self.updateHistory(archive.archiveID, 'results', len(results))
-        logger.debug('Found %d search results for %s/%s.', len(results), self.domain, archive.archiveID)
+        logger.info('Processing %d search results for %s in %s.', len(results), self.domain, archive.archiveID)
         return results
 
     def getFile(self, archive, index):
