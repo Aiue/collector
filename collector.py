@@ -476,6 +476,7 @@ class Domain:
 
         # This search format should mean we're always left of anything matching our search string.
         position = bisect.bisect_left(index, (self.searchString + '(', 0, "", 0, 0, 0))
+        logger.debug('(cluster index) Potential match at line %d out of %d. (%s)', position+1, len(index), index[position][0])
         # We may (and likely will) have matches in the index cluster prior to our match.
         results.append(index[position-1])
         while position < len(index):
@@ -509,6 +510,7 @@ class Domain:
                 searchable_string,timestamp,json = line.split(' ', 2)
                 index.append((searchable_string, int(timestamp), json))
             position = bisect.bisect_left(index, (self.searchString, 0, ""))
+            logger.debug('Index insertion point at line %d out of %d. (%s)', position+1, len(index), index[position][0])            
             # Unlike the cluster index, there should be no earlier result than position.
             while position < len(index):
                 if is_match(index[position][0], self.searchString):
