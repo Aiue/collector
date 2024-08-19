@@ -57,9 +57,10 @@ class Config:
     archive_host = 'https://data.commoncrawl.org'
     archive_list_uri = '/cc-index/collections/index.html'
     max_file_size = 104857600 # Max file size we'll download.
-                               # Currently set to 100 MiB, which may seem ridiculously large in context.
-                               # Only applies to [W]ARC files.
+                              # Currently set to 100 MiB, which may seem ridiculously large in context.
+                              # Only applies to [W]ARC files.
     min_request_interval = 1.0
+    max_request_interval = 30.0
     cache_index_clusters = False
     pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
                                                     # However, this would require more extensive rewrites.
@@ -235,7 +236,10 @@ class Archives:
             logger.info('Found %d archives.', len(self.archives))
 
 class RemoteFile:
-    lastRequest = [0] # Using a list for reference retention.
+    requests = { # Using a dict for reference retention.
+        'last': 0,
+        'failed': 0,
+    }
 
     def __init__(self, url, filename=None, offset=None, length=None, domain=None, archiveID=None):
         self.url = url
@@ -316,14 +320,14 @@ class RemoteFile:
 
     def get(self):
         logger.debug('Getting from %s', self.url)
-        if (time.time() - self.lastRequest[0]) < config.min_request_interval:
-            logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.lastRequest[0])
-            time.sleep(time.time() - self.lastRequest[0])
+        if (time.time() - self.requests['last']) < config.min_request_interval:
+            logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.requests['last'])
+            time.sleep(time.time() - self.requests['last'])
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
         if self.offset and self.length:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
-        self.lastRequest[0] = time.time()
+        self.requests['last'] = time.time()
         monitor = Monitor.get('monitor')
         try:
             r = requests.get(self.url, headers=headers)
@@ -334,11 +338,17 @@ class RemoteFile:
         if not (r.status_code >= 200 and r.status_code < 300):
             # This could imply a problem with parsing, raise it as such rather than simply bad status.
             if r.status_code >= 400 and r.status_code < 500:
-                raise ParserError('HTTP response %d indicates potential parsing issue. This should be investigated.', r.status_code)
+                raise ParserError('HTTP response %d indicates a potential parsing issue. This should be investigated.', r.status_code)
             monitor.failed.inc()
-            logger.error('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
+            self.requests['failed'] += 1
+            sleep = config.min_request_interval * pow(1.5, self.requests['failed'])
+            if sleep > config.max_request_interval:
+                sleep = config.max_request_interval
+            logger.error('Bad HTTP response %d %s for %s, sleeping for %d seconds (fail counter=%d).', r.status_code, r.reason, self.url, sleep, self.requests['failed'])
+            time.sleep(sleep)
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
 
+        self.requests['failed'] = 0
         monitor.requests.inc()
         return r.content
 

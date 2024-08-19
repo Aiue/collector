@@ -31,6 +31,11 @@ Default: 1.0
 
 Minimum time between sent HTTP requests.
 
+#### max_request_interval *(float)*
+Default: 30.0
+
+Maximum time between sent HTTP requests, used for staggering failed HTTP requests.
+
 #### cache_index_clusters *(boolean)*
 Default: False
 
