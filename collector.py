@@ -630,11 +630,17 @@ def main():
         monitor.state.state('collecting')
         finished_message = False
 
-        results = domain.search(archive) # Catch BadHTTPStatus?
-        if len(results) > 0:
-            results = domain.searchClusters(archive, results)
+        try:
+            results = domain.search(archive)
             if len(results) > 0:
-                domain.getFile(archive, results)
+                results = domain.searchClusters(archive, results)
+                if len(results) > 0:
+                    domain.getFile(archive, results)
+        except (requests.RequestException, BadHTTPStatus) as error:
+            if isinstance(error, BadHTTPStatus):
+                logger.info('Could not retrieve %s: %d %s'. error[0], error[3], error[4])
+            else:
+                logger.info(error)
 
         retryqueue.process()
 
