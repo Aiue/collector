@@ -60,7 +60,7 @@ class Config:
                               # Currently set to 100 MiB, which may seem ridiculously large in context.
                               # Only applies to [W]ARC files.
     min_request_interval = 1.0
-    max_request_interval = 30.0
+    max_request_interval = 60.0
     cache_index_clusters = False
     pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
                                                     # However, this would require more extensive rewrites.
