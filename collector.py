@@ -282,7 +282,7 @@ class RemoteFile:
             self.write(contents)
 
     def read(self):
-        logger.debug('Reading from %s', self.url)
+        #logger.debug('Reading from %s', self.url)
         contents = None
         if self.filename and self.filename.exists(): # File is in cache.
             if self.length:
@@ -293,7 +293,7 @@ class RemoteFile:
 
             fsize = self.filename.stat().st_size
             if fsize == size:
-                logger.debug('File is cached, reading from %s', self.filename)
+                #logger.debug('File is cached, reading from %s', self.filename)
                 with self.filename.open('rb') as f:
                     contents = f.read()
             else:
@@ -311,7 +311,7 @@ class RemoteFile:
     def write(self, contents):
         if not self.filename:
             raise RuntimeError('RemoteFile.write() called with no filename set: %s', url)
-        logger.debug('Writing from %s to %s', self.url, self.filename)
+        #logger.debug('Writing from %s to %s', self.url, self.filename)
         if not self.filename.parents[0].exists():
             logger.info("Recursively creating directory '%s'.", self.filename.parents[0])
             self.filename.parents[0].mkdir(parents=True)
@@ -319,7 +319,7 @@ class RemoteFile:
             f.write(contents)
 
     def get(self):
-        logger.debug('Getting from %s', self.url)
+        #logger.debug('Getting from %s', self.url)
         if (time.time() - self.requests['last']) < config.min_request_interval:
             logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.requests['last'])
             time.sleep(time.time() - self.requests['last'])
@@ -437,7 +437,7 @@ class Domain:
             self.history = {}
 
     def updateHistory(self, archiveID, key, history):
-        logger.debug('Updating history for %s (%s: %s)', self.domain, archiveID, str(history))
+        #logger.debug('Updating history for %s (%s: %s)', self.domain, archiveID, str(history))
         if not archiveID in self.history:
             self.history[archiveID] = {'completed': 0, 'failed': 0, 'results': 0}
         self.history[archiveID][key] = history
@@ -452,7 +452,7 @@ class Domain:
     # Search functions are here rather than on the classes they operate on for cache purposes.
     # Rather than having their own classes*, actually.
     def search(self, archive):
-        logger.debug('Searching %s for %s', archive.archiveID, self.domain)
+        #logger.debug('Searching %s for %s', archive.archiveID, self.domain)
         if 'search' in self.memoizeCache and self.memoizeCache['search'][0] == archive:
             return self.memoizeCache['search'][1]
 
@@ -535,7 +535,7 @@ class Domain:
 
         logger.debug('Result found at %d', position)
 
-        logger.debug('Loading JSON: %s', index[position])
+        #logger.debug('Loading JSON: %s', index[position])
         # Everything is treated as strings, so we will need to convert integers.
         fileInfo = json.loads(index[position])
 
@@ -557,7 +557,7 @@ class Domain:
 
             url = config.archive_host + '/' + fileInfo['filename']
             rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']), self.domain, archive.archiveID)
-            logger.debug('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
+            #logger.debug('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
             try:
                 rf.download()
             except (requests.RequestException, BadHTTPStatus):
