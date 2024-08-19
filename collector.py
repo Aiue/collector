@@ -456,6 +456,8 @@ class Domain:
         if 'search' in self.memoizeCache and self.memoizeCache['search'][0] == archive:
             return self.memoizeCache['search'][1]
 
+        logger.info('Processing %s in %s.', self.domain, archive.archiveID)
+
         results = []
         index = []
         if not archive.clusterIndex: # Implies indexPathsURI is also empty
@@ -519,7 +521,7 @@ class Domain:
         if len(results) == 0:
             self.updateHistory(archive.archiveID, 'completed', 0)
         self.updateHistory(archive.archiveID, 'results', len(results))
-        logger.info('Processing %d search results for %s in %s.', len(results), self.domain, archive.archiveID)
+        logger.info('Found %d search results.', len(results))
         return results
 
     def getFile(self, archive, index):
