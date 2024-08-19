@@ -568,6 +568,7 @@ def main():
     archives = Archives()
     domains = []
     snapshot1 = tracemalloc.take_snapshot()
+    snapshot_init = snapshot1
     snapshot1.dump('init_snapshot')
 
     logger.debug('Loading retry queue.')
@@ -665,7 +666,7 @@ def main():
             snapshot2.dump('latest_snapshot')
             cycle = 0
             snapshot_cur = tracemalloc.take_snapshot()
-            top_stats = snapshot2.compare_to(snapshot1, 'lineno')
+            top_stats = snapshot2.compare_to(snapshot_init, 'lineno')
             for stat in top_stats[:25]:
                 logger.info(stat)
 
