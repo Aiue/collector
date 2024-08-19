@@ -332,6 +332,9 @@ class RemoteFile:
             logger.error('Could not get %s - %s', self.url, error)
             raise
         if not (r.status_code >= 200 and r.status_code < 300):
+            # This could imply a problem with parsing, raise it as such rather than simply bad status.
+            if r.status_code >= 400 and r.status_code < 500:
+                raise ParserError('HTTP response %d indicates potential parsing issue. This should be investigated.', r.status_code)
             monitor.failed.inc()
             logger.error('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
@@ -627,7 +630,7 @@ def main():
         monitor.state.state('collecting')
         finished_message = False
 
-        results = domain.search(archive)
+        results = domain.search(archive) # Catch BadHTTPStatus?
         if len(results) > 0:
             results = domain.searchClusters(archive, results)
             if len(results) > 0:
