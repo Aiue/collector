@@ -662,7 +662,7 @@ def main():
         if (time.time() - last_forced_gc) > 60:
             logger.info('Collecting garbage.')
             gc.collect()
-            logger.info('Number of collection counts: %s', str(gc.get_count())
+            logger.info('Number of collection counts: %s', str(gc.get_count()))
             last_forced_gc = time.time()
 
 #        cycle += 1
