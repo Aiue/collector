@@ -16,9 +16,9 @@ import os
 from pathlib import Path
 import requests
 import time
-import tracemalloc
+#import tracemalloc
 
-tracemalloc.start(25)
+#tracemalloc.start(25)
 
 try:
     from prometheus_client import start_http_server, Gauge, Counter, Enum
@@ -571,9 +571,9 @@ def main():
     logger.info('Collector running.')
     archives = Archives()
     domains = []
-    snapshot1 = tracemalloc.take_snapshot()
-    snapshot_init = snapshot1
-    snapshot1.dump('init_snapshot')
+#    snapshot1 = tracemalloc.take_snapshot()
+#    snapshot_init = snapshot1
+#    snapshot1.dump('init_snapshot')
 
     logger.debug('Loading retry queue.')
     retryqueue = RetryQueue()
@@ -587,7 +587,7 @@ def main():
 
     last_forced_gc = time.time()
 
-    cycle = 0
+#    cycle = 0
 
     while True:
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
@@ -663,19 +663,19 @@ def main():
             gc.collect()
             last_forced_gc = time.time()
 
-        cycle += 1
-        if cycle > 100:
-            snapshot2 = tracemalloc.take_snapshot()
-            snapshot1.dump('penultimate_snapshot')
-            snapshot2.dump('latest_snapshot')
-            cycle = 0
-            snapshot_cur = tracemalloc.take_snapshot()
-            top_stats = snapshot2.compare_to(snapshot_init, 'lineno')
-            for stat in top_stats[:25]:
-                logger.info(stat)
-
-            logger.info(tracemalloc.get_traced_memory()[0])
-            snapshot1 = snapshot2
+#        cycle += 1
+#        if cycle > 100:
+#            snapshot2 = tracemalloc.take_snapshot()
+#            snapshot1.dump('penultimate_snapshot')
+#            snapshot2.dump('latest_snapshot')
+#            cycle = 0
+#            snapshot_cur = tracemalloc.take_snapshot()
+#            top_stats = snapshot2.compare_to(snapshot_init, 'lineno')
+#            for stat in top_stats[:25]:
+#                logger.info(stat)
+#
+#            logger.info(tracemalloc.get_traced_memory()[0])
+#            snapshot1 = snapshot2
 
 if __name__ == "__main__":
     main()
