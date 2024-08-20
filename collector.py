@@ -660,7 +660,9 @@ def main():
         retryqueue.process()
 
         if (time.time() - last_forced_gc) > 60:
+            logger.info('Collecting garbage.')
             gc.collect()
+            logger.info('Number of records in permanent generation: %d', gc.get_freeze_count())
             last_forced_gc = time.time()
 
 #        cycle += 1
