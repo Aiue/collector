@@ -325,7 +325,7 @@ class RemoteFile:
             time.sleep(time.time() - self.requests['last'])
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
-        if self.offset and self.length:
+        if type(self.offset) == int and self.length:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
         self.requests['last'] = time.time()
         monitor = Monitor.get('monitor')
@@ -437,7 +437,7 @@ class Domain:
             self.history = {}
 
     def updateHistory(self, archiveID, key, history):
-        #logger.debug('Updating history for %s (%s: %s)', self.domain, archiveID, str(history))
+        #logger.debug('Updating history for %s/%s (%s: %s)', self.domain, archiveID, key, str(history))
         if not archiveID in self.history:
             self.history[archiveID] = {'completed': 0, 'failed': 0, 'results': 0}
         self.history[archiveID][key] = history
