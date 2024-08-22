@@ -634,6 +634,8 @@ def main():
                     archive = a
                     break
 
+        retryqueue.process()
+
         if not domain:
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
@@ -657,8 +659,6 @@ def main():
                 logger.info('Could not retrieve %s: %d %s'. error[0], error[3], error[4])
             else:
                 logger.info(error)
-
-        retryqueue.process()
 
 #        cycle += 1
 #        if cycle > 100:
