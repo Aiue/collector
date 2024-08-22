@@ -5,6 +5,7 @@
 # Licensed under GPLv3, see license.txt
 
 import bisect
+import gc
 import gzip
 import html.parser
 import json
@@ -15,6 +16,9 @@ import os
 from pathlib import Path
 import requests
 import time
+#import tracemalloc
+
+#tracemalloc.start(25)
 
 try:
     from prometheus_client import start_http_server, Gauge, Counter, Enum
@@ -53,9 +57,10 @@ class Config:
     archive_host = 'https://data.commoncrawl.org'
     archive_list_uri = '/cc-index/collections/index.html'
     max_file_size = 104857600 # Max file size we'll download.
-                               # Currently set to 100 MiB, which may seem ridiculously large in context.
-                               # Only applies to [W]ARC files.
+                              # Currently set to 100 MiB, which may seem ridiculously large in context.
+                              # Only applies to [W]ARC files.
     min_request_interval = 1.0
+    max_request_interval = 60.0
     cache_index_clusters = False
     pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
                                                     # However, this would require more extensive rewrites.
@@ -104,6 +109,7 @@ def path_is_safe(path, inst=None): # path is a Path.
             and not (
                 str(path).startswith(config.pywb_collection_dir)
              or str(path).startswith(str(config.safe_path))
+             or str(path).startswith(str(config.cache_dir))
     )):
         msg = f"Unsafe path: {self}"
         if inst and type(inst) == RemoteFile: # Type is either RemoteFile or Domain. Only RemoteFile has attributes we want to add.
@@ -230,7 +236,10 @@ class Archives:
             logger.info('Found %d archives.', len(self.archives))
 
 class RemoteFile:
-    lastRequest = [0] # Using a list for reference retention.
+    requests = { # Using a dict for reference retention.
+        'last': 0,
+        'failed': 0,
+    }
 
     def __init__(self, url, filename=None, offset=None, length=None, domain=None, archiveID=None):
         self.url = url
@@ -273,7 +282,7 @@ class RemoteFile:
             self.write(contents)
 
     def read(self):
-        logger.debug('Reading from %s', self.url)
+        #logger.debug('Reading from %s', self.url)
         contents = None
         if self.filename and self.filename.exists(): # File is in cache.
             if self.length:
@@ -284,7 +293,7 @@ class RemoteFile:
 
             fsize = self.filename.stat().st_size
             if fsize == size:
-                logger.debug('File is cached, reading from %s', self.filename)
+                #logger.debug('File is cached, reading from %s', self.filename)
                 with self.filename.open('rb') as f:
                     contents = f.read()
             else:
@@ -302,7 +311,7 @@ class RemoteFile:
     def write(self, contents):
         if not self.filename:
             raise RuntimeError('RemoteFile.write() called with no filename set: %s', url)
-        logger.debug('Writing from %s to %s', self.url, self.filename)
+        #logger.debug('Writing from %s to %s', self.url, self.filename)
         if not self.filename.parents[0].exists():
             logger.info("Recursively creating directory '%s'.", self.filename.parents[0])
             self.filename.parents[0].mkdir(parents=True)
@@ -310,15 +319,15 @@ class RemoteFile:
             f.write(contents)
 
     def get(self):
-        logger.debug('Getting from %s', self.url)
-        if (time.time() - self.lastRequest[0]) < config.min_request_interval:
-            logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.lastRequest[0])
-            time.sleep(time.time() - self.lastRequest[0])
+        #logger.debug('Getting from %s', self.url)
+        if (time.time() - self.requests['last']) < config.min_request_interval:
+            logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.requests['last'])
+            time.sleep(time.time() - self.requests['last'])
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
-        if self.offset and self.length:
+        if type(self.offset) == int and self.length:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
-        self.lastRequest = time.time()
+        self.requests['last'] = time.time()
         monitor = Monitor.get('monitor')
         try:
             r = requests.get(self.url, headers=headers)
@@ -327,10 +336,19 @@ class RemoteFile:
             logger.error('Could not get %s - %s', self.url, error)
             raise
         if not (r.status_code >= 200 and r.status_code < 300):
+            # This could imply a problem with parsing, raise it as such rather than simply bad status.
+            if r.status_code >= 400 and r.status_code < 500:
+                raise ParserError('HTTP response %d indicates a potential parsing issue. This should be investigated.', r.status_code)
             monitor.failed.inc()
-            logger.error('Bad HTTP response %d %s for %s', r.status_code, r.reason, self.url)
+            self.requests['failed'] += 1
+            sleep = config.min_request_interval * pow(1.5, self.requests['failed'])
+            if sleep > config.max_request_interval:
+                sleep = config.max_request_interval
+            logger.error('Bad HTTP response %d %s for %s, sleeping for %f seconds (fail counter=%d).', r.status_code, r.reason, self.url, sleep, self.requests['failed'])
+            time.sleep(sleep)
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
 
+        self.requests['failed'] = 0
         monitor.requests.inc()
         return r.content
 
@@ -377,7 +395,6 @@ class RetryQueue:
             f.close()
 
 class Domain:
-    memoizeCache = {}
     domains = []
     
     def __init__(self, domain): # TODO: Check that it's not a duplicate.
@@ -419,7 +436,7 @@ class Domain:
             self.history = {}
 
     def updateHistory(self, archiveID, key, history):
-        logger.debug('Updating history for %s (%s: %s)', self.domain, archiveID, str(history))
+        #logger.debug('Updating history for %s/%s (%s: %s)', self.domain, archiveID, key, str(history))
         if not archiveID in self.history:
             self.history[archiveID] = {'completed': 0, 'failed': 0, 'results': 0}
         self.history[archiveID][key] = history
@@ -431,18 +448,31 @@ class Domain:
                 json.dump(self.history, f)
                 # No log message, we might do this often.
 
-    # Search functions are here rather than on the classes they operate on for cache purposes.
-    # Rather than having their own classes*, actually.
-    def search(self, archive):
-        logger.debug('Searching %s for %s', archive.archiveID, self.domain)
-        if 'search' in self.memoizeCache and self.memoizeCache['search'][0] == archive:
-            return self.memoizeCache['search'][1]
+class Search:
+    def __init__(self, domain, archive):
+        self.domain = domain
+        self.archive = archive
+        self.clusters = None
+        self.archives = None # A bit misleading. An archive in this case refers to an ARC or WARC,
+                             # which is distinctly different from a full archive release.
+                             # CC semantics can be a bit peculiar at times.
 
-        results = []
+    def process(self):
+        if not self.clusters:
+            self.findClusters()
+        if not self.archives:
+            self.findArchives()
+        if len(self.archives) > 0:
+            self.getFile()
+
+    def findClusters(self):
+        logger.info('Processing %s in %s.', self.domain.domain, self.archive.archiveID)
+
+        self.clusters = []
         index = []
-        if not archive.clusterIndex: # Implies indexPathsURI is also empty
-            archive.updatePaths()
-        for line in archive.clusterIndex.read().splitlines():
+        if not self.archive.clusterIndex: # Implies indexPathsURI is also empty
+            self.archive.updatePaths()
+        for line in self.archive.clusterIndex.read().splitlines():
             searchable_string,rest = line.split(' ')
             timestamp,filename,offset,length,cluster = rest.split('\t')
             index.append(
@@ -455,109 +485,109 @@ class Domain:
                 ))
 
         # This search format should mean we're always left of anything matching our search string.
-        position = bisect.bisect_left(index, (self.searchString + '(', 0, "", 0, 0, 0))
+        position = bisect.bisect_left(index, (self.domain.searchString + '(', 0, "", 0, 0, 0))
+        logger.debug('(cluster index) Potential match at line %d out of %d. (%s)', position+1, len(index), index[position][0])
         # We may (and likely will) have matches in the index cluster prior to our match.
-        results.append(index[position-1])
+        self.clusters.append(index[position-1])
         while position < len(index):
-            if is_match(index[position][0], self.searchString):
-                results.append(index[position])
+            if is_match(index[position][0], self.domain.searchString):
+                self.clusters.append(index[position])
                 position += 1
             else:
                 break
-        self.memoizeCache['search'] = (archive, results)
-        return results
 
-    def searchClusters(self, archive, clusters): # TODO: Not happy with variable names here. Need to revisit and rename.
-        logger.debug('Searching %s clusters for %s', archive.archiveID, self.domain)
-        if 'searchClusters' in self.memoizeCache and self.memoizeCache['searchClusters'][0] == self and self.memoizeCache['searchClusters'][1] == archive:
-            return self.memoizeCache['searchClusters'][2]
+    def findArchives(self): # TODO: Not happy with variable names here. Need to revisit and rename.
+        logger.debug('Searching %s clusters for %s', self.archive.archiveID, self.domain.domain)
 
-        results = []
-        for cluster in clusters:
-            # We do not need a call to Archive.updatePaths() here, we should only get here after Domain.search()
+        self.archives = []
+        for cluster in self.clusters:
             index = []
             if config.cache_index_clusters:
-                cacheFileName = str(config.cache_dir) + '/' + archive.archiveID + '/' + cluster[2] + '-' + str(cluster[5])
+                cacheFileName = str(config.cache_dir) + '/' + self.archive.archiveID + '/' + cluster[2] + '-' + str(cluster[5])
             else:
                 cacheFileName = None
             indexFile = RemoteFile(
-                config.archive_host + '/' + archive.indexPathsURI + cluster[2],
+                config.archive_host + '/' + self.archive.indexPathsURI + cluster[2],
                 cacheFileName,
                 cluster[3],
                 cluster[4])
             for line in indexFile.read().splitlines():
                 searchable_string,timestamp,json = line.split(' ', 2)
                 index.append((searchable_string, int(timestamp), json))
-            position = bisect.bisect_left(index, (self.searchString, 0, ""))
+            # Do a binary search, even if its not the first cluster in the list it should be fairly inexpensive.
+            position = bisect.bisect_left(index, (self.domain.searchString, 0, ""))
+            logger.debug('Index insertion point at line %d out of %d. (%s)', position+1, len(index), index[position][0])            
             # Unlike the cluster index, there should be no earlier result than position.
             while position < len(index):
-                if is_match(index[position][0], self.searchString):
+                if is_match(index[position][0], self.domain.searchString):
                     # Only the json data will be interesting from here on.
-                    results.append(index[position][2])
+                    self.archives.append(index[position][2])
                     position += 1
                 else:
                     break
-        self.memoizeCache['searchClusters'] = (self, archive, results)
-        if len(results) == 0:
-            self.updateHistory(archive.archiveID, 'completed', 0)
-        self.updateHistory(archive.archiveID, 'results', len(results))
-        logger.debug('Found %d search results for %s/%s.', len(results), self.domain, archive.archiveID)
-        return results
+        if len(self.archives) == 0:
+            self.domain.updateHistory(self.archive.archiveID, 'completed', 0)
+        self.domain.updateHistory(self.archive.archiveID, 'results', len(self.archives))
+        logger.info('Found %d search results.', len(self.archives))
 
-    def getFile(self, archive, index):
+    def getFile(self):
         # First, determine what to fetch.
-        if archive.archiveID not in self.history:
+        if self.archive.archiveID not in self.domain.history:
             position = 0
-        elif type(self.history[archive.archiveID]['completed']) == int:
-            position = self.history[archive.archiveID]['completed']
+        elif type(self.domain.history[self.archive.archiveID]['completed']) == int:
+            position = self.domain.history[self.archive.archiveID]['completed']
 
         logger.debug('Result found at %d', position)
 
-        logger.debug('Loading JSON: %s', index[position])
+        #logger.debug('Loading JSON: %s', index[position])
         # Everything is treated as strings, so we will need to convert integers.
-        fileInfo = json.loads(index[position])
+        fileInfo = json.loads(self.archives[position])
 
         if int(fileInfo['length']) > config.max_file_size:
             logger.warning('Skipping download of %s as file exceeds size limit at %s bytes.', fileInfo['filename'], fileInfo['length'])
-            self.updateHistory(archive.archiveID, 'completed', position+1)
+            self.domain.updateHistory(self.archive.archiveID, 'completed', position+1)
         else:
             filerange = '-' + fileInfo['offset'] + '-' + str(int(fileInfo['offset'])+int(fileInfo['length'])-1)
 
             filename = config.pywb_collection_dir + '/'
             if fileInfo['filename'].endswith('.arc.gz'):
-                for name in fileInfo['filename'].split('/'):
-                    filename += name
-                    filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
+                filename += fileInfo['filename'].replace('/', '-')
+                filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
             elif fileInfo['filename'].endswith('.warc.gz'):
                 _,_,_,partial_path,_,warcfile = fileInfo['filename'].split('/')
                 filename += partial_path + '-' + warcfile[0:len(warcfile)-8] + filerange + '.warc.gz'
+            else:
+                raise RuntimeError('Unknown file ending for %s', fileInfo['filename'])
 
             url = config.archive_host + '/' + fileInfo['filename']
-            rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']), self.domain, archive.archiveID)
-            logger.debug('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
+            rf = RemoteFile(url, filename, int(fileInfo['offset']), int(fileInfo['length']), self.domain.domain, self.archive.archiveID)
+            #logger.debug('Downloading from %s (range %i-%i) to %s', url, int(fileInfo['offset']), int(fileInfo['offset'])+int(fileInfo['length'])-1, filename)
             try:
                 rf.download()
             except (requests.RequestException, BadHTTPStatus):
                 raise
             finally:
-                self.updateHistory(archive.archiveID, 'completed', position+1)
+                self.domain.updateHistory(self.archive.archiveID, 'completed', position+1)
 
 #
 
 def main():
+#    snapshot1 = tracemalloc.take_snapshot()
+#    snapshot_init = snapshot1
+#    snapshot1.dump('init_snapshot')
     logger.info('Collector running.')
     archives = Archives()
     domains = []
+    domains_last_modified = 0
+    finished_message = False
+    monitor = Monitor.get('monitor')
+    current_search = None
+#    cycle = 0
 
     logger.debug('Loading retry queue.')
     retryqueue = RetryQueue()
     retryqueue.load()
 
-    domains_last_modified = 0
-
-    finished_message = False
-
-    monitor = Monitor.get('monitor')
 
     while True:
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
@@ -578,10 +608,10 @@ def main():
             with config.domain_list_file.open('r') as f:
                 line_number = 0
                 for line in f.read().splitlines():
+                    line_number += 1
                     if len(line) == 0:
                         logger.debug('Empty line in {dconf}, skipping.'.format(dconf=config.domain_list_file))
                         break
-                    line_number += 1
                     if line in domains:
                         logger.warning('Duplicate domain: %s (line %d in %s)', line, line_number, str(config.domain_list_file))
                     else:
@@ -604,7 +634,10 @@ def main():
                     archive = a
                     break
 
+        retryqueue.process()
+
         if not domain:
+            current_search = None
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
@@ -615,13 +648,32 @@ def main():
         monitor.state.state('collecting')
         finished_message = False
 
-        results = domain.search(archive)
-        if len(results) > 0:
-            results = domain.searchClusters(archive, results)
-            if len(results) > 0:
-                domain.getFile(archive, results)
+        if not current_search or current_search.domain != domain or current_search.archive != archive:
+            current_search = Search(domain, archive)
+            logger.info('Collection count prior to forced garbage collection: %s', str(gc.get_count()))
+            gc.collect()
+            logger.info('Collection count after forced garbage collection:    %s', str(gc.get_count()))
+        try:
+            current_search.process()
+        except (requests.RequestException, BadHTTPStatus) as error:
+            if isinstance(error, BadHTTPStatus):
+                logger.info('Could not retrieve %s: %d %s'. error[0], error[3], error[4])
+            else:
+                logger.info(error)
 
-        retryqueue.process()
+#        cycle += 1
+#        if cycle > 100:
+#            snapshot2 = tracemalloc.take_snapshot()
+#            snapshot1.dump('penultimate_snapshot')
+#            snapshot2.dump('latest_snapshot')
+#            cycle = 0
+#            snapshot_cur = tracemalloc.take_snapshot()
+#            top_stats = snapshot2.compare_to(snapshot_init, 'lineno')
+#            for stat in top_stats[:25]:
+#                logger.info(stat)
+#
+#            logger.info(tracemalloc.get_traced_memory()[0])
+#            snapshot1 = snapshot2
 
 if __name__ == "__main__":
     main()

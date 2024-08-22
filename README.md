@@ -31,6 +31,11 @@ Default: 1.0
 
 Minimum time between sent HTTP requests.
 
+#### max_request_interval *(float)*
+Default: 30.0
+
+Maximum time between sent HTTP requests, used for staggering failed HTTP requests.
+
 #### cache_index_clusters *(boolean)*
 Default: False
 
@@ -45,11 +50,6 @@ This will need to be set to wherever your pywb collection is located.
 Default: `Path.cwd()`
 
 A path that is considered safe, should point to where collector is located.
-
-#### critical_warn_interval *(integer)*
-Default: 8
-
-Logs a critical warning every (approximately) n hours without any successful http retrievals.
 
 #### prometheus_port *(integer)*
 Default: 1234
@@ -71,7 +71,7 @@ The script comes with two custom exceptions. Both inherit from Exception with no
 `ParserError` is the most important to take note of. It will be raised if we are unable to parse output of either the main index listing, or the cc-index.paths file, and should not be handled. This _could_ trigger if we get bad data from the server, but it will most likely mean there has been a format change, and our parsing algorithm will need to be updated accordingly.
 
 ### BadHTTPStatus
-Will be raised if we get a HTTP response other than 200 or 206. Arguments passed, in order, are: url, offset, length, status code, and status message. Presently have handlers in relevant locations, and should not have any loose chains.
+Will be raised if we get a non-OK HTTP (2??). Arguments passed, in order, are: url, offset, length, status code, and status message. Presently have handlers in relevant locations, and should not have any loose chains.
 
 ## License
 Licensed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html), see [license.txt](license.txt)
