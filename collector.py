@@ -344,7 +344,7 @@ class RemoteFile:
             sleep = config.min_request_interval * pow(1.5, self.requests['failed'])
             if sleep > config.max_request_interval:
                 sleep = config.max_request_interval
-            logger.error('Bad HTTP response %d %s for %s, sleeping for %d seconds (fail counter=%d).', r.status_code, r.reason, self.url, sleep, self.requests['failed'])
+            logger.error('Bad HTTP response %d %s for %s, sleeping for %f seconds (fail counter=%d).', r.status_code, r.reason, self.url, sleep, self.requests['failed'])
             time.sleep(sleep)
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
 
