@@ -637,6 +637,7 @@ def main():
         retryqueue.process()
 
         if not domain:
+            current_search = None
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
