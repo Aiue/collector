@@ -16,9 +16,9 @@ import os
 from pathlib import Path
 import requests
 import time
-#import tracemalloc
+import tracemalloc
 
-#tracemalloc.start(25)
+tracemalloc.start()
 
 try:
     from prometheus_client import start_http_server, Gauge, Counter, Enum
@@ -650,9 +650,9 @@ def main():
 
         if not current_search or current_search.domain != domain or current_search.archive != archive:
             current_search = Search(domain, archive)
-            logger.info('Collection count prior to forced garbage collection: %s', str(gc.get_count()))
+            logger.info('Collection count prior to forced garbage collection: %s, %d bytes traced.', str(gc.get_count()), tracemalloc.get_traced_memory())
             gc.collect()
-            logger.info('Collection count after forced garbage collection:    %s', str(gc.get_count()))
+            logger.info('Collection count after forced garbage collection:    %s, %d bytes traced.', str(gc.get_count()), tracemalloc.get_traced_memory())
         try:
             current_search.process()
         except (requests.RequestException, BadHTTPStatus) as error:
