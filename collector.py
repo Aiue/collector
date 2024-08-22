@@ -327,7 +327,11 @@ class RemoteFile:
         headers = None # Should not need to be initialized/emptied, but do it anyway.
         if type(self.offset) == int and self.length:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
+<<<<<<< HEAD
         self.requests['last'] = time.time()
+=======
+        self.lastRequest[0] = time.time()
+>>>>>>> e910feced7d7e2dc0651190660a8db459a497b45
         monitor = Monitor.get('monitor')
         try:
             r = requests.get(self.url, headers=headers)

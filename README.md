@@ -71,7 +71,11 @@ The script comes with two custom exceptions. Both inherit from Exception with no
 `ParserError` is the most important to take note of. It will be raised if we are unable to parse output of either the main index listing, or the cc-index.paths file, and should not be handled. This _could_ trigger if we get bad data from the server, but it will most likely mean there has been a format change, and our parsing algorithm will need to be updated accordingly.
 
 ### BadHTTPStatus
+<<<<<<< HEAD
 Will be raised if we get a non-OK HTTP (2??). Arguments passed, in order, are: url, offset, length, status code, and status message. Presently have handlers in relevant locations, and should not have any loose chains.
+=======
+Will be raised if we get a non-OK HTTP (2??) response. Arguments passed, in order, are: url, offset, length, status code, and status message. Presently have handlers in relevant locations, and should not have any loose chains.
+>>>>>>> e910feced7d7e2dc0651190660a8db459a497b45
 
 ## License
 Licensed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html), see [license.txt](license.txt)
