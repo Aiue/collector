@@ -503,7 +503,7 @@ class Search:
         for cluster in self.clusters:
             index = []
             if config.cache_index_clusters:
-                cacheFileName = str(config.cache_dir) + '/' + archive.archiveID + '/' + cluster[2] + '-' + str(cluster[5])
+                cacheFileName = str(config.cache_dir) + '/' + self.archive.archiveID + '/' + cluster[2] + '-' + str(cluster[5])
             else:
                 cacheFileName = None
             indexFile = RemoteFile(
