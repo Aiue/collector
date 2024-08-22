@@ -650,9 +650,9 @@ def main():
 
         if not current_search or current_search.domain != domain or current_search.archive != archive:
             current_search = Search(domain, archive)
-            logger.info('Collection count prior to forced garbage collection: %s, %d bytes traced.', str(gc.get_count()), tracemalloc.get_traced_memory())
+            logger.info('Collection count prior to forced garbage collection: %s, %d bytes traced.', str(gc.get_count()), tracemalloc.get_traced_memory()[0])
             gc.collect()
-            logger.info('Collection count after forced garbage collection:    %s, %d bytes traced.', str(gc.get_count()), tracemalloc.get_traced_memory())
+            logger.info('Collection count after forced garbage collection:    %s, %d bytes traced.', str(gc.get_count()), tracemalloc.get_traced_memory()[0])
         try:
             current_search.process()
         except (requests.RequestException, BadHTTPStatus) as error:
