@@ -526,7 +526,7 @@ class Search:
                 else:
                     break
         if len(self.archives) == 0:
-            self.updateHistory(self.archive.archiveID, 'completed', 0)
+            self.domain.updateHistory(self.archive.archiveID, 'completed', 0)
         self.domain.updateHistory(self.archive.archiveID, 'results', len(self.archives))
         logger.info('Found %d search results.', len(self.archives))
 
