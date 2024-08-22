@@ -128,6 +128,27 @@ def get_domain(domain):
         if d.domain == domain:
             return d
 
+def human_readable(mem): # Helper for some debugging.
+    value = None
+    unit = None
+    if mem > 1073741824:
+        value = mem/1073741824
+        unit = 'GiB'
+    elif mem > 1048576:
+        value = mem/1048576
+        unit = 'MiB'
+    elif mem > 1024:
+        value = mem/1024
+        unit = 'KiB'
+    else:
+        value = mem
+        unit = 'bytes'
+    print(type(value))
+    if type(value) == float:
+        return '%.2f %s' % (value, unit)
+    else:
+        return '%d %s' % (value, unit)
+
 # Classes
 class Monitor:
     monitors = {}
@@ -637,7 +658,7 @@ def main():
         retryqueue.process()
 
         if not domain:
-            current_search = None
+            current_search = None # Make sure we're not sitting on memory we don't need.
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
@@ -650,9 +671,9 @@ def main():
 
         if not current_search or current_search.domain != domain or current_search.archive != archive:
             current_search = Search(domain, archive)
-            logger.info('Collection count prior to forced garbage collection: %s, %d bytes traced.', str(gc.get_count()), tracemalloc.get_traced_memory()[0])
+            logger.info('Collection count prior to forced garbage collection: %s, %s traced.', str(gc.get_count()), human_readable(tracemalloc.get_traced_memory()[0]))
             gc.collect()
-            logger.info('Collection count after forced garbage collection:    %s, %d bytes traced.', str(gc.get_count()), tracemalloc.get_traced_memory()[0])
+            logger.info('Collection count after forced garbage collection:    %s, %s traced.', str(gc.get_count()), human_readable(tracemalloc.get_traced_memory()[0]))
         try:
             current_search.process()
         except (requests.RequestException, BadHTTPStatus) as error:
