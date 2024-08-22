@@ -646,10 +646,10 @@ def main():
         finished_message = False
 
         if not current_search or current_search.domain != domain or current_search.archive != archive:
+            current_search = Search(domain, archive)
             logger.info('Collection count prior to forced garbage collection: %s', str(gc.get_count()))
             gc.collect()
             logger.info('Collection count after forced garbage collection:    %s', str(gc.get_count()))
-            current_search = Search(domain, archive)
         try:
             current_search.process()
         except (requests.RequestException, BadHTTPStatus) as error:
