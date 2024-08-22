@@ -143,7 +143,6 @@ def human_readable(mem): # Helper for some debugging.
     else:
         value = mem
         unit = 'bytes'
-    print(type(value))
     if type(value) == float:
         return '%.2f %s' % (value, unit)
     else:
