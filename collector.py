@@ -341,7 +341,7 @@ class RemoteFile:
     def get(self):
         #logger.debug('Getting from %s', self.url)
         if (time.time() - self.requests['last']) < config.min_request_interval:
-            logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.requests['last'])
+            logger.debug('Request limit reached, sleeping for %.2f seconds.', time.time() - self.requests['last'])
             time.sleep(time.time() - self.requests['last'])
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
