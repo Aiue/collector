@@ -539,8 +539,10 @@ class Search:
 
             logger.info('%s memory traced after building internal archive index.', human_readable(tracemalloc.get_traced_memory()[0]))
 
-            # Do a binary search, even if its not the first cluster in the list it should be fairly inexpensive.
-            position = bisect.bisect_left(index, (self.domain.searchString, 0, ""))
+            if cluster is self.clusters[0]:
+                position = bisect.bisect_left(index, (self.domain.searchString, 0, ""))
+            else:
+                position = 0
             logger.debug('Index insertion point at line %d out of %d. (%s)', position+1, len(index), index[position][0])            
             # Unlike the cluster index, there should be no earlier result than position.
             while position < len(index):
