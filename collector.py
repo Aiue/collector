@@ -504,6 +504,8 @@ class Search:
                  int(cluster)       # 5
                 ))
 
+        logger.info('%s memory traced after building internal cluster index.', human_readable(tracemalloc.get_traced_memory()[0]))
+
         # This search format should mean we're always left of anything matching our search string.
         position = bisect.bisect_left(index, (self.domain.searchString + '(', 0, "", 0, 0, 0))
         logger.debug('(cluster index) Potential match at line %d out of %d. (%s)', position+1, len(index), index[position][0])
@@ -534,6 +536,9 @@ class Search:
             for line in indexFile.read().splitlines():
                 searchable_string,timestamp,json = line.split(' ', 2)
                 index.append((searchable_string, int(timestamp), json))
+
+            logger.info('%s memory traced after building internal archive index.', human_readable(tracemalloc.get_traced_memory()[0]))
+
             # Do a binary search, even if its not the first cluster in the list it should be fairly inexpensive.
             position = bisect.bisect_left(index, (self.domain.searchString, 0, ""))
             logger.debug('Index insertion point at line %d out of %d. (%s)', position+1, len(index), index[position][0])            
