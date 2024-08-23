@@ -16,9 +16,6 @@ import os
 from pathlib import Path
 import requests
 import time
-import tracemalloc
-
-tracemalloc.start()
 
 try:
     from prometheus_client import start_http_server, Gauge, Counter, Enum
@@ -341,7 +338,7 @@ class RemoteFile:
     def get(self):
         #logger.debug('Getting from %s', self.url)
         if (time.time() - self.requests['last']) < config.min_request_interval:
-            logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.requests['last'])
+            logger.debug('Request limit reached, sleeping for %.2f seconds.', time.time() - self.requests['last'])
             time.sleep(time.time() - self.requests['last'])
 
         headers = None # Should not need to be initialized/emptied, but do it anyway.
@@ -538,8 +535,11 @@ class Search:
             for line in indexFile.read().splitlines():
                 searchable_string,timestamp,json = line.split(' ', 2)
                 index.append((searchable_string, int(timestamp), json))
-            # Do a binary search, even if its not the first cluster in the list it should be fairly inexpensive.
-            position = bisect.bisect_left(index, (self.domain.searchString, 0, ""))
+
+            if cluster is self.clusters[0]:
+                position = bisect.bisect_left(index, (self.domain.searchString, 0, ""))
+            else:
+                position = 0
             logger.debug('Index insertion point at line %d out of %d. (%s)', position+1, len(index), index[position][0])            
             # Unlike the cluster index, there should be no earlier result than position.
             while position < len(index):
@@ -596,9 +596,6 @@ class Search:
 #
 
 def main():
-#    snapshot1 = tracemalloc.take_snapshot()
-#    snapshot_init = snapshot1
-#    snapshot1.dump('init_snapshot')
     logger.info('Collector running.')
     archives = Archives()
     domains = []
@@ -606,7 +603,6 @@ def main():
     finished_message = False
     monitor = Monitor.get('monitor')
     current_search = None
-#    cycle = 0
 
     logger.debug('Loading retry queue.')
     retryqueue = RetryQueue()
@@ -674,9 +670,6 @@ def main():
 
         if not current_search or current_search.domain != domain or current_search.archive != archive:
             current_search = Search(domain, archive)
-            logger.info('Collection count prior to forced garbage collection: %s, %s traced.', str(gc.get_count()), human_readable(tracemalloc.get_traced_memory()[0]))
-            gc.collect()
-            logger.info('Collection count after forced garbage collection:    %s, %s traced.', str(gc.get_count()), human_readable(tracemalloc.get_traced_memory()[0]))
         try:
             current_search.process()
         except (requests.RequestException, BadHTTPStatus) as error:
@@ -684,20 +677,6 @@ def main():
                 logger.info('Could not retrieve %s: %d %s'. error[0], error[3], error[4])
             else:
                 logger.info(error)
-
-#        cycle += 1
-#        if cycle > 100:
-#            snapshot2 = tracemalloc.take_snapshot()
-#            snapshot1.dump('penultimate_snapshot')
-#            snapshot2.dump('latest_snapshot')
-#            cycle = 0
-#            snapshot_cur = tracemalloc.take_snapshot()
-#            top_stats = snapshot2.compare_to(snapshot_init, 'lineno')
-#            for stat in top_stats[:25]:
-#                logger.info(stat)
-#
-#            logger.info(tracemalloc.get_traced_memory()[0])
-#            snapshot1 = snapshot2
 
 if __name__ == "__main__":
     main()
