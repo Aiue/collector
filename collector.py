@@ -125,26 +125,6 @@ def get_domain(domain):
         if d.domain == domain:
             return d
 
-def human_readable(mem): # Helper for some debugging.
-    value = None
-    unit = None
-    if mem > 1073741824:
-        value = mem/1073741824
-        unit = 'GiB'
-    elif mem > 1048576:
-        value = mem/1048576
-        unit = 'MiB'
-    elif mem > 1024:
-        value = mem/1024
-        unit = 'KiB'
-    else:
-        value = mem
-        unit = 'bytes'
-    if type(value) == float:
-        return '%.2f %s' % (value, unit)
-    else:
-        return '%d %s' % (value, unit)
-
 # Classes
 class Monitor:
     monitors = {}
@@ -626,7 +606,7 @@ def main():
                 for line in f.read().splitlines():
                     line_number += 1
                     if len(line) == 0:
-                        logger.debug('Empty line in %s, skipping.' % config.domain_list_file)
+                        logger.debug('Empty line in %s, skipping.', config.domain_list_file)
                         break
                     if line in domains:
                         logger.warning('Duplicate domain: %s (line %d in %s)', line, line_number, str(config.domain_list_file))
