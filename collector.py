@@ -357,10 +357,10 @@ class RemoteFile:
             if r.status_code >= 400 and r.status_code < 500:
                 raise ParserError('HTTP response %d indicates a potential parsing issue. This should be investigated.', r.status_code)
             monitor.failed.inc()
-            self.requests['failed'] += 1
             sleep = config.min_request_interval * pow(1.5, self.requests['failed'])
             if sleep > config.max_request_interval:
                 sleep = config.max_request_interval
+            self.requests['failed'] += 1
             logger.error('Bad HTTP response %d %s for %s, sleeping for %.2f seconds (fail counter=%d).', r.status_code, r.reason, self.url, sleep, self.requests['failed'])
             time.sleep(sleep)
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
