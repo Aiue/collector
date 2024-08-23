@@ -16,9 +16,6 @@ import os
 from pathlib import Path
 import requests
 import time
-import tracemalloc
-
-tracemalloc.start()
 
 try:
     from prometheus_client import start_http_server, Gauge, Counter, Enum
@@ -504,8 +501,6 @@ class Search:
                  int(cluster)       # 5
                 ))
 
-        logger.info('%s memory traced after building internal cluster index.', human_readable(tracemalloc.get_traced_memory()[0]))
-
         # This search format should mean we're always left of anything matching our search string.
         position = bisect.bisect_left(index, (self.domain.searchString + '(', 0, "", 0, 0, 0))
         logger.debug('(cluster index) Potential match at line %d out of %d. (%s)', position+1, len(index), index[position][0])
@@ -536,8 +531,6 @@ class Search:
             for line in indexFile.read().splitlines():
                 searchable_string,timestamp,json = line.split(' ', 2)
                 index.append((searchable_string, int(timestamp), json))
-
-            logger.info('%s memory traced after building internal archive index.', human_readable(tracemalloc.get_traced_memory()[0]))
 
             if cluster is self.clusters[0]:
                 position = bisect.bisect_left(index, (self.domain.searchString, 0, ""))
@@ -673,7 +666,6 @@ def main():
 
         if not current_search or current_search.domain != domain or current_search.archive != archive:
             current_search = Search(domain, archive)
-            logger.info('Collection count before processing new search: %s, %s traced.', str(gc.get_count()), human_readable(tracemalloc.get_traced_memory()[0]))
         try:
             current_search.process()
         except (requests.RequestException, BadHTTPStatus) as error:
