@@ -108,7 +108,7 @@ def path_is_safe(path, inst=None): # path is a Path.
              or str(path).startswith(str(config.safe_path))
              or str(path).startswith(str(config.cache_dir))
     )):
-        msg = f"Unsafe path: {self}"
+        msg = 'Unsafe path: %s' % self
         if inst and type(inst) == RemoteFile: # Type is either RemoteFile or Domain. Only RemoteFile has attributes we want to add.
             msg += ' (' + str(self.url) + ')'  # Only url is of real interest.
             
@@ -124,26 +124,6 @@ def get_domain(domain):
     for d in Domain.domains:
         if d.domain == domain:
             return d
-
-def human_readable(mem): # Helper for some debugging.
-    value = None
-    unit = None
-    if mem > 1073741824:
-        value = mem/1073741824
-        unit = 'GiB'
-    elif mem > 1048576:
-        value = mem/1048576
-        unit = 'MiB'
-    elif mem > 1024:
-        value = mem/1024
-        unit = 'KiB'
-    else:
-        value = mem
-        unit = 'bytes'
-    if type(value) == float:
-        return '%.2f %s' % (value, unit)
-    else:
-        return '%d %s' % (value, unit)
 
 # Classes
 class Monitor:
@@ -423,7 +403,7 @@ class Domain:
         if not '.' in domain: # Additional validation will follow when building the search string.
                               # We don't need to be super strict with the verification, as long as
                               # we only have dots and alphanumeric characters. More for lining up^
-            raise ValueError('Domains are expected to contain dots (.), read \'{domain}\'.'.format(domain=domain))
+            raise ValueError('Domains are expected to contain dots (.), read \'%s\'.' % domain)
 
         self.domain = domain
         self.searchString = ""
@@ -431,7 +411,7 @@ class Domain:
         for i in range(len(domainParts),0,-1):
             if not domainParts[i-1].replace('-', '').isalnum(): # Not the prettiest or most strictly accurate way of doing this,
                                                                 # but will be sufficient for our purposes.
-                raise ValueError('Domains can only contain alphanumeric characters, hyphens, and dots, read \'{domain}\'.'.format(domain=domain))
+                raise ValueError('Domains can only contain alphanumeric characters, hyphens, and dots, read \'%s\'.' % domain)
             self.searchString += domainParts[i-1]
             if i > 1:
                 self.searchString += ','
@@ -630,7 +610,7 @@ def main():
                 for line in f.read().splitlines():
                     line_number += 1
                     if len(line) == 0:
-                        logger.debug('Empty line in {dconf}, skipping.'.format(dconf=config.domain_list_file))
+                        logger.debug('Empty line in %s, skipping.', config.domain_list_file)
                         break
                     if line in domains:
                         logger.warning('Duplicate domain: %s (line %d in %s)', line, line_number, str(config.domain_list_file))
