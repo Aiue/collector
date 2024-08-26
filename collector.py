@@ -5,7 +5,6 @@
 # Licensed under GPLv3, see license.txt
 
 import bisect
-import gc
 import gzip
 import html.parser
 import json
