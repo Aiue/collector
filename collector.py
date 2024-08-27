@@ -130,10 +130,10 @@ class Monitor:
     def __init__(self, monitor):
         self.monitors[monitor] = self
         start_http_server(config.prometheus_port)
-        self.retryqueue = Gauge('retryqueue', 'Retry queue entries')
-        self.requests = Counter('requests', 'Requests send')
-        self.failed = Counter('failed', 'Failed requests')
-        self.state = Enum('state', 'Current state', states=['collecting', 'idle'])
+        self.retryqueue = Gauge('collector_retryqueue', 'Retry queue entries')
+        self.requests = Counter('collector_requests', 'Requests send')
+        self.failed = Counter('collector_failed', 'Failed requests')
+        self.state = Enum('collector_state', 'Current state', states=['collecting', 'idle'])
 
     def get(name):
         if name in Monitor.monitors: return Monitor.monitors[name]
@@ -582,7 +582,6 @@ def main():
     logger.debug('Loading retry queue.')
     retryqueue = RetryQueue()
     retryqueue.load()
-
 
     while True:
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
