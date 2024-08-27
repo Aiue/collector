@@ -31,8 +31,8 @@ def main():
 
     for cluster_index in Path(config.cache_dir).glob('*/cluster.idx'):
         cindex = []
-        with cluster_index.open('rb') as f:
-            for line in gzip.decompress(f.read()).splitlines():
+        with cluster_index.open('r') as f:
+            for line in f.read().splitlines():
                 searchable_string,rest = line.split(' ')
                 timestamp,filename,offset,length,cluster = rest.split('\t')
                 cindex.append(
