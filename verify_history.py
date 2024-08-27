@@ -31,7 +31,7 @@ def main():
 
     for cluster_index in Path(config.cache_dir).glob('*/cluster.idx'):
         cindex = []
-        with cluster_index.open('r') as f:
+        with cluster_index.open('rb') as f:
             for line in gzip.decompress(f.read()).splitlines():
                 searchable_string,rest = line.split(' ')
                 timestamp,filename,offset,length,cluster = rest.split('\t')
@@ -59,7 +59,7 @@ def main():
             for cluster in clusters:
                 aindex = []
                 cacheFile = Path(cluster_index.parent, cluster[2] + '-' + str(cluster[5]))
-                with cacheFile.open('r') as f:
+                with cacheFile.open('rb') as f:
                     for line in gzip.decompress(f.read()).splitlines():
                         searchable_string,timestamp,json = line.split(' ', 2)
                         aindex.append((searchable_string, int(timestamp), json))
