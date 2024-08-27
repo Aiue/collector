@@ -134,8 +134,8 @@ class Monitor:
         self.failed = Counter('collector_failed', 'Failed requests')
         self.state = Enum('collector_state', 'Current state', states=['collecting', 'idle'])
 
-    def get(name):
-        if name in Monitor.monitors: return Monitor.monitors[name]
+    def get(self, name):
+        if name in self.monitors: return self.monitors[name]
         return Monitor(name)
 
 class Archive:
