@@ -5,6 +5,7 @@
 
 import bisect
 from collector import is_match, Config, Domain
+import gzip
 import json
 import logging
 import logging.handlers
@@ -12,10 +13,10 @@ from pathlib import Path
 
 config = Config(Path('collector.conf'))
 
-logger = logging.getLogger()
+log = logging.getLogger('mail')
 email_handler = logging.handlers.SMTPHandler('localhost', 'noreply-common-crawl-collector@ccc-test.it.liu.se', ['jens.nilsson.sahlin@liu.se'], 'CC-Collector Diagnostics Report')
 email_handler.setFormatter(logging.Formatter(fmt=None))
-logger.addHandler(email_handler)
+log.addHandler(email_handler)
     
 def main():
     # Load domains.
@@ -97,10 +98,10 @@ def main():
             if mismatch is not mismatches[len(mismatches)-1]:
                 msg += '\n'
 
-        logger.info(msg)
+        log.info(msg)
                 
     else: # No errors! Yay!
-        logger.info('verify_history.py ran, no problems detected.')
+        log.info('verify_history.py ran, no problems detected.')
 
 if __name__ == "__main__":
     main()
