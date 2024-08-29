@@ -60,7 +60,7 @@ def main():
                 aindex = []
                 cacheFile = Path(cluster_index.parent, cluster[2] + '-' + str(cluster[5]))
                 with cacheFile.open('rb') as f:
-                    for line in gzip.decompress(f.read()).splitlines():
+                    for line in gzip.decompress(f.read()).decode().splitlines():
                         searchable_string,timestamp,json = line.split(' ', 2)
                         aindex.append((searchable_string, int(timestamp), json))
                 if cluster is clusters[0]:
