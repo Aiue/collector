@@ -76,10 +76,8 @@ def main():
 
             # Compare matches to history. If they mismatch, something's broken.
             archiveID = cluster_index.parts[len(cluster_index.parts)-2]
-            if not archiveID in domain.history:
-                mismatches.append((archiveID, domain, matches, 0, 0))
-            elif domain.history[archiveID]['results'] != matches:
-                mismatches.append((archiveID, domain, matches, domain.history[archiveID]['results']), 1)
+            if archiveID in domain.history and  domain.history[archiveID]['results'] != matches:
+                mismatches.append((archiveID, domain, matches, domain.history[archiveID]['results']))
 
     if len(mismatches) > 0:
         msg = ''
@@ -88,12 +86,7 @@ def main():
             # 1 domain
             # 2 matches
             # 3 history results
-            # 4 flag: 0 for no history, 1 for history but mismatch
-            msg += '%s in %s: %d matches, ' % (mismatch[1], mismatch[0], mismatch[2])
-            if mismatch[4] == 0:
-                msg += 'no recorded history found'
-            else:
-                msg += '%d in history' % mismatch[3]
+            msg += '%s in %s: %d matches, %d in history' % (mismatch[1], mismatch[0], mismatch[2], mismatch[3])
 
             if mismatch is not mismatches[len(mismatches)-1]:
                 msg += '\n'
