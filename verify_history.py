@@ -91,7 +91,7 @@ def main():
             # 4 flag: 0 for no history, 1 for history but mismatch
             msg += '%s in %s: %d matches, ' % (mismatch[1], mismatch[0], mismatch[2])
             if mismatch[4] == 0:
-                msg += 'no recorded history found\n'
+                msg += 'no recorded history found'
             else:
                 msg += '%d in history' % mismatch[3]
 
