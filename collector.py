@@ -129,11 +129,10 @@ class Monitor:
     monitors = {}
     def __init__(self, monitor):
         self.monitors[monitor] = self
-        start_http_server(config.prometheus_port)
-        self.retryqueue = Gauge('retryqueue', 'Retry queue entries')
-        self.requests = Counter('requests', 'Requests send')
-        self.failed = Counter('failed', 'Failed requests')
-        self.state = Enum('state', 'Current state', states=['collecting', 'idle'])
+        self.retryqueue = Gauge('collector_retryqueue', 'Retry queue entries')
+        self.requests = Counter('collector_requests', 'Requests send')
+        self.failed = Counter('collector_failed', 'Failed requests')
+        self.state = Enum('collector_state', 'Current state', states=['collecting', 'idle'])
 
     def get(name):
         if name in Monitor.monitors: return Monitor.monitors[name]
@@ -329,6 +328,7 @@ class RemoteFile:
         self.lastRequest[0] = time.time()
 >>>>>>> e910feced7d7e2dc0651190660a8db459a497b45
         monitor = Monitor.get('monitor')
+        monitor.requests.inc()
         try:
             r = requests.get(self.url, headers=headers)
         except requests.RequestException as error:
@@ -349,7 +349,6 @@ class RemoteFile:
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
 
         self.requests['failed'] = 0
-        monitor.requests.inc()
         return r.content
 
 class RetryQueue:
@@ -587,7 +586,8 @@ def main():
     retryqueue = RetryQueue()
     retryqueue.load()
 
-
+    start_http_server(config.prometheus_port)
+    
     while True:
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
             if domains_last_modified == 0:
