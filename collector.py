@@ -324,6 +324,7 @@ class RemoteFile:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
         self.requests['last'] = time.time()
         monitor = Monitor.get('monitor')
+        monitor.requests.inc()
         try:
             r = requests.get(self.url, headers=headers)
         except requests.RequestException as error:
@@ -344,7 +345,6 @@ class RemoteFile:
             raise BadHTTPStatus(self.url, self.offset, self.length, r.status_code, r.reason)
 
         self.requests['failed'] = 0
-        monitor.requests.inc()
         return r.content
 
 class RetryQueue:
