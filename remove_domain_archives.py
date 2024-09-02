@@ -16,7 +16,7 @@ def main():
     if len(sys.argv) != 2:
         print('Usage: ' + sys.argv[0] + ' <domain>')
         return
-    indexFile = Path(Path(config.pywb_collection_dir).parents[0], 'root', 'autoindex.cdxj')
+    indexFile = Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj')
     index = []
     with indexFile.open('r') as f:
         for line in f.read.splitlines():
