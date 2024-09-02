@@ -47,7 +47,7 @@ def main():
         for domain in domains:
             clusters = []
             matches = 0
-            position = bisect.bisect_left(cindex, (domain.searchString + '(', 0, "", 0, 0, 0))
+            position = bisect.bisect_left(cindex, (domain.searchString + ')', 0, "", 0, 0, 0))
             clusters.append(cindex[position-1])
             while position < len(cindex):
                 if is_match(cindex[position][0], domain.searchString):

@@ -484,7 +484,7 @@ class Search:
                 ))
 
         # This search format should mean we're always left of anything matching our search string.
-        position = bisect.bisect_left(index, (self.domain.searchString + '(', 0, "", 0, 0, 0))
+        position = bisect.bisect_left(index, (self.domain.searchString + ')', 0, "", 0, 0, 0))
         logger.debug('(cluster index) Potential match at line %d out of %d. (%s)', position+1, len(index), index[position][0])
         # We may (and likely will) have matches in the index cluster prior to our match.
         self.clusters.append(index[position-1])
