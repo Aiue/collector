@@ -19,7 +19,7 @@ def main():
     indexFile = Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj')
     index = []
     with indexFile.open('r') as f:
-        for line in f.read.splitlines():
+        for line in f.read().splitlines():
             searchable_string,timestamp,json = line.split(' ', 2)
             index.append((searchable_string, int(timestamp), json))
 
