@@ -34,14 +34,20 @@ def main():
             searchString += ','
 
     position = bisect.bisect_left(index, (searchString, 0, ''))
+    results = 0
     while is_match(index[position], searchString):
+        reults += 1
         info = json.loads(index.pop(position)[2])
         try:
             Path(config.pywb_collection_dir, info['filename']).unlink()
         except FileNotFoundError:
             print('Indexed file %s not found.' % info['filename'])
 
+    print('Removed %d files.' % results)
+
+    print('Removing history/%s (if existing)' %  domain)
     Path('history', domain).unlink(missing_ok=True)
+    print('Writing new index.')
     with indexFile.open('w') as f:
         for line in index:
             f.write(line[0] + ' ' + line[1] + ' ' + line[2])
