@@ -535,10 +535,6 @@ class Search:
         elif type(self.domain.history[self.archive.archiveID]['completed']) == int:
             position = self.domain.history[self.archive.archiveID]['completed']
 
-        logger.debug('Result found at %d', position)
-
-        #logger.debug('Loading JSON: %s', index[position])
-        # Everything is treated as strings, so we will need to convert integers.
         fileInfo = json.loads(self.archives[position])
 
         if int(fileInfo['length']) > config.max_file_size:
