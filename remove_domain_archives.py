@@ -20,8 +20,8 @@ def main():
     index = []
     with indexFile.open('r') as f:
         for line in f.read().splitlines():
-            searchable_string,timestamp,json = line.split(' ', 2)
-            index.append((searchable_string, int(timestamp), json))
+            searchable_string,timestamp,info = line.split(' ', 2)
+            index.append((searchable_string, int(timestamp), info))
 
     domainParts = sys.argv[1].split('.')
     searchString = ""
