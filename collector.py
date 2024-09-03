@@ -316,9 +316,10 @@ class RemoteFile:
     def get(self):
         #logger.debug('Getting from %s', self.url)
         if (time.time() - self.requests['last']) < config.min_request_interval:
-            logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.requests['last'])
-            time.sleep(time.time() - self.requests['last'])
+            logger.debug('Request limit reached, sleeping for %f seconds.', config.min_request_interval - (time.time() - self.requests['last']))
+            time.sleep(config.min_request_interval - (time.time() - self.requests['last']))
 
+        time_start = time.time()
         headers = None # Should not need to be initialized/emptied, but do it anyway.
         if type(self.offset) == int and self.length:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
@@ -335,6 +336,8 @@ class RemoteFile:
             monitor.failed.inc()
             logger.error('Could not get %s - %s', self.url, error)
             raise
+        finally:
+            logger.debug('Downloaded file in %f seconds.', time.time() - time_start)
         if not (r.status_code >= 200 and r.status_code < 300):
             # This could imply a problem with parsing, raise it as such rather than simply bad status.
             if r.status_code >= 400 and r.status_code < 500:
@@ -485,7 +488,7 @@ class Search:
 
         # This search format should mean we're always left of anything matching our search string.
         position = bisect.bisect_left(index, (self.domain.searchString + ')', 0, "", 0, 0, 0))
-        logger.debug('(cluster index) Potential match at line %d out of %d. (%s)', position+1, len(index), index[position][0])
+        logger.debug('(cluster index) Potential match at line %d out of %d. (Between %s and %s)', position+1, len(index), (position <= 0 and '(index out of range)' or index[position][-1]), index[position][0])
         # We may (and likely will) have matches in the index cluster prior to our match.
         self.clusters.append(index[position-1])
         while position < len(index):
@@ -539,10 +542,6 @@ class Search:
         elif type(self.domain.history[self.archive.archiveID]['completed']) == int:
             position = self.domain.history[self.archive.archiveID]['completed']
 
-        logger.debug('Result found at %d', position)
-
-        #logger.debug('Loading JSON: %s', index[position])
-        # Everything is treated as strings, so we will need to convert integers.
         fileInfo = json.loads(self.archives[position])
 
         if int(fileInfo['length']) > config.max_file_size:

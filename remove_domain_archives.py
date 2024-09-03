@@ -16,12 +16,12 @@ def main():
     if len(sys.argv) != 2:
         print('Usage: ' + sys.argv[0] + ' <domain>')
         return
-    indexFile = Path(Path(config.pywb_collection_dir).parents[0], 'root', 'autoindex.cdxj')
+    indexFile = Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj')
     index = []
     with indexFile.open('r') as f:
-        for line in f.read.splitlines():
-            searchable_string,timestamp,json = line.split(' ', 2)
-            index.append((searchable_string, int(timestamp), json))
+        for line in f.read().splitlines():
+            searchable_string,timestamp,info = line.split(' ', 2)
+            index.append((searchable_string, int(timestamp), info))
 
     domainParts = sys.argv[1].split('.')
     searchString = ""
@@ -35,8 +35,8 @@ def main():
 
     position = bisect.bisect_left(index, (searchString, 0, ''))
     results = 0
-    while is_match(index[position], searchString):
-        reults += 1
+    while is_match(index[position][0], searchString):
+        results += 1
         info = json.loads(index.pop(position)[2])
         try:
             Path(config.pywb_collection_dir, info['filename']).unlink()
@@ -45,8 +45,8 @@ def main():
 
     print('Removed %d files.' % results)
 
-    print('Removing history/%s (if existing)' %  domain)
-    Path('history', domain).unlink(missing_ok=True)
+    print('Removing history/%s (if existing)' %  sys.argv[1])
+    Path('history', sys.argv[1]).unlink(missing_ok=True)
     print('Writing new index.')
     with indexFile.open('w') as f:
         for line in index:
