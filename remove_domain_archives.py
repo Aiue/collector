@@ -45,8 +45,8 @@ def main():
 
     print('Removed %d files.' % results)
 
-    print('Removing history/%s (if existing)' %  domain)
-    Path('history', domain).unlink(missing_ok=True)
+    print('Removing history/%s (if existing)' %  sys.argv[1])
+    Path('history', sys.argv[1]).unlink(missing_ok=True)
     print('Writing new index.')
     with indexFile.open('w') as f:
         for line in index:
