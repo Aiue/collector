@@ -319,6 +319,7 @@ class RemoteFile:
             logger.debug('Request limit reached, sleeping for %f seconds.', time.time() - self.requests['last'])
             time.sleep(time.time() - self.requests['last'])
 
+        time_start = time.time()
         headers = None # Should not need to be initialized/emptied, but do it anyway.
         if type(self.offset) == int and self.length:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
@@ -331,6 +332,8 @@ class RemoteFile:
             monitor.failed.inc()
             logger.error('Could not get %s - %s', self.url, error)
             raise
+        finally:
+            logger.debug('Downloaded file in %f seconds.', time.time() - time_start)
         if not (r.status_code >= 200 and r.status_code < 300):
             # This could imply a problem with parsing, raise it as such rather than simply bad status.
             if r.status_code >= 400 and r.status_code < 500:
