@@ -35,7 +35,7 @@ def main():
 
     position = bisect.bisect_left(index, (searchString, 0, ''))
     results = 0
-    while is_match(index[position], searchString):
+    while is_match(index[position][0], searchString):
         reults += 1
         info = json.loads(index.pop(position)[2])
         try:
