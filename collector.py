@@ -585,6 +585,7 @@ def main():
     start_http_server(config.prometheus_port)
     
     while True:
+        monitor.retryqueue.set(len(retryqueue))
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
             if domains_last_modified == 0:
                 logger.info('Reading domain list.')
