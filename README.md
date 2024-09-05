@@ -61,8 +61,13 @@ Default: .cache
 
 Directory cache is stored in.
 
+### remove_domain_archives.py
+Usage: `./remove_domain_archive.py <domain>`
+
+Removes all of: indexed archives for a specific domain, pywb index entries for the domain, and our own history file for the domain. **Recommended to not use while collector or pywb are running, and also, it relies on pywb having finished building the index.**
+
 ### status.py
-`status.py` can be used to get completion information on individual domains. Usage is simple: `status.py <all|domain>`. 
+`status.py` can be used to get completion information on individual domains. Usage is simple: `./status.py <all|domain>`. 
 
 ## Exceptions
 The script comes with two custom exceptions. Both inherit from Exception with no additional changes. The exceptions are `ParserError` and `BadHTTPStatus`.
