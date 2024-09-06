@@ -650,7 +650,7 @@ def main():
             current_search.process()
         except (requests.RequestException, BadHTTPStatus) as error:
             if isinstance(error, BadHTTPStatus):
-                logger.info('Could not retrieve %s: %d %s'. error[0], error[3], error[4])
+                logger.info('Could not retrieve %s: %d %s', error[0], error[3], error[4])
             else:
                 logger.info(error)
 
