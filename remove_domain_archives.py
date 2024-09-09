@@ -42,6 +42,8 @@ def main():
             Path(config.pywb_collection_dir, info['filename']).unlink()
         except FileNotFoundError:
             print('Indexed file %s not found.' % info['filename'])
+         if len(index) == position:
+             break
 
     print('Removed %d files.' % results)
 
