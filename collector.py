@@ -79,6 +79,8 @@ class Config:
                         value = Path(value)
                     elif key in ['max_file_size', 'prometheus_port']:
                         value = int(value)
+                    elif key not in ['archive_host', 'archive_list_uri', 'pywb_collection_dir']:
+                        raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
 
 config = Config(Path('collector.conf'))
