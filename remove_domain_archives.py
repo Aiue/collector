@@ -42,13 +42,13 @@ def main():
             Path(config.pywb_collection_dir, info['filename']).unlink()
         except FileNotFoundError:
             print('Indexed file %s not found.' % info['filename'])
-        if len(index) == position:
+        if len(index) >= position:
              break
 
     print('Removed %d files.' % results)
 
     print('Removing history/%s (if existing)' %  sys.argv[1])
-    Path('history', sys.argv[1]).unlink(missing_ok=True)
+    Path('history', sys.argv[1]).unlink()
     print('Writing new index.')
     with indexFile.open('w') as f:
         for line in index:
