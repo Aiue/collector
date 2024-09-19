@@ -582,6 +582,8 @@ def main():
     domains_last_modified = 0
     finished_message = False
     monitor = Monitor.get('monitor')
+    monitor.state.state('idle')
+
     current_search = None
 
     logger.debug('Loading retry queue.')
