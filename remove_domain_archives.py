@@ -23,6 +23,10 @@ def main():
             searchable_string,timestamp,info = line.split(' ', 2)
             index.append((searchable_string, int(timestamp), info))
 
+    if len(index) == 0:
+        print('Nothing to remove.')
+        sys.exit()
+
     domainParts = sys.argv[1].split('.')
     searchString = ""
     for i in range(len(domainParts),0,-1):
@@ -43,7 +47,7 @@ def main():
         except FileNotFoundError:
             print('Indexed file %s not found.' % info['filename'])
         if len(index) <= position:
-             break
+            break
 
     print('Removed %d files.' % results)
 
