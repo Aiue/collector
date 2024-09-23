@@ -65,6 +65,7 @@ class Config:
     prometheus_port = 1234
     cache_dir = Path('.cache')
     notification_email = None
+    mail_from_address = None
 
     def __init__(self, configFile):
         if configFile.exists():
@@ -80,7 +81,7 @@ class Config:
                         value = Path(value)
                     elif key in ['max_file_size', 'prometheus_port']:
                         value = int(value)
-                    elif key not in ['archive_host', 'archive_list_uri', 'notification_email', 'pywb_collection_dir']:
+                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'pywb_collection_dir']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
 
@@ -91,10 +92,10 @@ logger = logging.getLogger()
 logging.config.fileConfig('logger.conf')
 mailer = logging.getLogger('mailer')
 mailer.setLevel('INFO')
-if config.notification_email == None:
+if config.notification_email == None or config.mail_from_address == None:
     mailer.addHandler(logging.NullHandler())
 else:
-    mailer.addHandler(logging.handler.SMTPHandler('localhost', 'collector', [config.notification_email], 'Collector Status Update'))
+    mailer.addHandler(logging.handlers.SMTPHandler('localhost', config.mail_from_address, [config.notification_email], 'Collector Status Update'))
 
 # Exceptions
 class ParserError(Exception):
@@ -596,7 +597,7 @@ def main():
     finished_message = False
     monitor = Monitor.get('monitor')
     monitor.state.state('idle')
-    init = True
+    hasProcessed = False
     current_search = None
 
     logger.debug('Loading retry queue.')
@@ -659,8 +660,9 @@ def main():
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
-            if not init:
+            if hasProcessed:
                 mailer.info('All configured domains have been processed in all current archives.' % '\n%d items remain in retry queue.' % len(retryqueue.queue) if len(retryqueue.queue) > 0 else '')
+                hasProcessed = False
             time.sleep(10)
             continue
 
@@ -677,7 +679,7 @@ def main():
             else:
                 logger.warning(error)
 
-        init = None
+        hasProcessed = True
 
 if __name__ == "__main__":
     main()
