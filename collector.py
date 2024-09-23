@@ -234,7 +234,7 @@ class Archives:
             
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
-                if not initial or len(self.archives) == preArchiveCount:
+                if not initial and len(parser.archives) > preArchiveCount:
                     logger.info('New archive: %s' % archive.archiveID)
                     mailer.info('New archive: %s' % archive.archiveID)
                 self.archives[archive.archiveID] = archive
