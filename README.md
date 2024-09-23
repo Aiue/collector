@@ -62,9 +62,14 @@ Default: .cache
 Directory cache is stored in.
 
 #### notification_email *(string)*
-Default: None (NoneType)
+Default: None *(NoneType)*
 
-Optional. Set to an email adress to have status updates (new archive/searches finished) sent to it.
+Optional. Set to an email adress to have status updates (new archive/searches finished) sent to it. Also requires *mail_from_address* to be set.
+
+#### mail_from_address *(string)*
+Default: None *(NoneType)*
+
+Optional. Required for functions related to sending email (outside of logging configuration file).
 
 ### remove_domain_archives.py
 Usage: `./remove_domain_archive.py <domain>`
