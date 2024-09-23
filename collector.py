@@ -593,7 +593,7 @@ def main():
     finished_message = False
     monitor = Monitor.get('monitor')
     monitor.state.state('idle')
-    init = True
+    hasProcessed = False
     current_search = None
 
     logger.debug('Loading retry queue.')
@@ -656,8 +656,9 @@ def main():
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
-            if not init:
+            if hasProcessed:
                 mailer.info('All configured domains have been processed in all current archives.' % '\n%d items remain in retry queue.' % len(retryqueue.queue) if len(retryqueue.queue) > 0 else '')
+                hasProcessed = False
             time.sleep(10)
             continue
 
@@ -674,7 +675,7 @@ def main():
             else:
                 logger.warning(error)
 
-        init = None
+        hasProcessed = True
 
 if __name__ == "__main__":
     main()
