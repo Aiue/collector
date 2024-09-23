@@ -659,7 +659,7 @@ def main():
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
-            if init:
+            if not init:
                 mailer.info('All configured domains have been processed in all current archives.' % '\n%d items remain in retry queue.' % len(retryqueue.queue) if len(retryqueue.queue) > 0 else '')
             time.sleep(10)
             continue
