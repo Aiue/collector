@@ -94,7 +94,7 @@ mailer.setLevel('INFO')
 if config.notification_email == None:
     mailer.addHandler(logging.NullHandler())
 else:
-    mailer.addHandler(logging.handler.SMTPHandler('localhost', 'collector', [config.notification_email], 'Collector Status Update'))
+    mailer.addHandler(logging.handlers.SMTPHandler('localhost', 'collector', [config.notification_email], 'Collector Status Update'))
 
 # Exceptions
 class ParserError(Exception):
