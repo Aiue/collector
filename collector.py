@@ -10,7 +10,7 @@ import html.parser
 import json
 import logging
 import logging.config
-import logging.handlers # Not used by default, but allows additional config options.
+import logging.handlers
 import os
 from pathlib import Path
 import requests
@@ -64,6 +64,7 @@ class Config:
     safe_path = Path.cwd()
     prometheus_port = 1234
     cache_dir = Path('.cache')
+    notification_email = None
 
     def __init__(self, configFile):
         if configFile.exists():
@@ -85,9 +86,15 @@ class Config:
 
 config = Config(Path('collector.conf'))
 
-# Init logger
+# Init loggers
 logger = logging.getLogger()
 logging.config.fileConfig('logger.conf')
+mailer = logging.getLogger('mailer')
+mailer.setLevel('INFO')
+if config.notification_email == None:
+    mailer.addHandler(logging.NullHandler())
+else:
+    mailer.addHandler(logging.handler.SMTPHandler('localhost', 'collector', [config.notification_email], 'Collector Status Update'))
 
 # Exceptions
 class ParserError(Exception):
@@ -219,10 +226,16 @@ class Archives:
         if len(parser.archives) == 0:
             logger.critical('Could not parse archive list.')
             raise ParserError('Could not parse archive list.')
+        preArchiveCount = 0
+        if Path('archive_count').exists():
+            with Path('archive_count').open('r') as f:
+                preArchiveCount = int(f.read())
+            
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
-                if not initial:
-                    logger.info('New archive: %s', archive.archiveID)
+                if not initial or len(self.archives) == preArchiveCount:
+                    logger.info('New archive: %s' % archive.archiveID)
+                    mailer.info('New archive: %s' % archive.archiveID)
                 self.archives[archive.archiveID] = archive
                 with Path('archive_count').open('w') as f:
                     f.write(str(len(self.archives)))
@@ -583,7 +596,7 @@ def main():
     finished_message = False
     monitor = Monitor.get('monitor')
     monitor.state.state('idle')
-
+    init = True
     current_search = None
 
     logger.debug('Loading retry queue.')
@@ -642,11 +655,13 @@ def main():
 
         if not domain:
             current_search = None # Make sure we're not sitting on memory we don't need.
+            monitor.state.state('idle')
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
-                time.sleep(10)
-            monitor.state.state('idle')
+            if init:
+                mailer.info('All configured domains have been processed in all current archives.' % '\n%d items remain in retry queue.' % len(retryqueue.queue) if len(retryqueue.queue) > 0 else '')
+            time.sleep(10)
             continue
 
         monitor.state.state('collecting')
@@ -661,6 +676,8 @@ def main():
                 logger.warning('Could not retrieve %s: %d %s', error[0], error[3], error[4])
             else:
                 logger.warning(error)
+
+        init = None
 
 if __name__ == "__main__":
     main()
