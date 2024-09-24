@@ -11,8 +11,7 @@ License: %{getenv:PKG_LICENSE}
 %{installroot}
 %license %{installroot}/license.txt
 %doc %{installroot}/README.md
-%config(noreplace) %{installroot}/domains.conf
-
+%config(noreplace) %{installroot}/*.conf
 #--
 
 %description
