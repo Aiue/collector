@@ -150,7 +150,7 @@ class Monitor:
         self.requests = Counter('collector_requests', 'Requests send')
         self.failed = Counter('collector_failed', 'Failed requests')
         self.state = Enum('collector_state', 'Current state', states=['collecting', 'idle'])
-        self.status = Info('collector_info', 'Collector Status Information')
+        self.status = Info('collector_status', 'Collector Status Information')
         self.status.info({
             'current_domain':'N/A',
             'current_archive':'N/A',
