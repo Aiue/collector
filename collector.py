@@ -248,10 +248,13 @@ class Archives:
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
                 monitor = Monitor.get('monitor')
-                monitor.status.info({'latest_archive':archive.archiveID})
-                if not initial and len(parser.archives) > preArchiveCount:
+                if not initial:
                     logger.info('New archive: %s' % archive.archiveID)
-                    mailer.info('New archive: %s' % archive.archiveID)
+                    monitor.status.info({'latest_archive':archive.archiveID})
+                elif len(self.archives) == 0:
+                    monitor.status.info({'latest_archive':archive.archiveID})
+                    if len(parser.archives) > preArchiveCount:
+                        mailer.info('New archive: %s' % archive.archiveID)
                 self.archives[archive.archiveID] = archive
                 with Path('archive_count').open('w') as f:
                     f.write(str(len(self.archives)))
