@@ -154,8 +154,6 @@ class Monitor:
         self.status.info({
             'current_domain':'N/A',
             'current_archive':'N/A',
-            'current_process':0,
-            'current_total':0,
             'latest_archive':'N/A',
         })
 
@@ -563,8 +561,6 @@ class Search:
         if len(self.archives) == 0:
             self.domain.updateHistory(self.archive.archiveID, 'completed', 0)
         self.domain.updateHistory(self.archive.archiveID, 'results', len(self.archives))
-        monitor = Monitor.get('monitor')
-        monitor.status.info({'current_total':len(self.archives)})
         logger.info('Found %d search results.', len(self.archives))
 
     def getFile(self):
@@ -573,9 +569,6 @@ class Search:
             position = 0
         elif type(self.domain.history[self.archive.archiveID]['completed']) == int:
             position = self.domain.history[self.archive.archiveID]['completed']
-
-        monitor = Monitor.get('monitor')
-        monitor.status.info({'current_process':position+1})
 
         fileInfo = json.loads(self.archives[position])
 
