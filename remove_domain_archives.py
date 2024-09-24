@@ -41,7 +41,6 @@ def main():
     results = 0
     if position == len(index):
         position -= 1
-    print(str(index[position]) + ' ' + searchString)
     while is_match(index[position][0], searchString):
         results += 1
         info = json.loads(index.pop(position)[2])
