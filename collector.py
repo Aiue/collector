@@ -17,7 +17,7 @@ import requests
 import time
 
 try:
-    from prometheus_client import start_http_server, Gauge, Counter, Enum
+    from prometheus_client import start_http_server, Gauge, Counter, Enum, Info
 except ModuleNotFoundError:
     # Create dummy references instead of the above.
     def start_http_server(port):
@@ -45,6 +45,12 @@ except ModuleNotFoundError:
         def __init__(*args, **kwargs):
             pass
         def state(*args):
+            pass
+
+    class Info:
+        def __init__(*args):
+            pass
+        def info(*args):
             pass
 
 # I don't like the configuration file alternatives python offers. I'll write my own.
@@ -144,6 +150,14 @@ class Monitor:
         self.requests = Counter('collector_requests', 'Requests send')
         self.failed = Counter('collector_failed', 'Failed requests')
         self.state = Enum('collector_state', 'Current state', states=['collecting', 'idle'])
+        self.status = Info('collector_info', 'Collector Status Information')
+        self.status.info({
+            'current_domain':'N/A',
+            'current_archive':'N/A',
+            'current_process':0,
+            'current_total':0,
+            'latest_archive':'N/A',
+        })
 
     def get(name):
         if name in Monitor.monitors: return Monitor.monitors[name]
@@ -235,6 +249,8 @@ class Archives:
             
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
+                monitor = Monitor.get('monitor')
+                monitor.status.info({'latest_archive':archive.archiveID})
                 if not initial and len(parser.archives) > preArchiveCount:
                     logger.info('New archive: %s' % archive.archiveID)
                     mailer.info('New archive: %s' % archive.archiveID)
@@ -547,6 +563,8 @@ class Search:
         if len(self.archives) == 0:
             self.domain.updateHistory(self.archive.archiveID, 'completed', 0)
         self.domain.updateHistory(self.archive.archiveID, 'results', len(self.archives))
+        monitor = Monitor.get('monitor')
+        monitor.status.info({'current_total':len(self.archives)})
         logger.info('Found %d search results.', len(self.archives))
 
     def getFile(self):
@@ -555,6 +573,9 @@ class Search:
             position = 0
         elif type(self.domain.history[self.archive.archiveID]['completed']) == int:
             position = self.domain.history[self.archive.archiveID]['completed']
+
+        monitor = Monitor.get('monitor')
+        monitor.status.info({'current_process':position+1})
 
         fileInfo = json.loads(self.archives[position])
 
@@ -647,6 +668,7 @@ def main():
                 if not a.archiveID in d.history or d.history[a.archiveID]['completed'] < d.history[a.archiveID]['results']:
                     domain = d
                     archive = a
+                    monitor.status.info({'current_domain':str(domain),'current_archive':str(archive)})
                     break
 
         retryqueue.process()
