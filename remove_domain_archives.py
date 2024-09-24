@@ -63,7 +63,7 @@ def main():
     print('Writing new index.')
     with indexFile.open('w') as f:
         for line in index:
-            f.write(line[0] + ' ' + str(line[1]) + ' ' + line[2])
+            f.write(line[0] + ' ' + str(line[1]) + ' ' + line[2] + '\n')
 
 if __name__ == '__main__':
     main()
