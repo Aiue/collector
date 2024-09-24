@@ -166,6 +166,7 @@ class Archive:
         self.archiveID = archiveID
         self.indexPathsFile = RemoteFile(config.archive_host + indexPathsFile)
         self.clusterIndex = None
+        self.order = None
 
     def __repr__(self):
         return self.archiveID
@@ -256,6 +257,7 @@ class Archives:
                     if len(parser.archives) > preArchiveCount:
                         mailer.info('New archive: %s' % archive.archiveID)
                 self.archives[archive.archiveID] = archive
+                self.archives[archive.archiveID].order = len(self.archives)
                 with Path('archive_count').open('w') as f:
                     f.write(str(len(self.archives)))
 
@@ -664,7 +666,10 @@ def main():
                 if not a.archiveID in d.history or d.history[a.archiveID]['completed'] < d.history[a.archiveID]['results']:
                     domain = d
                     archive = a
-                    monitor.status.info({'current_domain':str(domain),'current_archive':str(archive),'latest_archive':archives.latest})
+                    monitor.status.info({
+                        'current_domain':str(domain),
+                        'current_archive':'%s (%d/%d)' % (archive.archiveID, archive.order, len(archives.archives)),
+                        'latest_archive':archives.latest})
                     break
 
         retryqueue.process()
