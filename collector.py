@@ -602,7 +602,7 @@ def main():
     retryqueue.load()
 
     start_http_server(config.prometheus_port)
-    
+
     while True:
         monitor.retryqueue.set(len(retryqueue.queue))
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
@@ -658,7 +658,7 @@ def main():
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
             if hasProcessed:
-                mailer.info('All configured domains have been processed in all current archives.' % '\n%d items remain in retry queue.' % len(retryqueue.queue) if len(retryqueue.queue) > 0 else '')
+                mailer.info('All configured domains have been processed in all current archives.%s' % ('\n%d items remain in retry queue.' % len(retryqueue.queue) if len(retryqueue.queue) > 0 else ''))
                 hasProcessed = False
             time.sleep(10)
             continue
