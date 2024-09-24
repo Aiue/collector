@@ -203,7 +203,7 @@ class Archives:
             super().__init__()
 
         def handle_starttag(self, tag, attributes):
-            if tag == "tbody":
+            if tag == 'tbody':
                 self.isScanningTableBody = True
             if self.isScanningTableBody:
                 if tag == 'tr':
@@ -220,6 +220,10 @@ class Archives:
                         for attribute in attributes:
                             if attribute[0] == 'href':
                                 self.archives.append(Archive(self.archiveID, attribute[1]))
+
+        def handle_endtag(self, tag):
+            if tag == 'tbody':
+                self.isScanningTableBody = False
                 
         def handle_data(self, data):
             if self.tdCount == 1 and self.archiveID == None:
@@ -246,7 +250,7 @@ class Archives:
         if Path('archive_count').exists():
             with Path('archive_count').open('r') as f:
                 preArchiveCount = int(f.read())
-            
+
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
                 if not initial:
@@ -258,8 +262,9 @@ class Archives:
                         mailer.info('New archive: %s' % archive.archiveID)
                 self.archives[archive.archiveID] = archive
                 self.archives[archive.archiveID].order = len(self.archives)
-                with Path('archive_count').open('w') as f:
-                    f.write(str(len(self.archives)))
+                if len(self.archives) > preArchiveCount:
+                    with Path('archive_count').open('w') as f:
+                        f.write(str(len(self.archives)))
 
         parser.close()
         self.lastUpdate = time.time()
