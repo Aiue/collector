@@ -13,10 +13,6 @@ import sys
 config = Config(Path('collector.conf'))
 
 def main():
-    print('This is currently experimental. Continue? ', end='')
-    if input() != 'y':
-        sys.exit()
-    
     if len(sys.argv) != 2:
         print('Usage: ' + sys.argv[0] + ' <domain>')
         return
