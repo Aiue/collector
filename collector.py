@@ -17,7 +17,7 @@ import requests
 import time
 
 try:
-    from prometheus_client import start_http_server, Gauge, Counter, Enum
+    from prometheus_client import start_http_server, Gauge, Counter, Enum, Info
 except ModuleNotFoundError:
     # Create dummy references instead of the above.
     def start_http_server(port):
@@ -45,6 +45,12 @@ except ModuleNotFoundError:
         def __init__(*args, **kwargs):
             pass
         def state(*args):
+            pass
+
+    class Info:
+        def __init__(*args):
+            pass
+        def info(*args):
             pass
 
 # I don't like the configuration file alternatives python offers. I'll write my own.
@@ -144,6 +150,12 @@ class Monitor:
         self.requests = Counter('collector_requests', 'Requests send')
         self.failed = Counter('collector_failed', 'Failed requests')
         self.state = Enum('collector_state', 'Current state', states=['collecting', 'idle'])
+        self.status = Info('collector_status', 'Collector Status Information')
+        self.status.info({
+            'current_domain':'N/A',
+            'current_archive':'N/A',
+            'latest_archive':'N/A',
+        })
 
     def get(name):
         if name in Monitor.monitors: return Monitor.monitors[name]
@@ -235,9 +247,14 @@ class Archives:
             
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
-                if not initial and len(parser.archives) > preArchiveCount:
+                monitor = Monitor.get('monitor')
+                if not initial:
                     logger.info('New archive: %s' % archive.archiveID)
-                    mailer.info('New archive: %s' % archive.archiveID)
+                    monitor.status.info({'latest_archive':archive.archiveID})
+                elif len(self.archives) == 0:
+                    monitor.status.info({'latest_archive':archive.archiveID})
+                    if len(parser.archives) > preArchiveCount:
+                        mailer.info('New archive: %s' % archive.archiveID)
                 self.archives[archive.archiveID] = archive
                 with Path('archive_count').open('w') as f:
                     f.write(str(len(self.archives)))
@@ -651,6 +668,7 @@ def main():
                 if not a.archiveID in d.history or d.history[a.archiveID]['completed'] < d.history[a.archiveID]['results']:
                     domain = d
                     archive = a
+                    monitor.status.info({'current_domain':str(domain),'current_archive':str(archive)})
                     break
 
         retryqueue.process()
@@ -658,6 +676,7 @@ def main():
         if not domain:
             current_search = None # Make sure we're not sitting on memory we don't need.
             monitor.state.state('idle')
+            monitor.status.info({'current_domain':'N/A','current_archive':'N/A'})
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True

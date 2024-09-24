@@ -13,10 +13,6 @@ import sys
 config = Config(Path('collector.conf'))
 
 def main():
-    print('This is currently experimental. Continue? ', end='')
-    if input() != 'y':
-        sys.exit()
-    
     if len(sys.argv) != 2:
         print('Usage: ' + sys.argv[0] + ' <domain>')
         return
@@ -43,6 +39,8 @@ def main():
 
     position = bisect.bisect_left(index, (searchString, 0, ''))
     results = 0
+    if position == len(index):
+        position -= 1
     while is_match(index[position][0], searchString):
         results += 1
         info = json.loads(index.pop(position)[2])
@@ -60,7 +58,7 @@ def main():
     print('Writing new index.')
     with indexFile.open('w') as f:
         for line in index:
-            f.write(line[0] + ' ' + str(line[1]) + ' ' + line[2])
+            f.write(line[0] + ' ' + str(line[1]) + ' ' + line[2] + '\n')
 
 if __name__ == '__main__':
     main()
