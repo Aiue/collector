@@ -166,6 +166,7 @@ class Archive:
         self.archiveID = archiveID
         self.indexPathsFile = RemoteFile(config.archive_host + indexPathsFile)
         self.clusterIndex = None
+        self.order = None
 
     def __repr__(self):
         return self.archiveID
@@ -188,6 +189,7 @@ class Archives:
     def __init__(self):
         self.archives = {}
         self.lastUpdate = 0
+        self.latest = None
 
     def __iter__(self):
         return iter(self.archives.items())
@@ -247,15 +249,15 @@ class Archives:
             
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
-                monitor = Monitor.get('monitor')
                 if not initial:
+                    self.latest = archive.archiveID
                     logger.info('New archive: %s' % archive.archiveID)
-                    monitor.status.info({'latest_archive':archive.archiveID})
                 elif len(self.archives) == 0:
-                    monitor.status.info({'latest_archive':archive.archiveID})
+                    self.latest = archive.archiveID
                     if len(parser.archives) > preArchiveCount:
                         mailer.info('New archive: %s' % archive.archiveID)
                 self.archives[archive.archiveID] = archive
+                self.archives[archive.archiveID].order = len(self.archives)
                 with Path('archive_count').open('w') as f:
                     f.write(str(len(self.archives)))
 
@@ -668,7 +670,10 @@ def main():
                 if not a.archiveID in d.history or d.history[a.archiveID]['completed'] < d.history[a.archiveID]['results']:
                     domain = d
                     archive = a
-                    monitor.status.info({'current_domain':str(domain),'current_archive':str(archive)})
+                    monitor.status.info({
+                        'current_domain':str(domain),
+                        'current_archive':'%s (%d/%d)' % (archive.archiveID, archive.order, len(archives.archives)),
+                        'latest_archive':archives.latest})
                     break
 
         retryqueue.process()
@@ -676,7 +681,7 @@ def main():
         if not domain:
             current_search = None # Make sure we're not sitting on memory we don't need.
             monitor.state.state('idle')
-            monitor.status.info({'current_domain':'N/A','current_archive':'N/A'})
+            monitor.status.info({'current_domain':'N/A','current_archive':'N/A','latest_archive':archives.latest})
             if not finished_message:
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
