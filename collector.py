@@ -96,6 +96,7 @@ if config.notification_email == None or config.mail_from_address == None:
     mailer.addHandler(logging.NullHandler())
 else:
     mailer.addHandler(logging.handlers.SMTPHandler('localhost', config.mail_from_address, [config.notification_email], 'Collector Status Update'))
+mailer.propagate = False
 
 # Exceptions
 class ParserError(Exception):
