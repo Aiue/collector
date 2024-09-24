@@ -41,7 +41,12 @@ def main():
         if i > 1:
             searchString += ','
 
+    print(len(index))
+    print(searchString)
     position = bisect.bisect_left(index, (searchString, 0, ''))
+    print(position)
+    print(index[position][0])
+    print(index[position+1])
     results = 0
     while is_match(index[position][0], searchString):
         results += 1
