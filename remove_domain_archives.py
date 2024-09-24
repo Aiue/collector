@@ -41,16 +41,11 @@ def main():
         if i > 1:
             searchString += ','
 
-    print(len(index))
-    print(index[0][0] + ' - ' + index[len(index)-1][0])
-    print(searchString)
     position = bisect.bisect_left(index, (searchString, 0, ''))
-    print(position)
-    print(index[position])
-    print(index[position+1])
     results = 0
     if position == len(index):
         position -= 1
+    print(index[position] + ' ' + searchString)
     while is_match(index[position][0], searchString):
         results += 1
         info = json.loads(index.pop(position)[2])
