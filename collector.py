@@ -17,7 +17,7 @@ import requests
 import time
 
 try:
-    from prometheus_client import start_http_server, Gauge, Counter, Enum, Info
+    from prometheus_client import start_http_server, Gauge, Counter, Enum, Info, Summary
 except ModuleNotFoundError:
     # Create dummy references instead of the above.
     def start_http_server(port):
@@ -51,6 +51,12 @@ except ModuleNotFoundError:
         def __init__(*args):
             pass
         def info(*args):
+            pass
+
+    class Summary:
+        def __init__(*args):
+            pass
+        def observe(*args):
             pass
 
 # I don't like the configuration file alternatives python offers. I'll write my own.
@@ -156,6 +162,8 @@ class Monitor:
             'current_archive':'N/A',
             'latest_archive':'N/A',
         })
+        self.download_size = Summary('collector_download_size', 'Download Size')
+        self.download_time = Summary('collector_download_time', 'Download Time')
 
     def get(name):
         if name in Monitor.monitors: return Monitor.monitors[name]
@@ -376,7 +384,14 @@ class RemoteFile:
             logger.error('Could not get %s - %s', self.url, error)
             raise
         finally:
-            logger.debug('Downloaded file in %f seconds.', time.time() - time_start)
+#        self.download_size('collector_download_size', 'Download Size')
+#        self.download_time('collector_download_time', 'Download
+            monitor = Monitor.get('monitor')
+            download_time = time.time() - time_start
+            download_size = self.length if self.length else int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
+            monitor.download_time.observe(download_time)
+            monitor.download_size.observe(download_size)
+            logger.debug('Downloaded %d bytes in %f seconds.', download_size, download_time)
         if not (r.status_code >= 200 and r.status_code < 300):
             # This could imply a problem with parsing, raise it as such rather than simply bad status.
             if r.status_code >= 400 and r.status_code < 500:
