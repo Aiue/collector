@@ -152,10 +152,10 @@ class Monitor:
     monitors = {}
     def __init__(self, monitor):
         self.monitors[monitor] = self
-        self.retryqueue = Gauge('collector_retryqueue', 'Retry queue entries')
-        self.requests = Counter('collector_requests', 'Requests send')
-        self.failed = Counter('collector_failed', 'Failed requests')
-        self.state = Enum('collector_state', 'Current state', states=['collecting', 'idle'])
+        self.retryqueue = Gauge('collector_retryqueue', 'Retry Queue Entries')
+        self.requests = Counter('collector_requests', 'Requests Send')
+        self.failed = Counter('collector_failed', 'Failed Requests')
+        self.state = Enum('collector_state', 'Current State', states=['collecting', 'idle'])
         self.status = Info('collector_status', 'Collector Status Information')
         self.status.info({
             'current_domain':'N/A',
@@ -384,8 +384,6 @@ class RemoteFile:
             logger.error('Could not get %s - %s', self.url, error)
             raise
         finally:
-#        self.download_size('collector_download_size', 'Download Size')
-#        self.download_time('collector_download_time', 'Download
             monitor = Monitor.get('monitor')
             download_time = time.time() - time_start
             download_size = self.length if self.length else int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
