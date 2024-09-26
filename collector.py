@@ -256,6 +256,7 @@ class Archives:
                 if not initial:
                     self.latest = archive.archiveID
                     logger.info('New archive: %s' % archive.archiveID)
+                    mailer.info('New archive: %s' % archive.archiveID)
                 elif len(self.archives) == 0:
                     self.latest = archive.archiveID
                     if len(parser.archives) > preArchiveCount:
