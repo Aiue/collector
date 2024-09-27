@@ -604,7 +604,7 @@ class Search:
         fileInfo = json.loads(self.archives[position])
 
         monitor = Monitor.get('monitor')
-        monitor.UpdateStatus(current_progress='%d/%d (%d%%)' % (position + 1, self.domain.history[self.archive.archiveID['results']], ((position + 1) / self.domain.history[self.archive.archiveID['results']])))
+        monitor.UpdateStatus(current_progress='%d/%d (%d%%)' % (position + 1, self.domain.history[self.archive.archiveID]['results'], ((position + 1) / self.domain.history[self.archive.archiveID]['results'])))
         if int(fileInfo['length']) > config.max_file_size:
             logger.warning('Skipping download of %s as file exceeds size limit at %s bytes.', fileInfo['filename'], fileInfo['length'])
             self.domain.updateHistory(self.archive.archiveID, 'completed', position+1)
