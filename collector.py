@@ -151,8 +151,9 @@ def get_domain(domain):
 class Monitor:
     monitors = {}
     status_cache = {
-        'current_domain':'N/A'
         'current_archive':'N/A',
+        'current_domain':'N/A',
+        'current_progress':'N/A',
         'latest_archive':'N/A',
     }
     def __init__(self, monitor):
@@ -168,13 +169,13 @@ class Monitor:
         if name in Monitor.monitors: return Monitor.monitors[name]
         return Monitor(name)
 
-    def UpdateStatus(**kwargs):
+    def UpdateStatus(self, **kwargs):
         for k,v in kwargs.items():
             if k not in self.status_cache:
                 logger.warning('Unknown status type: %s' % k)
                 continue
             self.status_cache[k] = v
-        self.status.info(status_cache)
+        self.status.info(self.status_cache)
 
 
 class Archive:
@@ -602,6 +603,8 @@ class Search:
 
         fileInfo = json.loads(self.archives[position])
 
+        monitor = Monitor.get('monitor')
+        monitor.UpdateStatus(current_progress='%d/%d (%d%%)' % (position + 1, self.history[self.archive.archiveID['results']], ((position + 1) / self.history[self.archive.archiveID['results']])))
         if int(fileInfo['length']) > config.max_file_size:
             logger.warning('Skipping download of %s as file exceeds size limit at %s bytes.', fileInfo['filename'], fileInfo['length'])
             self.domain.updateHistory(self.archive.archiveID, 'completed', position+1)
