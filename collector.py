@@ -163,7 +163,6 @@ class Monitor:
             'latest_archive':'N/A',
         })
         self.download_size = Summary('collector_download_size', 'Download Size')
-        self.download_time = Summary('collector_download_time', 'Download Time')
 
     def get(name):
         if name in Monitor.monitors: return Monitor.monitors[name]
@@ -385,11 +384,9 @@ class RemoteFile:
             raise
         finally:
             monitor = Monitor.get('monitor')
-            download_time = time.time() - time_start
             download_size = self.length if self.length else int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
-            monitor.download_time.observe(download_time)
             monitor.download_size.observe(download_size)
-            logger.debug('Downloaded %d bytes in %f seconds.', download_size, download_time)
+            logger.debug('Downloaded %d bytes in %f seconds.', download_size, time.time() - time_start)
         if not (r.status_code >= 200 and r.status_code < 300):
             # This could imply a problem with parsing, raise it as such rather than simply bad status.
             if r.status_code >= 400 and r.status_code < 500:
