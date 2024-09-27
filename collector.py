@@ -702,8 +702,8 @@ def main():
         if not domain:
             current_search = None # Make sure we're not sitting on memory we don't need.
             monitor.state.state('idle')
-            monitor.UpdateStatus(current_domain='N/A', current_archive='N/A', current_progress='N/A')
             if not finished_message:
+                monitor.UpdateStatus(current_domain='N/A', current_archive='N/A', current_progress='N/A')
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
             if hasProcessed:
