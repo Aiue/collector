@@ -159,7 +159,7 @@ class Monitor:
     def __init__(self, monitor):
         self.monitors[monitor] = self
         self.retryqueue = Gauge('collector_retryqueue', 'Retry Queue Entries')
-        self.requests = Counter('collector_requests', 'Requests Send')
+        self.requests = Counter('collector_requests', 'Requests Sent')
         self.failed = Counter('collector_failed', 'Failed Requests')
         self.state = Enum('collector_state', 'Current State', states=['collecting', 'idle'])
         self.status = Info('collector_status', 'Collector Status Information')
