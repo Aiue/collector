@@ -159,7 +159,8 @@ class Monitor:
     def __init__(self, monitor):
         self.monitors[monitor] = self
         self.retryqueue = Gauge('collector_retryqueue', 'Retry Queue Entries')
-        self.requests = Counter('collector_requests', 'HTTP Requests', ['type'])
+        self.requests = Counter('collector_requests', 'Requests Send')
+        self.failed = Counter('collector_failed', 'Failed Requests')
         self.state = Enum('collector_state', 'Current State', states=['collecting', 'idle'])
         self.status = Info('collector_status', 'Collector Status Information')
         self.download_size = Summary('collector_download_size', 'Download Size')
@@ -384,11 +385,11 @@ class RemoteFile:
             headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
         self.requests['last'] = time.time()
         monitor = Monitor.get('monitor')
-        monitor.requests.labels('sent').inc()
+        monitor.requests.inc()
         try:
             r = requests.get(self.url, headers=headers)
         except requests.RequestException as error:
-            monitor.requests.labels('failed').inc()
+            monitor.failed.inc()
             logger.error('Could not get %s - %s', self.url, error)
             raise
         finally:
@@ -400,7 +401,7 @@ class RemoteFile:
             # This could imply a problem with parsing, raise it as such rather than simply bad status.
             if r.status_code >= 400 and r.status_code < 500:
                 raise ParserError('HTTP response %d indicates a potential parsing issue. This should be investigated.', r.status_code)
-            monitor.requests.labels('failed').inc()
+            monitor.failed.inc()
             sleep = config.min_request_interval * pow(1.5, self.requests['failed'])
             if sleep > config.max_request_interval:
                 sleep = config.max_request_interval
