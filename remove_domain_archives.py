@@ -14,8 +14,7 @@ config = Config(Path('collector.conf'))
 
 def main():
     if len(sys.argv) != 2:
-        print('Usage: ' + sys.argv[0] + ' <domain>')
-        return
+        sys.exit('Usage: ' + sys.argv[0] + ' <domain>')
     indexFile = Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj')
     index = []
     with indexFile.open('r') as f:

@@ -36,8 +36,7 @@ def main():
         print('status.py should be run from the directory where it is located.')
         return
     if len(sys.argv) != 2: # TODO: Use no arguments for 'all' instead.
-        print('Usage: ' + sys.argv[0] + ' <domain|all>')
-        return
+        sys.exit('Usage: ' + sys.argv[0] + ' <domain|all>')
     with Path('archive_count').open('r') as f:
         archive_count = int(f.read())
     if sys.argv[1] == 'all':
