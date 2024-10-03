@@ -14,8 +14,7 @@ config = Config(Path('collector.conf'))
 
 def main():
     if len(sys.argv) != 2:
-        print('Usage: ' + sys.argv[0] + ' <domain>')
-        return
+        sys.exit('Usage: ' + sys.argv[0] + ' <domain>')
     indexFile = Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj')
     index = []
     with indexFile.open('r') as f:
@@ -28,7 +27,7 @@ def main():
         sys.exit()
 
     domainParts = sys.argv[1].split('.')
-    searchString = ""
+    searchString = ''
     for i in range(len(domainParts),0,-1):
         if not domainParts[i-1].replace('-', '').isalnum(): # Not the prettiest or most strictly accurate way of doing this,
                                                             # but will be sufficient for our purposes.

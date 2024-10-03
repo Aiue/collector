@@ -36,8 +36,7 @@ def main():
         print('status.py should be run from the directory where it is located.')
         return
     if len(sys.argv) != 2: # TODO: Use no arguments for 'all' instead.
-        print('Usage: ' + sys.argv[0] + ' <domain|all>')
-        return
+        sys.exit('Usage: ' + sys.argv[0] + ' <domain|all>')
     with Path('archive_count').open('r') as f:
         archive_count = int(f.read())
     if sys.argv[1] == 'all':
@@ -80,7 +79,7 @@ def main():
             )
             if len(partial_list) > 0:
                 print('Partially processed domains (completed/total archives): {partial}'.format(
-                    partial = ", ".join(partial_list))
+                    partial = ', '.join(partial_list))
                 )
 
     else:
@@ -103,5 +102,5 @@ def main():
                 failed = stat['failed'])
             )
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
