@@ -229,7 +229,7 @@ class Archives:
                 if tag == 'td':
                     self.tdCount += 1
 
-                if tag == "a":
+                if tag == 'a':
                     if self.tdCount == 4:
                         # As of writing, only 'href' attributes are present.
                         # But in case this changes in the future, let's be vigilant.
@@ -367,7 +367,7 @@ class RemoteFile:
             raise RuntimeError('RemoteFile.write() called with no filename set: %s', url)
         #logger.debug('Writing from %s to %s', self.url, self.filename)
         if not self.filename.parents[0].exists():
-            logger.info("Recursively creating directory '%s'.", self.filename.parents[0])
+            logger.info('Recursively creating directory \'%s\'.', self.filename.parents[0])
             self.filename.parents[0].mkdir(parents=True)
         with self.filename.open('wb') as f:
             f.write(contents)
@@ -382,7 +382,7 @@ class RemoteFile:
         time_start = time.time()
         headers = None # Should not need to be initialized/emptied, but do it anyway.
         if type(self.offset) == int and self.length:
-            headers = {'Range': "bytes=" + str(self.offset) + "-" + str(self.offset+self.length-1)}
+            headers = {'Range': 'bytes=' + str(self.offset) + '-' + str(self.offset+self.length-1)}
         self.requests['last'] = time.time()
         monitor = Monitor.get('monitor')
         monitor.requests.inc()
@@ -466,7 +466,7 @@ class Domain:
             raise ValueError('Domains are expected to contain dots (.), read \'%s\'.' % domain)
 
         self.domain = domain
-        self.searchString = ""
+        self.searchString = ''
         domainParts = domain.split('.')
         for i in range(len(domainParts),0,-1):
             if not domainParts[i-1].replace('-', '').isalnum(): # Not the prettiest or most strictly accurate way of doing this,
@@ -546,7 +546,7 @@ class Search:
                 ))
 
         # This search format should mean we're always left of anything matching our search string.
-        position = bisect.bisect_left(index, (self.domain.searchString + ')', 0, "", 0, 0, 0))
+        position = bisect.bisect_left(index, (self.domain.searchString + ')', 0, '', 0, 0, 0))
         logger.debug('(cluster index) Potential match at line %d out of %d. (Between %s and %s)', position+1, len(index), (position <= 0 and '(index out of range)' or index[position-1][0]), index[position][0])
         # We may (and likely will) have matches in the index cluster prior to our match.
         self.clusters.append(index[position-1])
@@ -577,7 +577,7 @@ class Search:
                 index.append((searchable_string, int(timestamp), json))
 
             if cluster is self.clusters[0]:
-                position = bisect.bisect_left(index, (self.domain.searchString, 0, ""))
+                position = bisect.bisect_left(index, (self.domain.searchString, 0, ''))
             else:
                 position = 0
             logger.debug('Index insertion point at line %d out of %d. (%s)', position+1, len(index), index[position][0])            
@@ -727,5 +727,5 @@ def main():
 
         hasProcessed = True
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

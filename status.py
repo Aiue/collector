@@ -79,7 +79,7 @@ def main():
             )
             if len(partial_list) > 0:
                 print('Partially processed domains (completed/total archives): {partial}'.format(
-                    partial = ", ".join(partial_list))
+                    partial = ', '.join(partial_list))
                 )
 
     else:
@@ -102,5 +102,5 @@ def main():
                 failed = stat['failed'])
             )
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

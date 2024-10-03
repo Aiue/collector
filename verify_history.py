@@ -47,7 +47,7 @@ def main():
         for domain in domains:
             clusters = []
             matches = 0
-            position = bisect.bisect_left(cindex, (domain.searchString + ')', 0, "", 0, 0, 0))
+            position = bisect.bisect_left(cindex, (domain.searchString + ')', 0, '', 0, 0, 0))
             clusters.append(cindex[position-1])
             while position < len(cindex):
                 if is_match(cindex[position][0], domain.searchString):
@@ -64,7 +64,7 @@ def main():
                         searchable_string,timestamp,json = line.split(' ', 2)
                         aindex.append((searchable_string, int(timestamp), json))
                 if cluster is clusters[0]:
-                    position = bisect.bisect_left(aindex, (domain.searchString, 0, ""))
+                    position = bisect.bisect_left(aindex, (domain.searchString, 0, ''))
                 else:
                     position = 0
                 while position < len(aindex):
@@ -96,5 +96,5 @@ def main():
     else: # No errors! Yay!
         log.info('verify_history.py ran, no problems detected.')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

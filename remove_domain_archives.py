@@ -27,7 +27,7 @@ def main():
         sys.exit()
 
     domainParts = sys.argv[1].split('.')
-    searchString = ""
+    searchString = ''
     for i in range(len(domainParts),0,-1):
         if not domainParts[i-1].replace('-', '').isalnum(): # Not the prettiest or most strictly accurate way of doing this,
                                                             # but will be sufficient for our purposes.
