@@ -14,13 +14,6 @@ variables:
   PKG_VERSION: '1'
   PKG_RELEASE: $CI_PIPELINE_IID
 
-test:
-  stage: package
-  image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
-  when: manual
-  script:
-    - echo $SSH_KNOWN_HOSTS
-
 ccc-rhel-opt-package:
   stage: package
   image: 'gitlab.it.liu.se:5000/serverdrift-projs/ci/packaging-images/base/rhel8:latest'
