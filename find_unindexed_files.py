@@ -14,7 +14,7 @@ def main():
         archives.append(archive)
     print('%d files found.' % len(archives))
     print('Comparing against pywb index... ', end='', flush=True)
-    with Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj').open('w') as f:
+    with Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj').open('r') as f:
         for line in f.read().splitlines():
             _,_,info = line.split(' ', 2)
             filename = Path(json.loads(info)['filename'])
