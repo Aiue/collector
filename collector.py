@@ -123,7 +123,7 @@ def human_readable(b):
         if abs(b) < 1024:
             if prefix == '':
                 return '%d B' % int(b) # Just a special case to not get a float for bytes. Ensure b is treated as integer.
-            return '%.1f %sB' % b, prefix
+            return '%.1f %sB' % (b, prefix)
         b /= 1024.0
     return '%.1f PiB' % b # Fallback. If we get this: worry.
 
@@ -405,7 +405,7 @@ class RemoteFile:
             monitor = Monitor.get('monitor')
             download_size = self.length if self.length else int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
             monitor.download_size.observe(download_size)
-            logger.debug('Downloaded %d bytes in %f seconds. (%s/s)', download_size, time.time() - time_start), human_readable(download_size/time.time()-time_start)
+            logger.debug('Downloaded %d bytes in %f seconds. (%s/s)', download_size, time.time() - time_start), human_readable(download_size/(time.time()-time_start))
         if not (r.status_code >= 200 and r.status_code < 300):
             # This could imply a problem with parsing, raise it as such rather than simply bad status.
             if r.status_code >= 400 and r.status_code < 500:
