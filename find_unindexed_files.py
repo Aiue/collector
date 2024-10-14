@@ -24,13 +24,13 @@ def main():
                 missing_archives.append(filename)
 
     print('%d files missing from index:' % len(archives))
-    for archive in archives:
-        print(archive)
+#    for archive in archives:
+#        print(archive)
 
     if len(missing_archives) > 0:
         print('\nAdditionally, %d index entries has no corresponding archive file:' % len(missing_archives))
-        for archive in missing_archives:
-            print(archive)
+#        for archive in missing_archives:
+#            print(archive)
 
 if __name__ == '__main__':
     main()
