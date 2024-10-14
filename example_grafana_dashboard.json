@@ -148,7 +148,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "11.2.1",
+      "pluginVersion": "11.2.2",
       "targets": [
         {
           "datasource": {
@@ -370,7 +370,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.2.1",
+      "pluginVersion": "11.2.2",
       "targets": [
         {
           "datasource": {
@@ -586,7 +586,7 @@
             }
           },
           "mappings": [],
-          "max": 100,
+          "max": 1,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -601,7 +601,7 @@
               }
             ]
           },
-          "unit": "percent"
+          "unit": "percentunit"
         },
         "overrides": []
       },
@@ -666,7 +666,7 @@
             "type": "__expr__",
             "uid": "__expr__"
           },
-          "expression": "$B>0 && ($A/$B)*100*($A>0) || 0",
+          "expression": "($B > 0) * $A/$B",
           "hide": false,
           "refId": "C",
           "type": "math"
@@ -746,7 +746,7 @@
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "single",
@@ -762,19 +762,38 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "rate(collector_download_size_sum{hostname=\"$host\"}[$__rate_interval])",
+          "expr": "rate(collector_network_total{hostname=\"$host\", dimension=\"rx\"}[$__rate_interval])",
           "format": "time_series",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{daemon}} {{dimension}}",
           "range": true,
           "refId": "A",
           "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "NTfMo-jGz"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "exemplar": false,
+          "expr": "rate(collector_network_total{hostname=\"$host\", dimension=\"tx\"}[$__rate_interval]) * -1",
+          "format": "time_series",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": false,
+          "instant": false,
+          "legendFormat": "{{daemon}} {{dimension}}",
+          "range": true,
+          "refId": "B",
+          "useBackend": false
         }
       ],
-      "title": "Downstream (Approximated)",
+      "title": "Network Usage",
       "type": "timeseries"
     }
   ],
@@ -820,6 +839,6 @@
   "timezone": "",
   "title": "CC Collector",
   "uid": "edw9uj4wi4jy8f",
-  "version": 31,
+  "version": 37,
   "weekStart": ""
 }
