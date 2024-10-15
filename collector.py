@@ -703,7 +703,7 @@ def main():
                 if not a.archiveID in d.history or d.history[a.archiveID]['completed'] < d.history[a.archiveID]['results']:
                     domain = d
                     archive = a
-                    monitor.UpdateStatus(current_domain=str(domain), current_archive='%s (%d/%d)' % (archive.archiveID, archive.order, len(archives.archives)))
+                    monitor.UpdateStatus(current_domain='%s (%d/%d)' % (str(domain), domains.index(domain)+1, len(domains)), current_archive='%s (%d/%d)' % (archive.archiveID, archive.order, len(archives.archives)))
                     break
 
         retryqueue.process()
