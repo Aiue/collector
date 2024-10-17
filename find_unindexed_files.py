@@ -13,6 +13,7 @@ def main():
     for archive in Path(config.pywb_collection_dir).iterdir():
         archives.append(archive.name)
     print('%d files found.' % len(archives))
+    print('Comparing against pywb index...')
     with Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj').open('r') as f:
         lineno = 0
         for line in f.read().splitlines():
@@ -23,8 +24,8 @@ def main():
                 archives.remove(filename)
             else:
                 missing_archives.append(filename)
-            print('Comparing against pywb index... %d' % lineno, end='\r', flush=True)
-        print('Comparing against pywb index... done', end='\r', flush=True)
+            print('\033[FComparing against pywb index... %d' % lineno)
+        print('\033[FComparing against pywb index... done')
 
     print('%d files missing from index' % len(archives), end='')
     if len(archives) > 0:
