@@ -23,14 +23,19 @@ def main():
             else:
                 missing_archives.append(filename)
 
-    print('%d files missing from index:' % len(archives))
-#    for archive in archives:
-#        print(archive)
+    print('%d files missing from index' % len(archives), end='')
+    if len(archives) > 0:
+        with Path('unindexed_files').open('w') as f:
+            for archive in archives:
+                f.write(archive)
+        print(', full list in file \'unindexed_files\'.')
+    print('.')
 
     if len(missing_archives) > 0:
-        print('\nAdditionally, %d index entries has no corresponding archive file:' % len(missing_archives))
-#        for archive in missing_archives:
-#            print(archive)
+        with Path('missing_files').open('w') as f:
+            for archive in missing_archives:
+                f.write(archive)
+        print('\n%d index entries has no corresponding archive file, full list in file \'missing_files\'.' % len(missing_archives))
 
 if __name__ == '__main__':
     main()
