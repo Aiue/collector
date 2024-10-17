@@ -21,7 +21,7 @@ def main():
             lineno += 1
             _,_,info = line.split(' ', 2)
             filename = json.loads(info)['filename']
-            position = bisect_left(a,filename)
+            position = bisect_left(archives,filename)
             if archives[position] == filename:
                 archives.pop(position)
             else:
