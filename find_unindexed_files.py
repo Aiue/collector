@@ -11,6 +11,7 @@ def main():
     archives = []
     missing_archives = []
     for archive in Path(config.pywb_collection_dir).iterdir():
+        # To optimise (step 1): Bisect to find insertion point.
         archives.append(archive.name)
     print('%d files found.' % len(archives))
     print('Comparing against pywb index...')
@@ -20,6 +21,7 @@ def main():
             lineno += 1
             _,_,info = line.split(' ', 2)
             filename = json.loads(info)['filename']
+            # To optimise (step 2): Bisect and compare.
             if filename in archives: # Not exactly the most optimal approach, but this tool will only be used sparingly.
                 archives.remove(filename)
             else:
@@ -31,7 +33,7 @@ def main():
     if len(archives) > 0:
         with Path('unindexed_files').open('w') as f:
             for archive in archives:
-                f.write(archive)
+                f.write(archive + '\n')
         print(', full list in file \'unindexed_files\'.')
     else:
         print('.')
@@ -39,7 +41,7 @@ def main():
     if len(missing_archives) > 0:
         with Path('missing_files').open('w') as f:
             for archive in missing_archives:
-                f.write(archive)
+                f.write(archive + '\n')
         print('%d index entries has no corresponding archive file, full list in file \'missing_files\'.' % len(missing_archives))
 
 if __name__ == '__main__':
