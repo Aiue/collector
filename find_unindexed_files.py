@@ -25,7 +25,7 @@ def main():
             else:
                 missing_archives.append(filename)
             print('\033[FComparing against pywb index... %d' % lineno)
-        print('\033[FComparing against pywb index... %d entries read.')
+        print('\033[FComparing against pywb index... %d entries read.' % lineno)
 
     print('%d files missing from index' % len(archives), end='')
     if len(archives) > 0:
