@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from bisect import bisect_left, insort_left
 from collector import Config
 import json
 from pathlib import Path
@@ -11,8 +12,7 @@ def main():
     archives = []
     missing_archives = []
     for archive in Path(config.pywb_collection_dir).iterdir():
-        # To optimise (step 1): Bisect to find insertion point.
-        archives.append(archive.name)
+        insort_left(archives, archive.name)
     print('%d files found.' % len(archives))
     print('Comparing against pywb index...')
     with Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj').open('r') as f:
@@ -21,9 +21,9 @@ def main():
             lineno += 1
             _,_,info = line.split(' ', 2)
             filename = json.loads(info)['filename']
-            # To optimise (step 2): Bisect and compare.
-            if filename in archives: # Not exactly the most optimal approach, but this tool will only be used sparingly.
-                archives.remove(filename)
+            position = bisect_left(a,filename)
+            if archives[position] == filename:
+                archives.pop(position)
             else:
                 missing_archives.append(filename)
             print('\033[FComparing against pywb index... %d' % lineno)
