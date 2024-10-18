@@ -5,17 +5,29 @@ from collector import Config
 import json
 from pathlib import Path
 import sys
+import termios
+import tty
 
 config = Config(Path('collector.conf'))
 
+def read_char():
+    f = sys.stdin.fileno()
+    old = termios.tcgetattr(f)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(f, termios.TCSADRAIN, old)
+    return ch
+
 def get_input(msg, valid_inputs):
     print(msg, end='', flush=True)
-    key = sys.stdin.read(1)
+    ch = read_char()
     print()
-    if key in valid_inputs:
-        return key
+    if ch in valid_inputs:
+        return ch
     else:
-        print('Unknown key %s, ' % key, end='', flush=True)
+        print('Unknown key %s, ' % ch, end='', flush=True)
         return get_input(msg, valid_inputs)
 
 def main():
