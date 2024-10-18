@@ -26,6 +26,8 @@ def get_input(msg, valid_inputs):
     print()
     if ch in valid_inputs:
         return ch
+    elif ch == '\x03':
+        sys.exit()
     else:
         print('Unknown key %s, ' % ch, end='', flush=True)
         return get_input(msg, valid_inputs)
