@@ -19,12 +19,13 @@ def get_input(msg, valid_inputs):
         return get_input(msg, valid_inputs)
 
 def main():
-    print('Building file list... ', end='', flush=True)
+    print('Building file list... ')
     archives = []
     missing_archives = []
     for archive in Path(config.pywb_collection_dir).iterdir():
         insort_left(archives, archive.name)
-    print('%d files found.' % len(archives))
+        print('\033[F\033[KBuilding file list... %d' % len(archives))
+    print('\033[F\033[KBuilding file list... %d files found.' % len(archives))
     print('Comparing against pywb index...')
     with Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj').open('r') as f:
         lineno = 0
@@ -37,8 +38,8 @@ def main():
                 archives.pop(position)
             else:
                 missing_archives.append(filename)
-            print('\033[FComparing against pywb index... %d' % lineno)
-        print('\033[FComparing against pywb index... %d entries read.' % lineno)
+            print('\033[F\033[KComparing against pywb index... %d' % lineno)
+        print('\033[F\033[KComparing against pywb index... %d entries read.' % lineno)
 
     print('%d files missing from index' % len(archives), end='')
     if len(archives) > 0:
