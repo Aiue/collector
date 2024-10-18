@@ -43,7 +43,7 @@ def main():
     print('%d files missing from index' % len(archives), end='')
     if len(archives) > 0:
         print('; ', end='')
-        key = get_input('[w]rite to file, or [m]ove archives? ')
+        key = get_input('[w]rite to file, or [m]ove archives? ', 'mw')
         if key == 'm':
             if not Path('unindexed_files').exists():
                 Path('unindexed_files').mkdir()
