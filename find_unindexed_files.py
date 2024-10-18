@@ -11,6 +11,7 @@ config = Config(Path('collector.conf'))
 def get_input(msg, valid_inputs):
     print(msg, end='', flush=True)
     key = sys.stdin.read(1)
+    sys.stdin.flush()
     print()
     if key in valid_inputs:
         return key
