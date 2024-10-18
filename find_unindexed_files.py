@@ -4,16 +4,40 @@ from bisect import bisect_left, insort_left
 from collector import Config
 import json
 from pathlib import Path
+import sys
+import termios
+import tty
 
 config = Config(Path('collector.conf'))
 
+def read_char():
+    f = sys.stdin.fileno()
+    old = termios.tcgetattr(f)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(f, termios.TCSADRAIN, old)
+    return ch
+
+def get_input(msg, valid_inputs):
+    print(msg, end='', flush=True)
+    ch = read_char()
+    print()
+    if ch in valid_inputs:
+        return ch
+    else:
+        print('Unknown key %s, ' % ch, end='', flush=True)
+        return get_input(msg, valid_inputs)
+
 def main():
-    print('Building file list... ', end='', flush=True)
+    print('Building file list... ')
     archives = []
     missing_archives = []
     for archive in Path(config.pywb_collection_dir).iterdir():
         insort_left(archives, archive.name)
-    print('%d files found.' % len(archives))
+        print('\033[F\033[KBuilding file list... %d' % len(archives))
+    print('\033[F\033[KBuilding file list... %d files found.' % len(archives))
     print('Comparing against pywb index...')
     with Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj').open('r') as f:
         lineno = 0
@@ -26,15 +50,28 @@ def main():
                 archives.pop(position)
             else:
                 missing_archives.append(filename)
-            print('\033[FComparing against pywb index... %d' % lineno)
-        print('\033[FComparing against pywb index... %d entries read.' % lineno)
+            print('\033[F\033[KComparing against pywb index... %d' % lineno)
+        print('\033[F\033[KComparing against pywb index... %d entries read.' % lineno)
 
     print('%d files missing from index' % len(archives), end='')
     if len(archives) > 0:
-        with Path('unindexed_files').open('w') as f:
+        print('; ', end='')
+        key = get_input('[w]rite to file, or [m]ove archives? ', 'mw')
+        if key == 'm':
+            if not Path('unindexed_files').exists():
+                Path('unindexed_files').mkdir()
+            elif not Path('unindexed_files').is_dir():
+                print('\'unindexed_files\' already exists, but is not a directory.')
+                sys.exit()
             for archive in archives:
-                f.write(archive + '\n')
-        print(', full list in file \'unindexed_files\'.')
+                Path(config.pywb_collection_dir, archive).rename(Path('unindexed_files', archive))
+            print('Files moved to \'unindexed_archives/\'.')
+                
+        elif key == 'w':
+            with Path('unindexed_file_list').open('w') as f:
+                for archive in archives:
+                    f.write(archive + '\n')
+            print('Wrote to \'unindexed_archive_list\'.')
     else:
         print('.')
 
