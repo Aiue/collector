@@ -278,13 +278,12 @@ class Archives:
 
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
-                monitor = Monitor.get('monitor')
                 if not initial:
-                    monitor.UpdateStatus(latest_archive=archive.archiveID)
+                    Monitor.get('monitor').UpdateStatus(latest_archive=archive.archiveID)
                     logger.info('New archive: %s' % archive.archiveID)
                     mailer.info('New archive: %s' % archive.archiveID)
                 elif len(self.archives) == 0:
-                    monitor.UpdateStatus(latest_archive=archive.archiveID)
+                    Monitor.get('monitor').UpdateStatus(latest_archive=archive.archiveID)
                     if len(parser.archives) > preArchiveCount:
                         mailer.info('New archive: %s' % archive.archiveID)
                 self.archives[archive.archiveID] = archive
@@ -403,7 +402,6 @@ class RemoteFile:
             logger.error('Could not get %s - %s', self.url, error)
             raise
         finally:
-            monitor = Monitor.get('monitor')
             download_size = self.length if self.length else int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
             monitor.download_size.observe(download_size)
             logger.debug('Downloaded %d bytes in %f seconds. (%s/s)' % (download_size, time.time() - time_start, human_readable(download_size/(time.time()-time_start))))
@@ -602,6 +600,7 @@ class Search:
                     break
         if len(self.archives) == 0:
             self.domain.updateHistory(self.archive.archiveID, 'completed', 0)
+            Monitor.get('monitor').UpdateStatus(current_progress='N/A')
         self.domain.updateHistory(self.archive.archiveID, 'results', len(self.archives))
         logger.info('Found %d search results.', len(self.archives))
 
@@ -614,8 +613,7 @@ class Search:
 
         fileInfo = json.loads(self.archives[position])
 
-        monitor = Monitor.get('monitor')
-        monitor.UpdateStatus(current_progress='%d/%d (%d%%)' % (position + 1, self.domain.history[self.archive.archiveID]['results'], (100*(position + 1) / self.domain.history[self.archive.archiveID]['results'])))
+        Monitor.get('monitor').UpdateStatus(current_progress='%d/%d (%d%%)' % (position + 1, self.domain.history[self.archive.archiveID]['results'], (100*(position + 1) / self.domain.history[self.archive.archiveID]['results'])))
         if int(fileInfo['length']) > config.max_file_size:
             logger.warning('Skipping download of %s as file exceeds size limit at %s bytes.', fileInfo['filename'], fileInfo['length'])
             self.domain.updateHistory(self.archive.archiveID, 'completed', position+1)
