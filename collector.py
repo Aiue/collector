@@ -378,8 +378,9 @@ class RemoteFile:
         if not self.filename.parents[0].exists():
             logger.info('Recursively creating directory \'%s\'.', self.filename.parents[0])
             self.filename.parents[0].mkdir(parents=True)
-        with self.filename.open('wb') as f:
+        with Path('/tmp', 'cccollector', self.filename.name).open('wb') as f:
             f.write(contents)
+        Path('/tmp', 'cccollector', self.filename.name).rename(self.filename)
 
     def get(self):
         #logger.debug('Getting from %s', self.url)
@@ -514,9 +515,10 @@ class Domain:
         if path_is_safe(p, self):
             if not p.parents[0].exists():
                 p.parents[0].mkdir()
-            with p.open('w') as f:
+            with Path('/tmp', 'cccollector', p.name).open('w') as f:
                 json.dump(self.history, f)
                 # No log message, we might do this often.
+            Path('/tmp', 'cccollector', p.name).rename(p)
 
 class Search:
     def __init__(self, domain, archive):
@@ -644,6 +646,9 @@ class Search:
 
 def main():
     logger.info('Collector running.')
+    if not Path('/tmp', 'cccollector').exists():
+        logger.info('Creating temp storage, /tmp/cccollector')
+        Path('/tmp', 'cccollector').mkdir(parents=True)
     archives = Archives()
     domains = []
     domains_last_modified = 0
