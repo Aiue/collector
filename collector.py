@@ -514,10 +514,10 @@ class Domain:
         if path_is_safe(p, self):
             if not p.parents[0].exists():
                 p.parents[0].mkdir()
-            with Path(config.tempdir, p.name).open('w') as f:
+            with Path('tempfile').open('w') as f:
                 json.dump(self.history, f)
                 # No log message, we might do this often.
-            Path(config.tempdir, p.name).rename(p)
+            Path('tempfile').rename(p)
 
 class Search:
     def __init__(self, domain, archive):
