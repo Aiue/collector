@@ -60,17 +60,17 @@ def main():
         print('; ', end='')
         key = get_input('[w]rite to file, or [m]ove archives? ', 'mw')
         if key == 'm':
-            if not Path('unindexed_files').exists():
-                Path('unindexed_files').mkdir()
-            elif not Path('unindexed_files').is_dir():
-                print('\'unindexed_files\' already exists, but is not a directory.')
+            if not Path('unindexed_archives').exists():
+                Path('unindexed_archives').mkdir()
+            elif not Path('unindexed_archives').is_dir():
+                print('\'unindexed_archives\' already exists, but is not a directory.')
                 sys.exit()
             for archive in archives:
-                Path(config.pywb_collection_dir, archive).rename(Path('unindexed_files', archive))
+                Path(config.pywb_collection_dir, archive).rename(Path('unindexed_archives', archive))
             print('Files moved to \'unindexed_archives/\'.')
                 
         elif key == 'w':
-            with Path('unindexed_file_list').open('w') as f:
+            with Path('unindexed_archive_list').open('w') as f:
                 for archive in archives:
                     f.write(archive + '\n')
             print('Wrote to \'unindexed_archive_list\'.')
