@@ -58,7 +58,7 @@ def main():
     print('%d files missing from index' % len(archives), end='')
     if len(archives) > 0:
         print('; ', end='')
-        key = get_input('[w]rite to file, or [m]ove archives? ', 'mw')
+        key = get_input('[w]rite to file, [m]ove archives, or [t]ouch files? ', 'mtw')
         if key == 'm':
             if not Path('unindexed_archives').exists():
                 Path('unindexed_archives').mkdir()
@@ -68,6 +68,11 @@ def main():
             for archive in archives:
                 Path(config.pywb_collection_dir, archive).rename(Path('unindexed_archives', archive))
             print('Files moved to \'unindexed_archives/\'.')
+
+        # This should, according to a hunch, make pywb 'see' them and attempt to index them again.
+        elif key == 't':
+            for archive in archives:
+                Path(config.pywb_collection_dir + '/' + archive).touch()
                 
         elif key == 'w':
             with Path('unindexed_archive_list').open('w') as f:
