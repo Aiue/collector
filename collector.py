@@ -78,6 +78,7 @@ class Config:
     cache_dir = Path('.cache')
     notification_email = None
     mail_from_address = None
+    tempdir = Path('/tmp/cccollector')
 
     def __init__(self, configFile):
         if configFile.exists():
@@ -89,7 +90,7 @@ class Config:
                         value = bool(value)
                     elif key == 'min_request_interval':
                         value = float(value)
-                    elif key in ['domain_list_file', 'safe_path', 'cache_dir']:
+                    elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir']:
                         value = Path(value)
                     elif key in ['max_file_size', 'prometheus_port']:
                         value = int(value)
@@ -377,9 +378,9 @@ class RemoteFile:
         if not self.filename.parents[0].exists():
             logger.info('Recursively creating directory \'%s\'.', self.filename.parents[0])
             self.filename.parents[0].mkdir(parents=True)
-        with Path('/tmp', 'cccollector', self.filename.name).open('wb') as f:
+        with Path(config.tempdir, self.filename.name).open('wb') as f:
             f.write(contents)
-        Path('/tmp', 'cccollector', self.filename.name).rename(self.filename)
+        Path(config.tempdir, self.filename.name).rename(self.filename)
 
     def get(self):
         #logger.debug('Getting from %s', self.url)
@@ -513,10 +514,10 @@ class Domain:
         if path_is_safe(p, self):
             if not p.parents[0].exists():
                 p.parents[0].mkdir()
-            with Path('/tmp', 'cccollector', p.name).open('w') as f:
+            with Path(config.tempdir, p.name).open('w') as f:
                 json.dump(self.history, f)
                 # No log message, we might do this often.
-            Path('/tmp', 'cccollector', p.name).rename(p)
+            Path(config.tempdir, p.name).rename(p)
 
 class Search:
     def __init__(self, domain, archive):
@@ -644,9 +645,9 @@ class Search:
 
 def main():
     logger.info('Collector running.')
-    if not Path('/tmp', 'cccollector').exists():
-        logger.info('Creating temp storage, /tmp/cccollector')
-        Path('/tmp', 'cccollector').mkdir(parents=True)
+    if not Path(config.tempdir).exists():
+        logger.info('Creating temp storage, %s' % str(config.tempdir))
+        Path(config.tempdir).mkdir(parents=True)
     archives = Archives()
     domains = []
     domains_last_modified = 0
@@ -719,7 +720,7 @@ def main():
                 logger.info('All searches currently finished, next archive list update check in %.2f seconds.', 86400 - (time.time() - archives.lastUpdate))
                 finished_message = True
             if hasProcessed:
-                mailer.info('All configured domains have been processed in all current archives.%s' % ('\n%d items remain in retry queue.' % len(retryqueue.queue) if len(retryqueue.queue) > 0 else ''))
+                #mailer.info('All configured domains have been processed in all current archives.%s' % ('\n%d items remain in retry queue.' % len(retryqueue.queue) if len(retryqueue.queue) > 0 else ''))
                 hasProcessed = False
             time.sleep(10)
             continue

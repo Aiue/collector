@@ -71,6 +71,11 @@ Default: None *(NoneType)*
 
 Optional. Required for functions related to sending email (outside of logging configuration file).
 
+#### tempdir *(string)*
+Default: /tmp/cccollector
+
+Where to store temporary files. Needs to be on the same device as cache and collection dir.
+
 ### remove_domain_archives.py
 Usage: `./remove_domain_archive.py <domain>`
 
