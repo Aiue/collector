@@ -278,13 +278,12 @@ class Archives:
 
         for archive in parser.archives:
             if archive.archiveID not in self.archives:
-                monitor = Monitor.get('monitor')
                 if not initial:
-                    monitor.UpdateStatus(latest_archive=archive.archiveID)
+                    Monitor.get('monitor').UpdateStatus(latest_archive=archive.archiveID)
                     logger.info('New archive: %s' % archive.archiveID)
                     mailer.info('New archive: %s' % archive.archiveID)
                 elif len(self.archives) == 0:
-                    monitor.UpdateStatus(latest_archive=archive.archiveID)
+                    Monitor.get('monitor').UpdateStatus(latest_archive=archive.archiveID)
                     if len(parser.archives) > preArchiveCount:
                         mailer.info('New archive: %s' % archive.archiveID)
                 self.archives[archive.archiveID] = archive
@@ -378,8 +377,9 @@ class RemoteFile:
         if not self.filename.parents[0].exists():
             logger.info('Recursively creating directory \'%s\'.', self.filename.parents[0])
             self.filename.parents[0].mkdir(parents=True)
-        with self.filename.open('wb') as f:
+        with Path('/tmp', 'cccollector', self.filename.name).open('wb') as f:
             f.write(contents)
+        Path('/tmp', 'cccollector', self.filename.name).rename(self.filename)
 
     def get(self):
         #logger.debug('Getting from %s', self.url)
@@ -402,7 +402,6 @@ class RemoteFile:
             logger.error('Could not get %s - %s', self.url, error)
             raise
         finally:
-            monitor = Monitor.get('monitor')
             download_size = self.length if self.length else int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
             monitor.download_size.observe(download_size)
             logger.debug('Downloaded %d bytes in %f seconds. (%s/s)' % (download_size, time.time() - time_start, human_readable(download_size/(time.time()-time_start))))
@@ -514,9 +513,10 @@ class Domain:
         if path_is_safe(p, self):
             if not p.parents[0].exists():
                 p.parents[0].mkdir()
-            with p.open('w') as f:
+            with Path('/tmp', 'cccollector', p.name).open('w') as f:
                 json.dump(self.history, f)
                 # No log message, we might do this often.
+            Path('/tmp', 'cccollector', p.name).rename(p)
 
 class Search:
     def __init__(self, domain, archive):
@@ -600,6 +600,7 @@ class Search:
                     break
         if len(self.archives) == 0:
             self.domain.updateHistory(self.archive.archiveID, 'completed', 0)
+            Monitor.get('monitor').UpdateStatus(current_progress='N/A')
         self.domain.updateHistory(self.archive.archiveID, 'results', len(self.archives))
         logger.info('Found %d search results.', len(self.archives))
 
@@ -612,8 +613,7 @@ class Search:
 
         fileInfo = json.loads(self.archives[position])
 
-        monitor = Monitor.get('monitor')
-        monitor.UpdateStatus(current_progress='%d/%d (%d%%)' % (position + 1, self.domain.history[self.archive.archiveID]['results'], (100*(position + 1) / self.domain.history[self.archive.archiveID]['results'])))
+        Monitor.get('monitor').UpdateStatus(current_progress='%d/%d (%d%%)' % (position + 1, self.domain.history[self.archive.archiveID]['results'], (100*(position + 1) / self.domain.history[self.archive.archiveID]['results'])))
         if int(fileInfo['length']) > config.max_file_size:
             logger.warning('Skipping download of %s as file exceeds size limit at %s bytes.', fileInfo['filename'], fileInfo['length'])
             self.domain.updateHistory(self.archive.archiveID, 'completed', position+1)
@@ -644,6 +644,9 @@ class Search:
 
 def main():
     logger.info('Collector running.')
+    if not Path('/tmp', 'cccollector').exists():
+        logger.info('Creating temp storage, /tmp/cccollector')
+        Path('/tmp', 'cccollector').mkdir(parents=True)
     archives = Archives()
     domains = []
     domains_last_modified = 0
