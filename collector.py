@@ -381,6 +381,7 @@ class RemoteFile:
         with Path(config.tempdir, self.filename.name).open('wb') as f:
             f.write(contents)
         Path(config.tempdir, self.filename.name).rename(self.filename)
+        self.filename.touch() # Hack to try to get pywb to autoindex this file.
 
     def get(self):
         #logger.debug('Getting from %s', self.url)
