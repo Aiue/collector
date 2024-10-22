@@ -346,6 +346,11 @@ class RemoteFile:
             rq.add(self)
         else:
             self.write(contents)
+            if config.pywb_dir:
+                logger.debug('Running %s/bin/wb-manager add %s %s', str(config.pywb_dir), config.collection_name, str(self.filename))
+                subprocess.run([str(config.pywb_dir) + '/bin/wb-manager', 'add', config.collection_name, str(self.filename)], env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s:%s' % (str(config.pywb_dir), os.getenv('PATH'))}, check=True)
+            else:
+                self.filename.rename(Path(pywb_collection_dir, self.filename.name))
 
     def read(self):
         #logger.debug('Reading from %s', self.url)
@@ -623,7 +628,7 @@ class Search:
         else:
             filerange = '-' + fileInfo['offset'] + '-' + str(int(fileInfo['offset'])+int(fileInfo['length'])-1)
 
-            filename = config.pywb_collection_dir + '/'
+            filename = config.tempdir + '/'
             if fileInfo['filename'].endswith('.arc.gz'):
                 filename += fileInfo['filename'].replace('/', '-')
                 filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
