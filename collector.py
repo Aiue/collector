@@ -628,7 +628,7 @@ class Search:
         else:
             filerange = '-' + fileInfo['offset'] + '-' + str(int(fileInfo['offset'])+int(fileInfo['length'])-1)
 
-            filename = config.tempdir + '/'
+            filename = str(config.tempdir) + '/'
             if fileInfo['filename'].endswith('.arc.gz'):
                 filename += fileInfo['filename'].replace('/', '-')
                 filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
