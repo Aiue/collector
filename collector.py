@@ -384,7 +384,7 @@ class RemoteFile:
         with Path(config.tempdir, self.filename.name).open('wb') as f:
             f.write(contents)
         if config.pywb_dir:
-            subprocess.run('wb-manager', 'add', config.collection_name, str(self.filename), env='VIRTUAL_ENV=%s PATH=%s:%s' % (config.pywb_dir, config.pywb_dir, os.getenv('PATH')), check=True)
+            subprocess.run(['wb-manager', 'add', config.collection_name, str(self.filename)], env='VIRTUAL_ENV=%s PATH=%s:%s' % (config.pywb_dir, config.pywb_dir, os.getenv('PATH')), check=True)
         else:
             Path(config.tempdir, self.filename.name).rename(self.filename)
 
