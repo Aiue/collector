@@ -354,6 +354,7 @@ class RemoteFile:
                 except subprocess.CalledProcessError as err:
                     logger.error('wb-manager exited with code %d: %s' % (err.returncode, err.output))
                     raise
+                self.filename.unlink()
             else:
                 self.filename.rename(Path(pywb_collection_dir, self.filename.name))
 
