@@ -14,6 +14,7 @@ import logging.handlers
 import os
 from pathlib import Path
 import requests
+import subprocess
 import time
 
 try:
@@ -79,6 +80,8 @@ class Config:
     notification_email = None
     mail_from_address = None
     tempdir = Path('/tmp/cccollector')
+    pywb_dir = None
+    collection_name = 'root'
 
     def __init__(self, configFile):
         if configFile.exists():
@@ -90,11 +93,11 @@ class Config:
                         value = bool(value)
                     elif key == 'min_request_interval':
                         value = float(value)
-                    elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir']:
+                    elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'pywb_dir']:
                         value = Path(value)
                     elif key in ['max_file_size', 'prometheus_port']:
                         value = int(value)
-                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'pywb_collection_dir']:
+                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'pywb_collection_dir', 'collection_name']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
 
@@ -380,8 +383,10 @@ class RemoteFile:
             self.filename.parents[0].mkdir(parents=True)
         with Path(config.tempdir, self.filename.name).open('wb') as f:
             f.write(contents)
-        Path(config.tempdir, self.filename.name).rename(self.filename)
-        self.filename.touch() # Hack to try to get pywb to autoindex this file.
+        if config.pywb_dir:
+            subprocess.run('wb-manager', 'add', config.collection_name, str(self.filename), env='VIRTUAL_ENV=%s PATH=%s:%s' % (config.pywb_dir, config.pywb_dir, os.getenv('PATH')))
+        else:
+            Path(config.tempdir, self.filename.name).rename(self.filename)
 
     def get(self):
         #logger.debug('Getting from %s', self.url)

@@ -4,7 +4,7 @@ The purpose of this script is to search the [Common Crawl](https://commoncrawl.o
 ## Usage
 The script is intended to run as a daemon over a long period of time. Other uses may be possible, but would not be advised without proper modifications.
 
-When running alongside pywb, it is assumed that pywb has been configured to use automatic index updating. The purpose is twofold: stay out of pywb's venv, and don't trigger index rebuilds too frequently.
+It was originally written to make use of pywb's automatic indexing. However, due to problems with the automatic indexer not always picking up files, it has been rewritten to allow use of `wb-manager`. Note that this is optional, and the old behaviour of simply dumping the file in a directory will be used.
 
 The domains to be searched should be listed in [domains.conf](domains.conf) (can be reconfigured by setting `domain_list_file`), which will be expected to be a plaintext file. Separate domain entries with a newline. By request, the script will prioritise finish searching all archives for one domain, letting the domain's history be completed. Only domains will be accepted, and will implicitly include all subdomains. Full URLs are not supported, because when combined with the implicit inclusion of subdomains, this would be less optimal.
 
@@ -73,6 +73,16 @@ Optional. Required for functions related to sending email (outside of logging co
 
 #### tempdir *(string)*
 Default: /tmp/cccollector
+
+#### pywb_dir *(string)*
+Default: None *(NoneType)*
+
+Optional. Path to pybw's venv. If set, wb-manager will be used.
+
+#### collection_name *(string)*
+Default: root
+
+Name of collection in pywb, only applies if using wb-manager.
 
 Where to store temporary files. Needs to be on the same device as cache and collection dir.
 
