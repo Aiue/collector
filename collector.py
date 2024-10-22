@@ -81,7 +81,7 @@ class Config:
     mail_from_address = None
     tempdir = Path('/tmp/cccollector')
     pywb_dir = None
-    collection_name = '$root'
+    collection_name = 'root'
 
     def __init__(self, configFile):
         if configFile.exists():
