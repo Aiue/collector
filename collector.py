@@ -349,10 +349,11 @@ class RemoteFile:
             self.write(contents)
             if config.pywb_dir:
                 logger.debug('Running %s/bin/wb-manager add %s %s', str(config.pywb_dir), config.collection_name, str(self.filename))
-                proc = subprocess.run([str(config.pywb_dir) + '/bin/wb-manager', 'add', config.collection_name, str(self.filename)], env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s:%s' % (str(config.pywb_dir), os.getenv('PATH'))})
-                if proc.returncode > 0:
-                    logger.error('wb-manager exited with code %d: %s' % (proc.returncode, proc.stderr.decode()))
-                    proc.check_returncode()
+                try:
+                    subprocess.run([str(config.pywb_dir) + '/bin/wb-manager', 'add', config.collection_name, str(self.filename)], env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s:%s' % (str(config.pywb_dir), os.getenv('PATH'))}, check=True)
+                except subprocess.CalledProcesserror as err:
+                    logger.error('wb-manager exited with code %d: %s' % (err.returncode, err.output))
+                    raise
             else:
                 self.filename.rename(Path(pywb_collection_dir, self.filename.name))
 
