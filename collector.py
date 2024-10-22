@@ -383,6 +383,7 @@ class RemoteFile:
             self.filename.parents[0].mkdir(parents=True)
         with Path(config.tempdir, self.filename.name).open('wb') as f:
             f.write(contents)
+        # Hold on, this doesn't go here at all. This could just as well be cache stuff!
         if config.pywb_dir:
             logger.debug('Running %s/bin/wb-manager add %s %s', str(config.pywb_dir), config.collection_name, str(self.filename))
             subprocess.run([str(config.pywb_dir) + '/bin/wb-manager', 'add', config.collection_name, str(config.tempdir) + ' ' + str(self.filename.name)], env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s:%s' % (str(config.pywb_dir), os.getenv('PATH'))}, check=True)
