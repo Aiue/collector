@@ -142,6 +142,7 @@ def path_is_safe(path, inst=None): # path is a Path.
                 str(path).startswith(config.pywb_collection_dir)
              or str(path).startswith(str(config.safe_path))
              or str(path).startswith(str(config.cache_dir))
+             or str(path).startswith(str(config.tempdir))
     )):
         msg = 'Unsafe path: %s' % path
         if inst and type(inst) == RemoteFile: # Type is either RemoteFile or Domain. Only RemoteFile has attributes we want to add.
