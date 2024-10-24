@@ -426,7 +426,7 @@ class RemoteFile:
             raise
         # Note that this excludes headers.
         monitor.download_size.observe(len(r.content))
-        logger.debug('Downloaded %s in %f seconds. (%s/s)' % (len(r.content), time.time() - time_start, human_readable(len(r.content)/(time.time()-time_start))))
+        logger.debug('Downloaded %s in %f seconds. (%s/s)' % (human_readable(len(r.content)), time.time() - time_start, human_readable(len(r.content)/(time.time()-time_start))))
         if not (r.status_code >= 200 and r.status_code < 300):
             # This could imply a problem with parsing, raise it as such rather than simply bad status.
             if r.status_code >= 400 and r.status_code < 500:
