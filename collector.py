@@ -355,7 +355,8 @@ class RemoteFile:
                         env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s:%s' % (str(config.pywb_dir), os.getenv('PATH'))},
                         check=True,
                         cwd=str(config.pywb_dir),
-                        stdout=subprocess.DEVNULL
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
                     )
                 except subprocess.CalledProcessError as err:
                     logger.error('wb-manager exited with code %d: %s' % (err.returncode, err.output))
