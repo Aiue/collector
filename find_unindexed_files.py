@@ -41,7 +41,7 @@ def main():
         print('\033[F\033[KBuilding file list... %d' % len(archives))
     print('\033[F\033[KBuilding file list... %d files found.' % len(archives))
     print('Comparing against pywb index...')
-    with Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'index.cdxj').open('r') as f:
+    with Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj').open('r') as f:
         lineno = 0
         for line in f.read().splitlines():
             lineno += 1
