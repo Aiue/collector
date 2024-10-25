@@ -353,7 +353,6 @@ class RemoteFile:
                         [str(config.pywb_dir) + 'wb-manager', 'add', config.collection_name, str(self.filename)],
                         env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s/bin:%s' % (str(config.pywb_dir), os.getenv('PATH'))},
                         check=True,
-                        cwd=str(config.pywb_dir),
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         encoding='utf8'
