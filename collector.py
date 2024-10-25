@@ -355,7 +355,8 @@ class RemoteFile:
                         check=True,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        encoding='utf8'
+                        encoding='utf8',
+                        cwd=str(config.pywb_dir)
                     )
                 except subprocess.CalledProcessError as err:
                     logger.error('wb-manager exited with code %d: %s' % (err.returncode, err.output))
