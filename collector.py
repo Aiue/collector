@@ -350,8 +350,8 @@ class RemoteFile:
             if config.pywb_dir:
                 try:
                     wbm = subprocess.run(
-                        [str(config.pywb_dir) + '/bin/wb-manager', 'add', config.collection_name, str(self.filename)],
-                        env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s:%s' % (str(config.pywb_dir), os.getenv('PATH'))},
+                        [str(config.pywb_dir) + 'wb-manager', 'add', config.collection_name, str(self.filename)],
+                        env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s/bin:%s' % (str(config.pywb_dir), os.getenv('PATH'))},
                         check=True,
                         cwd=str(config.pywb_dir),
                         stdout=subprocess.PIPE,
