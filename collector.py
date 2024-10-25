@@ -753,7 +753,7 @@ def main():
             current_search.process()
         except (requests.RequestException, BadHTTPStatus) as error:
             if isinstance(error, BadHTTPStatus):
-                logger.warning('Could not retrieve %s: %d %s' % (error[0], error[3], error[4]))
+                logger.warning('Could not retrieve %s: %d %s' % (error.args[0], error.args[3], error.args[4]))
             else:
                 logger.warning(error)
 
