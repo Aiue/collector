@@ -348,6 +348,7 @@ class RemoteFile:
         else:
             self.write(contents)
             if config.pywb_dir:
+                start_time = time.time()
                 try:
                     wbm = subprocess.run(
                         ['wb-manager', 'add', config.collection_name, str(self.filename)],
@@ -361,6 +362,7 @@ class RemoteFile:
                 except subprocess.CalledProcessError as err:
                     logger.error('wb-manager exited with code %d: %s' % (err.returncode, err.output))
                     raise
+                logger.debug('wb-manager ran for %.2f seconds.' % time.time() - start_time)
                 self.filename.unlink()
             else:
                 self.filename.rename(Path(pywb_collection_dir, self.filename.name))
