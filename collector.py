@@ -716,6 +716,7 @@ def main():
             domains_last_modified = Path(config.domain_list_file).stat().st_mtime
 
         archives.update()
+        retryqueue.process()
 
         archive = None
         domain = None
@@ -730,8 +731,6 @@ def main():
                     archive = a
                     monitor.UpdateStatus(current_domain='%s (%d/%d)' % (str(domain), domains.index(domain)+1, len(domains)), current_archive='%s (%d/%d)' % (archive.archiveID, archive.order, len(archives.archives)))
                     break
-
-        retryqueue.process()
 
         if not domain:
             current_search = None # Make sure we're not sitting on memory we don't need.
