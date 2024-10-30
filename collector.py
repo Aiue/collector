@@ -76,8 +76,7 @@ class Config:
     min_request_interval = 1.0
     max_request_interval = 60.0
     cache_index_clusters = False
-    download_dir = None # Should (probably) also be Pathified.
-                        # However, this would require more extensive rewrites.
+    download_dir = None
     domain_list_file = Path('domains.conf')
     safe_path = Path.cwd()
     prometheus_port = 1234
@@ -107,8 +106,6 @@ class Config:
                         elif value.lower() == 'auto': value = INDEX_AUTO
                         elif value.lower() == 'manager': value = INDEX_MANAGER
                         else: raise RuntimeError('Unknown indexing method: %s' % value)
-                    elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'pywb_dir']:
-                        value = Path(value)
                     elif key in ['max_file_size', 'prometheus_port']:
                         if value.isnumeric(): value = int(value)
                         else: raise RuntimeError('Key %s expects integer value, got %s' % (key, value))
@@ -117,7 +114,9 @@ class Config:
                         raise RuntimeError('Both download_dir and pywb_collection_dir has been set, only use download_dir.')
                     elif key == 'pywb_collection_dir':
                         key = 'download_dir'
-                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'download_dir', 'collection_name']:
+                    elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'pywb_dir', 'download_dir']:
+                        value = Path(value)
+                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'collection_name']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
             if self.indexing_method < INDEX_MANAGER and self.download_dir == None: raise RuntimeError('%s indexing requires download_dir to be set.' % ('Automatic' if self.indexing_method == INDEX_AUTO else 'No'))
@@ -161,7 +160,7 @@ def path_is_safe(path, inst=None): # path is a Path.
          or str(path).endswith('/..')
          or path.is_absolute()
             and not (
-                str(path).startswith(config.download_dir)
+                str(path).startswith(str(config.download_dir))
              or str(path).startswith(str(config.safe_path))
              or str(path).startswith(str(config.cache_dir))
              or str(path).startswith(str(config.tempdir))
@@ -230,7 +229,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
         bisect.insort_left(self.files, filename)
 
     def check_and_hack(self):
-        indexfile = Path(Path(config.download_dir).parents[0], 'indexes', 'autoindex.cdxj')
+        indexfile = Path(config.download_dir.parents[0], 'indexes', 'autoindex.cdxj')
         if not indexfile.exists():
             logger.warning('%s does not exist, check your pywb configuration.' % str(indexfile))
         else:
@@ -744,7 +743,7 @@ def main():
     if config.indexing_method == INDEX_AUTO:
         last_index_hack = 0 # Ensure we do a pass as soon as possible.
         unknown_status_files = FileList.get('unknown_status_files')
-        for archive in Path(config.download_dir).iterdir():
+        for archive in config.download_dir.iterdir():
             unknown_status_files.add(archive.name)
         logger.info('Cached %d previously downloaded files for index comparison.' % len(unknown_status_files))
 
