@@ -213,6 +213,39 @@ class Monitor:
             self.status_cache[k] = v
         self.status.info(self.status_cache)
 
+class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
+    filelists = {}
+
+    def get(name):
+        if name in FileList.filelists: return FileList.filelists[name]
+        return FileList(name)
+
+    def __init__(self, name):
+        self.files = []
+
+    def __len__(self):
+        return len(self.files)
+    
+    def add(self, filename):
+        bisect.insort_left(self.files, filename)
+
+    def check_and_hack(self):
+        indexfile = Path(Path(config.download_dir).parents[0], 'indexes', 'autoindex.cdxj')
+        if not indexfile.exists():
+            logger.warning('%s does not exist, check your pywb configuration.' % str(indexfile))
+        else:
+            count = 0
+            with indexfile.open('r') as f:
+                for line in f.read().splitlines():
+                    _,_,info = line.split(' ', 2)
+                    filename = json.loads(info)['filename']
+                    position = bisect_left(self.files, filename)
+                    if self.files[position] == filename:
+                        self.files.pop(position)
+                    else:
+                        Path(config.download_dir, filename).touch()
+                        count += 1
+            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
 
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
@@ -388,6 +421,7 @@ class RemoteFile:
                 self.filename.unlink()
             else:
                 self.filename.rename(Path(download_dir, self.filename.name))
+                FileList.get('unknown_status_files').add(self.filename.name)
 
     def read(self):
         #logger.debug('Reading from %s', self.url)
@@ -706,7 +740,12 @@ def main():
 
     start_http_server(config.prometheus_port)
 
-    # TODO: Load unknown status file cache.
+    if config.indexing_method == INDEX_AUTO:
+        last_index_hack = 0 # Ensure we do a pass as soon as possible.
+        unknown_status_files = FileList.get('unknown_status_files')
+        for archive in Path(config.download_dir).iterdir():
+            unknown_status_files.add(archive.name)
+        logger.info('Cached %d previously downloaded files for index comparison.' % len(unknown_status_files))
 
     while True:
         monitor.retryqueue.set(len(retryqueue.queue))
@@ -742,8 +781,9 @@ def main():
         archives.update()
         retryqueue.process()
 
-        # TODO: If condition (every n cycles, every n seconds, or if cache of unknown status files is a certain size? The last one could leave files in limbo, so not that one.)
-        #           Compare unknown status cache against pywb index. If indexed, remove from cache, otherwise touch file.
+        if config.indexing_method == INDEX_AUTO and time.time() - last_index_hack > 600: # Once every 10 minutes should be good.
+            if len(unknown_status_files) > 0: unknown_status_files.check_and_hack()
+            last_index_hack = time.time()
         
         archive = None
         domain = None
