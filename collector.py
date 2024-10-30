@@ -421,7 +421,7 @@ class RemoteFile:
                 logger.debug('wb-manager ran for %.2f seconds.' % (time.time() - start_time))
                 self.filename.unlink()
             else:
-                self.filename.rename(Path(download_dir, self.filename.name))
+                self.filename.rename(Path(config.download_dir, self.filename.name))
                 FileList.get('unknown_status_files').add(self.filename.name)
 
     def read(self):
