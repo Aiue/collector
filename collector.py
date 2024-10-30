@@ -60,6 +60,10 @@ except ModuleNotFoundError:
         def observe(*args):
             pass
 
+# Set some constants. Or well, "constants", but anyway.
+INDEX_AUTO=1
+INDEX_MANAGER=2
+
 # I don't like the configuration file alternatives python offers. I'll write my own.
 class Config:
     # Set defaults
@@ -81,7 +85,8 @@ class Config:
     mail_from_address = None
     tempdir = Path('/tmp/cccollector')
     pywb_dir = None
-    collection_name = 'root'
+    collection_name = None
+    indexing_method=INDEX_AUTO
 
     def __init__(self, configFile):
         if configFile.exists():
@@ -90,16 +95,26 @@ class Config:
                     # This isn't pretty, but it will ensure the preferred format is viable.
                     key,value = line.split('=')
                     if key == 'cache_index_clusters':
-                        value = bool(value)
+                        if value.lower() == 'true': value = True
+                        elif value.lower() == 'false': value = False
+                        else: raise RuntimeError('Key %s expects boolean value, got %s' % (key, value))
                     elif key == 'min_request_interval':
-                        value = float(value)
+                        if value.isdecimal(): value = float(value)
+                        else: raise RuntimeError('Key %s expects float value, got %s' % (key, value))
+                    elif key == 'indexing_method':
+                        if value == 'auto': value = INDEX_AUTO
+                        elif value == 'manager': value = INDEX_MANAGER
+                        else: raise RuntimeError('Unknown indexing method: %s' % value)
                     elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'pywb_dir']:
                         value = Path(value)
                     elif key in ['max_file_size', 'prometheus_port']:
-                        value = int(value)
+                        if value.isnumeric(): value = int(value)
+                        else: raise RuntimeError('Key %s expects integer value, got %s' % (key, value))
                     elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'pywb_collection_dir', 'collection_name']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
+            if self.indexing_method == INDEX_AUTO and self.pywb_collection_dir == None: raise RuntimeError('Automatic indexing requires pywb_collection_dir to be set.')
+            if self.indexing_method == INDEX_MANAGER and (self.pywb_dir == None or self.collection_name == None): raise RuntimeError('Manager indexing requires pywb_dir and collection_name to be set.')
 
 config = Config(Path('collector.conf'))
 
@@ -684,6 +699,8 @@ def main():
 
     start_http_server(config.prometheus_port)
 
+    # TODO: Load unknown status file cache.
+
     while True:
         monitor.retryqueue.set(len(retryqueue.queue))
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
@@ -718,6 +735,9 @@ def main():
         archives.update()
         retryqueue.process()
 
+        # TODO: If condition (every n cycles, every n seconds, or if cache of unknown status files is a certain size? The last one could leave files in limbo, so not that one.)
+        #           Compare unknown status cache against pywb index. If indexed, remove from cache, otherwise touch file.
+        
         archive = None
         domain = None
         for d in domains:
