@@ -41,11 +41,6 @@ Default: False
 
 Whether or not we should cache index clusters. Normally, this can be left off, since it's fairly unlikely we'll ever need to search the same cluster more than once.
 
-#### pywb_collection_dir *(string)*
-Default: path/to/pywb/collection
-
-This will need to be set to wherever your pywb collection is located.
-
 #### safe_path *(string)*
 Default: `Path.cwd()`
 
@@ -74,17 +69,33 @@ Optional. Required for functions related to sending email (outside of logging co
 #### tempdir *(string)*
 Default: /tmp/cccollector
 
+Where to store temporary files. Needs to be on the same device as cache and collection dir.
+
+#### indexing_method *(string)*
+Default: auto
+
+Indexing method:
+ - 'none' (or 'download') means the collector will make no attempts to interact with pywb, making it able to function standalone. Requires `download_dir` to also be set.
+ - 'auto' means the collector will make use of pywb's automatic indexing, and track files that remain unindexed to make use of a workaround. Requires `download_dir` to also be set.
+ - 'manager' means `wb-manager` will be called for each download. This method is very slow and not recommended. Requires `pywb_dir` and `collection_name` to also be set.
+
+#### download_dir *(string)*
+Default: None *(NoneType)*
+
+Where to drop files if automatic or no indexing method is used.
+
 #### pywb_dir *(string)*
 Default: None *(NoneType)*
 
-Optional. Path to pybw's venv. If set, wb-manager will be used.
+Path to pybw's venv, required if using manager indexing method.
 
 #### collection_name *(string)*
 Default: root
 
-Name of collection in pywb, only applies if using wb-manager.
+#### pywb_collection_dir *(string)* (DEPRECATED)
+Default: None
 
-Where to store temporary files. Needs to be on the same device as cache and collection dir.
+Use download_dir instead.
 
 ### remove_domain_archives.py
 Usage: `./remove_domain_archive.py <domain>`
