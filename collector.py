@@ -61,6 +61,7 @@ except ModuleNotFoundError:
             pass
 
 # Set some constants. Or well, "constants", but anyway.
+INDEX_NONE=0
 INDEX_AUTO=1
 INDEX_MANAGER=2
 
@@ -102,8 +103,9 @@ class Config:
                         if value.isdecimal(): value = float(value)
                         else: raise RuntimeError('Key %s expects float value, got %s' % (key, value))
                     elif key == 'indexing_method':
-                        if value == 'auto': value = INDEX_AUTO
-                        elif value == 'manager': value = INDEX_MANAGER
+                        if value.lower() in ['download', 'none']: value = INDEX_NONE
+                        elif value.lower() == 'auto': value = INDEX_AUTO
+                        elif value.lower() == 'manager': value = INDEX_MANAGER
                         else: raise RuntimeError('Unknown indexing method: %s' % value)
                     elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'pywb_dir']:
                         value = Path(value)
@@ -113,7 +115,7 @@ class Config:
                     elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'pywb_collection_dir', 'collection_name']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
-            if self.indexing_method == INDEX_AUTO and self.pywb_collection_dir == None: raise RuntimeError('Automatic indexing requires pywb_collection_dir to be set.')
+            if self.indexing_method < INDEX_MANAGER and self.pywb_collection_dir == None: raise RuntimeError('%s indexing requires pywb_collection_dir to be set.' % ('Automatic' if self.indexing_method == INDEX_AUTO else 'No'))
             if self.indexing_method == INDEX_MANAGER and (self.pywb_dir == None or self.collection_name == None): raise RuntimeError('Manager indexing requires pywb_dir and collection_name to be set.')
 
 config = Config(Path('collector.conf'))
