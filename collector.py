@@ -76,8 +76,8 @@ class Config:
     min_request_interval = 1.0
     max_request_interval = 60.0
     cache_index_clusters = False
-    pywb_collection_dir = None # Should (probably) also be Pathified.
-                               # However, this would require more extensive rewrites.
+    download_dir = None # Should (probably) also be Pathified.
+                        # However, this would require more extensive rewrites.
     domain_list_file = Path('domains.conf')
     safe_path = Path.cwd()
     prometheus_port = 1234
@@ -112,10 +112,15 @@ class Config:
                     elif key in ['max_file_size', 'prometheus_port']:
                         if value.isnumeric(): value = int(value)
                         else: raise RuntimeError('Key %s expects integer value, got %s' % (key, value))
-                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'pywb_collection_dir', 'collection_name']:
+                    # Allow old key if there is no conflict. To be removed later.
+                    elif self.download_dir and key in ['download_dir', 'pywb_collection_dir']:
+                        raise RuntimeError('Both download_dir and pywb_collection_dir has been set, only use download_dir.')
+                    elif key == 'pywb_collection_dir':
+                        key = 'download_dir'
+                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'download_dir', 'collection_name']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
-            if self.indexing_method < INDEX_MANAGER and self.pywb_collection_dir == None: raise RuntimeError('%s indexing requires pywb_collection_dir to be set.' % ('Automatic' if self.indexing_method == INDEX_AUTO else 'No'))
+            if self.indexing_method < INDEX_MANAGER and self.download_dir == None: raise RuntimeError('%s indexing requires download_dir to be set.' % ('Automatic' if self.indexing_method == INDEX_AUTO else 'No'))
             if self.indexing_method == INDEX_MANAGER and (self.pywb_dir == None or self.collection_name == None): raise RuntimeError('Manager indexing requires pywb_dir and collection_name to be set.')
 
 config = Config(Path('collector.conf'))
@@ -156,7 +161,7 @@ def path_is_safe(path, inst=None): # path is a Path.
          or str(path).endswith('/..')
          or path.is_absolute()
             and not (
-                str(path).startswith(config.pywb_collection_dir)
+                str(path).startswith(config.download_dir)
              or str(path).startswith(str(config.safe_path))
              or str(path).startswith(str(config.cache_dir))
              or str(path).startswith(str(config.tempdir))
@@ -382,7 +387,7 @@ class RemoteFile:
                 logger.debug('wb-manager ran for %.2f seconds.' % (time.time() - start_time))
                 self.filename.unlink()
             else:
-                self.filename.rename(Path(pywb_collection_dir, self.filename.name))
+                self.filename.rename(Path(download_dir, self.filename.name))
 
     def read(self):
         #logger.debug('Reading from %s', self.url)
