@@ -271,7 +271,7 @@ class Archive:
             logger.critical('Could not update paths for archive %s (incomplete or otherwise malformed paths file).', self.archiveID)
             raise ParserError('Could not update paths for archive %s (incomplete or otherwise malformed paths file).', self.archiveID)
 
-class Archives:
+class ArchiveList:
     def __init__(self):
         self.archives = {}
         self.lastUpdate = 0
@@ -725,7 +725,7 @@ def main():
     if not Path(config.tempdir).exists():
         logger.info('Creating temp storage, %s' % str(config.tempdir))
         Path(config.tempdir).mkdir(parents=True)
-    archives = Archives()
+    archives = ArchiveList()
     domains = []
     domains_last_modified = 0
     finished_message = False
