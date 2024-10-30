@@ -234,6 +234,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
         if not indexfile.exists():
             logger.warning('%s does not exist, check your pywb configuration.' % str(indexfile))
         else:
+            logger.info('Checking index status of %d files.' % len(self))
             count = 0
             with indexfile.open('r') as f:
                 for line in f.read().splitlines():
