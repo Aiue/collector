@@ -76,7 +76,7 @@ Default: auto
 
 Indexing method:
  - 'none' (or 'download') means the collector will make no attempts to interact with pywb, making it able to function standalone. Requires `download_dir` to also be set.
- - 'auto' means the collector will make use of pywb's automatic indexing, and track files that remain unindexed to make use of a workaround. Requires `download_dir` to also be set.
+ - 'auto' means the collector will make use of pywb's automatic indexing, and track files that remain unindexed to make use of a workaround. Will result in a slight increase in startup times. Requires `download_dir` to also be set.
  - 'manager' means `wb-manager` will be called for each download. This method is very slow and not recommended. Requires `pywb_dir` and `collection_name` to also be set.
 
 #### download_dir *(string)*
