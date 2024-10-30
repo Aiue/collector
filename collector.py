@@ -94,6 +94,8 @@ class Config:
                 for line in f.read().splitlines():
                     # This isn't pretty, but it will ensure the preferred format is viable.
                     key,value = line.split('=')
+                    if key == 'pywb_collection_dir':
+                        key = 'download_dir'
                     if key == 'cache_index_clusters':
                         if value.lower() == 'true': value = True
                         elif value.lower() == 'false': value = False
@@ -112,8 +114,6 @@ class Config:
                     # Allow old key if there is no conflict. To be removed later.
                     elif self.download_dir and key in ['download_dir', 'pywb_collection_dir']:
                         raise RuntimeError('Both download_dir and pywb_collection_dir has been set, only use download_dir.')
-                    elif key == 'pywb_collection_dir':
-                        key = 'download_dir'
                     elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'pywb_dir', 'download_dir']:
                         value = Path(value)
                     elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'collection_name']:
