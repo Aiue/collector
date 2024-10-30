@@ -245,7 +245,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
                     else:
                         Path(config.download_dir, filename).touch()
                         count += 1
-            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
+            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % count)
 
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
