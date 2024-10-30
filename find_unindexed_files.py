@@ -36,12 +36,12 @@ def main():
     print('Building file list... ')
     archives = []
     missing_archives = []
-    for archive in Path(config.pywb_collection_dir).iterdir():
+    for archive in Path(config.download_dir).iterdir():
         insort_left(archives, archive.name)
         print('\033[F\033[KBuilding file list... %d' % len(archives))
     print('\033[F\033[KBuilding file list... %d files found.' % len(archives))
     print('Comparing against pywb index...')
-    with Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj').open('r') as f:
+    with Path(Path(config.download_dir).parents[0], 'indexes', 'autoindex.cdxj').open('r') as f:
         lineno = 0
         for line in f.read().splitlines():
             lineno += 1
@@ -66,13 +66,13 @@ def main():
                 print('\'unindexed_archives\' already exists, but is not a directory.')
                 sys.exit()
             for archive in archives:
-                Path(config.pywb_collection_dir, archive).rename(Path('unindexed_archives', archive))
+                Path(config.download_dir, archive).rename(Path('unindexed_archives', archive))
             print('Files moved to \'unindexed_archives/\'.')
 
         # This should, according to a hunch, make pywb 'see' them and attempt to index them again.
         elif key == 't':
             for archive in archives:
-                Path(config.pywb_collection_dir + '/' + archive).touch()
+                Path(config.download_dir + '/' + archive).touch()
                 
         elif key == 'w':
             with Path('unindexed_archive_list').open('w') as f:

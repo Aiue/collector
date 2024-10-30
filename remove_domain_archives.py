@@ -15,7 +15,7 @@ config = Config(Path('collector.conf'))
 def main():
     if len(sys.argv) != 2:
         sys.exit('Usage: ' + sys.argv[0] + ' <domain>')
-    indexFile = Path(Path(config.pywb_collection_dir).parents[0], 'indexes', 'autoindex.cdxj')
+    indexFile = Path(Path(config.download_dir).parents[0], 'indexes', 'autoindex.cdxj')
     index = []
     with indexFile.open('r') as f:
         for line in f.read().splitlines():
@@ -44,7 +44,7 @@ def main():
         results += 1
         info = json.loads(index.pop(position)[2])
         try:
-            Path(config.pywb_collection_dir, info['filename']).unlink()
+            Path(config.download_dir, info['filename']).unlink()
         except FileNotFoundError:
             print('Indexed file %s not found.' % info['filename'])
         if len(index) <= position:
