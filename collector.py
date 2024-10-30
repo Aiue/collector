@@ -75,8 +75,8 @@ class Config:
     min_request_interval = 1.0
     max_request_interval = 60.0
     cache_index_clusters = False
-    pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
-                                                    # However, this would require more extensive rewrites.
+    pywb_collection_dir = None # Should (probably) also be Pathified.
+                               # However, this would require more extensive rewrites.
     domain_list_file = Path('domains.conf')
     safe_path = Path.cwd()
     prometheus_port = 1234
