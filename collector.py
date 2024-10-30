@@ -362,7 +362,7 @@ class RemoteFile:
             rq.add(self)
         else:
             self.write(contents)
-            if config.pywb_dir:
+            if config.indexing_method == INDEX_MANAGER:
                 start_time = time.time()
                 try:
                     wbm = subprocess.run(
