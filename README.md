@@ -4,7 +4,7 @@ The purpose of this script is to search the [Common Crawl](https://commoncrawl.o
 ## Usage
 The script is intended to run as a daemon over a long period of time. Other uses may be possible, but would not be advised without proper modifications.
 
-When running alongside pywb, it is assumed that pywb has been configured to use automatic index updating. The purpose is twofold: stay out of pywb's venv, and don't trigger index rebuilds too frequently.
+It was originally written to make use of pywb's automatic indexing. However, due to problems with the automatic indexer not always picking up files, it has been rewritten to allow use of `wb-manager`. Note that this is optional, and the old behaviour of simply dumping the file in a directory will be used.
 
 The domains to be searched should be listed in [domains.conf](domains.conf) (can be reconfigured by setting `domain_list_file`), which will be expected to be a plaintext file. Separate domain entries with a newline. By request, the script will prioritise finish searching all archives for one domain, letting the domain's history be completed. Only domains will be accepted, and will implicitly include all subdomains. Full URLs are not supported, because when combined with the implicit inclusion of subdomains, this would be less optimal.
 
@@ -41,11 +41,6 @@ Default: False
 
 Whether or not we should cache index clusters. Normally, this can be left off, since it's fairly unlikely we'll ever need to search the same cluster more than once.
 
-#### pywb_collection_dir *(string)*
-Default: path/to/pywb/collection
-
-This will need to be set to wherever your pywb collection is located.
-
 #### safe_path *(string)*
 Default: `Path.cwd()`
 
@@ -70,6 +65,37 @@ Optional. Set to an email adress to have status updates (new archive/searches fi
 Default: None *(NoneType)*
 
 Optional. Required for functions related to sending email (outside of logging configuration file).
+
+#### tempdir *(string)*
+Default: /tmp/cccollector
+
+Where to store temporary files. Needs to be on the same device as cache and collection dir.
+
+#### indexing_method *(string)*
+Default: auto
+
+Indexing method:
+ - 'none' (or 'download') means the collector will make no attempts to interact with pywb, making it able to function standalone. Requires `download_dir` to also be set.
+ - 'auto' means the collector will make use of pywb's automatic indexing, and track files that remain unindexed to make use of a workaround. Will result in a slight increase in startup times. Requires `download_dir` to also be set.
+ - 'manager' means `wb-manager` will be called for each download. This method is very slow and not recommended. Will become progressively slower as collections grow. Requires `pywb_dir` and `collection_name` to also be set.
+
+#### download_dir *(string)*
+Default: None *(NoneType)*
+
+Where to drop files if automatic or no indexing method is used.
+
+#### pywb_dir *(string)*
+Default: None *(NoneType)*
+
+Path to pybw's venv, required if using manager indexing method.
+
+#### collection_name *(string)*
+Default: root
+
+#### pywb_collection_dir *(string)* (DEPRECATED)
+Default: None
+
+Use download_dir instead.
 
 ### remove_domain_archives.py
 Usage: `./remove_domain_archive.py <domain>`

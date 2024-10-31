@@ -14,6 +14,7 @@ import logging.handlers
 import os
 from pathlib import Path
 import requests
+import subprocess
 import time
 
 try:
@@ -59,6 +60,11 @@ except ModuleNotFoundError:
         def observe(*args):
             pass
 
+# Set some constants. Or well, "constants", but anyway.
+INDEX_NONE=0
+INDEX_AUTO=1
+INDEX_MANAGER=2
+
 # I don't like the configuration file alternatives python offers. I'll write my own.
 class Config:
     # Set defaults
@@ -70,14 +76,17 @@ class Config:
     min_request_interval = 1.0
     max_request_interval = 60.0
     cache_index_clusters = False
-    pywb_collection_dir = 'path/to/pywb/collection' # Should (probably) also be Pathified.
-                                                    # However, this would require more extensive rewrites.
+    download_dir = None
     domain_list_file = Path('domains.conf')
     safe_path = Path.cwd()
     prometheus_port = 1234
     cache_dir = Path('.cache')
     notification_email = None
     mail_from_address = None
+    tempdir = Path('/tmp/cccollector')
+    pywb_dir = None
+    collection_name = None
+    indexing_method=INDEX_AUTO
 
     def __init__(self, configFile):
         if configFile.exists():
@@ -85,17 +94,33 @@ class Config:
                 for line in f.read().splitlines():
                     # This isn't pretty, but it will ensure the preferred format is viable.
                     key,value = line.split('=')
+                    if key == 'pywb_collection_dir':
+                        key = 'download_dir'
                     if key == 'cache_index_clusters':
-                        value = bool(value)
+                        if value.lower() == 'true': value = True
+                        elif value.lower() == 'false': value = False
+                        else: raise RuntimeError('Key %s expects boolean value, got %s' % (key, value))
                     elif key == 'min_request_interval':
-                        value = float(value)
-                    elif key in ['domain_list_file', 'safe_path', 'cache_dir']:
-                        value = Path(value)
+                        if value.isdecimal(): value = float(value)
+                        else: raise RuntimeError('Key %s expects float value, got %s' % (key, value))
+                    elif key == 'indexing_method':
+                        if value.lower() in ['download', 'none']: value = INDEX_NONE
+                        elif value.lower() == 'auto': value = INDEX_AUTO
+                        elif value.lower() == 'manager': value = INDEX_MANAGER
+                        else: raise RuntimeError('Unknown indexing method: %s' % value)
                     elif key in ['max_file_size', 'prometheus_port']:
-                        value = int(value)
-                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'pywb_collection_dir']:
+                        if value.isnumeric(): value = int(value)
+                        else: raise RuntimeError('Key %s expects integer value, got %s' % (key, value))
+                    # Allow old key if there is no conflict. To be removed later.
+                    elif self.download_dir and key in ['download_dir', 'pywb_collection_dir']:
+                        raise RuntimeError('Both download_dir and pywb_collection_dir has been set, only use download_dir.')
+                    elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'pywb_dir', 'download_dir']:
+                        value = Path(value)
+                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'collection_name']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
+            if self.indexing_method < INDEX_MANAGER and self.download_dir == None: raise RuntimeError('%s indexing requires download_dir to be set.' % ('Automatic' if self.indexing_method == INDEX_AUTO else 'No'))
+            if self.indexing_method == INDEX_MANAGER and (self.pywb_dir == None or self.collection_name == None): raise RuntimeError('Manager indexing requires pywb_dir and collection_name to be set.')
 
 config = Config(Path('collector.conf'))
 
@@ -135,13 +160,14 @@ def path_is_safe(path, inst=None): # path is a Path.
          or str(path).endswith('/..')
          or path.is_absolute()
             and not (
-                str(path).startswith(config.pywb_collection_dir)
+                str(path).startswith(str(config.download_dir))
              or str(path).startswith(str(config.safe_path))
              or str(path).startswith(str(config.cache_dir))
+             or str(path).startswith(str(config.tempdir))
     )):
-        msg = 'Unsafe path: %s' % self
+        msg = 'Unsafe path: %s' % path
         if inst and type(inst) == RemoteFile: # Type is either RemoteFile or Domain. Only RemoteFile has attributes we want to add.
-            msg += ' (' + str(self.url) + ')'  # Only url is of real interest.
+            msg += ' (' + str(inst.url) + ')'  # Only url is of real interest.
             
         logger.warning(msg)
         raise ValueError(msg) # Yes, it could lead to a deadlock. But if we ever do end up here, we have bigger issues.
@@ -186,6 +212,40 @@ class Monitor:
             self.status_cache[k] = v
         self.status.info(self.status_cache)
 
+class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
+    filelists = {}
+
+    def get(name):
+        if name in FileList.filelists: return FileList.filelists[name]
+        return FileList(name)
+
+    def __init__(self, name):
+        self.files = []
+
+    def __len__(self):
+        return len(self.files)
+    
+    def add(self, filename):
+        bisect.insort_left(self.files, filename)
+
+    def check_and_hack(self):
+        indexfile = Path(config.download_dir.parents[0], 'indexes', 'autoindex.cdxj')
+        if not indexfile.exists():
+            logger.warning('%s does not exist, check your pywb configuration.' % str(indexfile))
+        else:
+            logger.info('Checking index status of %d files.' % len(self))
+            count = 0
+            with indexfile.open('r') as f:
+                for line in f.read().splitlines():
+                    _,_,info = line.split(' ', 2)
+                    filename = json.loads(info)['filename']
+                    position = bisect_left(self.files, filename)
+                    if self.files[position] == filename:
+                        self.files.pop(position)
+                    else:
+                        Path(config.download_dir, filename).touch()
+                        count += 1
+            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % count)
 
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
@@ -211,7 +271,7 @@ class Archive:
             logger.critical('Could not update paths for archive %s (incomplete or otherwise malformed paths file).', self.archiveID)
             raise ParserError('Could not update paths for archive %s (incomplete or otherwise malformed paths file).', self.archiveID)
 
-class Archives:
+class ArchiveList:
     def __init__(self):
         self.archives = {}
         self.lastUpdate = 0
@@ -342,6 +402,26 @@ class RemoteFile:
             rq.add(self)
         else:
             self.write(contents)
+            if config.indexing_method == INDEX_MANAGER:
+                start_time = time.time()
+                try:
+                    wbm = subprocess.run(
+                        ['wb-manager', 'add', config.collection_name, str(self.filename)],
+                        env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s/bin:%s' % (str(config.pywb_dir), os.getenv('PATH'))},
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        encoding='utf8',
+                        cwd=str(config.pywb_dir)
+                    )
+                except subprocess.CalledProcessError as err:
+                    logger.error('wb-manager exited with code %d: %s' % (err.returncode, err.output))
+                    raise
+                logger.debug('wb-manager ran for %.2f seconds.' % (time.time() - start_time))
+                self.filename.unlink()
+            else:
+                self.filename.rename(Path(config.download_dir, self.filename.name))
+                FileList.get('unknown_status_files').add(self.filename.name)
 
     def read(self):
         #logger.debug('Reading from %s', self.url)
@@ -377,9 +457,8 @@ class RemoteFile:
         if not self.filename.parents[0].exists():
             logger.info('Recursively creating directory \'%s\'.', self.filename.parents[0])
             self.filename.parents[0].mkdir(parents=True)
-        with Path('/tmp', 'cccollector', self.filename.name).open('wb') as f:
+        with self.filename.open('wb') as f:
             f.write(contents)
-        Path('/tmp', 'cccollector', self.filename.name).rename(self.filename)
 
     def get(self):
         #logger.debug('Getting from %s', self.url)
@@ -401,10 +480,9 @@ class RemoteFile:
             monitor.failed.inc()
             logger.error('Could not get %s - %s', self.url, error)
             raise
-        finally:
-            download_size = self.length if self.length else int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
-            monitor.download_size.observe(download_size)
-            logger.debug('Downloaded %d bytes in %f seconds. (%s/s)' % (download_size, time.time() - time_start, human_readable(download_size/(time.time()-time_start))))
+        # Note that this excludes headers.
+        monitor.download_size.observe(len(r.content))
+        logger.debug('Downloaded %s in %f seconds. (%s/s)' % (human_readable(len(r.content)), time.time() - time_start, human_readable(len(r.content)/(time.time()-time_start))))
         if not (r.status_code >= 200 and r.status_code < 300):
             # This could imply a problem with parsing, raise it as such rather than simply bad status.
             if r.status_code >= 400 and r.status_code < 500:
@@ -513,10 +591,10 @@ class Domain:
         if path_is_safe(p, self):
             if not p.parents[0].exists():
                 p.parents[0].mkdir()
-            with Path('/tmp', 'cccollector', p.name).open('w') as f:
+            with Path('tempfile').open('w') as f:
                 json.dump(self.history, f)
                 # No log message, we might do this often.
-            Path('/tmp', 'cccollector', p.name).rename(p)
+            Path('tempfile').rename(p)
 
 class Search:
     def __init__(self, domain, archive):
@@ -620,7 +698,7 @@ class Search:
         else:
             filerange = '-' + fileInfo['offset'] + '-' + str(int(fileInfo['offset'])+int(fileInfo['length'])-1)
 
-            filename = config.pywb_collection_dir + '/'
+            filename = str(config.tempdir) + '/'
             if fileInfo['filename'].endswith('.arc.gz'):
                 filename += fileInfo['filename'].replace('/', '-')
                 filename = filename[0:len(filename)-7] + filerange + '.arc.gz'
@@ -644,10 +722,10 @@ class Search:
 
 def main():
     logger.info('Collector running.')
-    if not Path('/tmp', 'cccollector').exists():
-        logger.info('Creating temp storage, /tmp/cccollector')
-        Path('/tmp', 'cccollector').mkdir(parents=True)
-    archives = Archives()
+    if not Path(config.tempdir).exists():
+        logger.info('Creating temp storage, %s' % str(config.tempdir))
+        Path(config.tempdir).mkdir(parents=True)
+    archives = ArchiveList()
     domains = []
     domains_last_modified = 0
     finished_message = False
@@ -661,6 +739,13 @@ def main():
     retryqueue.load()
 
     start_http_server(config.prometheus_port)
+
+    if config.indexing_method == INDEX_AUTO:
+        last_index_hack = 0 # Ensure we do a pass as soon as possible.
+        unknown_status_files = FileList.get('unknown_status_files')
+        for archive in config.download_dir.iterdir():
+            unknown_status_files.add(archive.name)
+        logger.info('Cached %d previously downloaded files for index comparison.' % len(unknown_status_files))
 
     while True:
         monitor.retryqueue.set(len(retryqueue.queue))
@@ -694,7 +779,12 @@ def main():
             domains_last_modified = Path(config.domain_list_file).stat().st_mtime
 
         archives.update()
+        retryqueue.process()
 
+        if config.indexing_method == INDEX_AUTO and time.time() - last_index_hack > 600: # Once every 10 minutes should be good.
+            if len(unknown_status_files) > 0: unknown_status_files.check_and_hack()
+            last_index_hack = time.time()
+        
         archive = None
         domain = None
         for d in domains:
@@ -708,8 +798,6 @@ def main():
                     archive = a
                     monitor.UpdateStatus(current_domain='%s (%d/%d)' % (str(domain), domains.index(domain)+1, len(domains)), current_archive='%s (%d/%d)' % (archive.archiveID, archive.order, len(archives.archives)))
                     break
-
-        retryqueue.process()
 
         if not domain:
             current_search = None # Make sure we're not sitting on memory we don't need.
@@ -733,7 +821,7 @@ def main():
             current_search.process()
         except (requests.RequestException, BadHTTPStatus) as error:
             if isinstance(error, BadHTTPStatus):
-                logger.warning('Could not retrieve %s: %d %s' % error[0], error[3], error[4])
+                logger.warning('Could not retrieve %s: %d %s' % (error.args[0], error.args[3], error.args[4]))
             else:
                 logger.warning(error)
 
