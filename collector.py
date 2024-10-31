@@ -63,7 +63,6 @@ except ModuleNotFoundError:
 # Set some constants. Or well, "constants", but anyway.
 INDEX_NONE=0
 INDEX_AUTO=1
-INDEX_MANAGER=2
 
 # I don't like the configuration file alternatives python offers. I'll write my own.
 class Config:
@@ -84,7 +83,6 @@ class Config:
     notification_email = None
     mail_from_address = None
     tempdir = Path('/tmp/cccollector')
-    pywb_dir = None
     collection_name = None
     indexing_method=INDEX_AUTO
 
@@ -106,7 +104,6 @@ class Config:
                     elif key == 'indexing_method':
                         if value.lower() in ['download', 'none']: value = INDEX_NONE
                         elif value.lower() == 'auto': value = INDEX_AUTO
-                        elif value.lower() == 'manager': value = INDEX_MANAGER
                         else: raise RuntimeError('Unknown indexing method: %s' % value)
                     elif key in ['max_file_size', 'prometheus_port']:
                         if value.isnumeric(): value = int(value)
@@ -114,13 +111,13 @@ class Config:
                     # Allow old key if there is no conflict. To be removed later.
                     elif self.download_dir and key in ['download_dir', 'pywb_collection_dir']:
                         raise RuntimeError('Both download_dir and pywb_collection_dir has been set, only use download_dir.')
-                    elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'pywb_dir', 'download_dir']:
+                    elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'download_dir']:
                         value = Path(value)
                     elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'collection_name']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
-            if self.indexing_method < INDEX_MANAGER and self.download_dir == None: raise RuntimeError('%s indexing requires download_dir to be set.' % ('Automatic' if self.indexing_method == INDEX_AUTO else 'No'))
-            if self.indexing_method == INDEX_MANAGER and (self.pywb_dir == None or self.collection_name == None): raise RuntimeError('Manager indexing requires pywb_dir and collection_name to be set.')
+            # Currently no other supported indexing methods, but leave like this for future reference.
+            if self.indexing_method <= INDEX_AUTO and self.download_dir == None: raise RuntimeError('%s indexing requires download_dir to be set.' % ('Automatic' if self.indexing_method == INDEX_AUTO else 'No'))
 
 config = Config(Path('collector.conf'))
 
@@ -402,26 +399,8 @@ class RemoteFile:
             rq.add(self)
         else:
             self.write(contents)
-            if config.indexing_method == INDEX_MANAGER:
-                start_time = time.time()
-                try:
-                    wbm = subprocess.run(
-                        ['wb-manager', 'add', config.collection_name, str(self.filename)],
-                        env={'VIRTUAL_ENV': str(config.pywb_dir), 'PATH': '%s/bin:%s' % (str(config.pywb_dir), os.getenv('PATH'))},
-                        check=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        encoding='utf8',
-                        cwd=str(config.pywb_dir)
-                    )
-                except subprocess.CalledProcessError as err:
-                    logger.error('wb-manager exited with code %d: %s' % (err.returncode, err.output))
-                    raise
-                logger.debug('wb-manager ran for %.2f seconds.' % (time.time() - start_time))
-                self.filename.unlink()
-            else:
-                self.filename.rename(Path(config.download_dir, self.filename.name))
-                FileList.get('unknown_status_files').add(self.filename.name)
+            self.filename.rename(Path(config.download_dir, self.filename.name))
+            FileList.get('unknown_status_files').add(self.filename.name)
 
     def read(self):
         #logger.debug('Reading from %s', self.url)
