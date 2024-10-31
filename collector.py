@@ -782,7 +782,6 @@ def main():
         retryqueue.process()
 
         if config.indexing_method == INDEX_AUTO and time.time() - last_index_hack > 600: # Once every 10 minutes should be good.
-            logger.debug('index hack %d' % len(unknown_status_files))
             if len(unknown_status_files) > 0: unknown_status_files.check_and_hack()
             last_index_hack = time.time()
         
