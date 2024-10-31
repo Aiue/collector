@@ -235,6 +235,9 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
             with indexfile.open('r') as f:
                 for line in f.read().splitlines():
                     logger.debug(len(self.files))
+                    if len(self.files) == 0:
+                        logger.debug('Aborting check_and_hack()')
+                        break
                     _,_,info = line.split(' ', 2)
                     filename = json.loads(info)['filename']
                     position = bisect.bisect_left(self.files, filename)
