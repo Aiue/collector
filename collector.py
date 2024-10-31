@@ -239,7 +239,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
                 for line in f.read().splitlines():
                     _,_,info = line.split(' ', 2)
                     filename = json.loads(info)['filename']
-                    position = bisect_left(self.files, filename)
+                    position = bisect.bisect_left(self.files, filename)
                     if self.files[position] == filename:
                         self.files.pop(position)
                     else:
