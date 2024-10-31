@@ -231,7 +231,6 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
             logger.warning('%s does not exist, check your pywb configuration.' % str(indexfile))
         else:
             logger.info('Checking index status of %d files.' % len(self))
-            count = 0
             with indexfile.open('r') as f:
                 for line in f.read().splitlines():
                     if len(self.files) == 0:
@@ -243,8 +242,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
                         self.files.pop(position)
             for f in self.files:
                 Path(config.download_dir, f).touch()
-                count += 1
-            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % count)
+            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
 
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
