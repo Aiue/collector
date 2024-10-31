@@ -97,17 +97,17 @@ class Config:
                     if key == 'cache_index_clusters':
                         if value.lower() == 'true': value = True
                         elif value.lower() == 'false': value = False
-                        else: raise RuntimeError('Key %s expects boolean value, got %s' % (key, value))
+                        else: raise TypeError('Key %s expects boolean value, got %s' % (key, value))
                     elif key == 'min_request_interval':
                         if value.isdecimal(): value = float(value)
-                        else: raise RuntimeError('Key %s expects float value, got %s' % (key, value))
+                        else: raise TypeError('Key %s expects float value, got %s' % (key, value))
                     elif key == 'indexing_method':
                         if value.lower() in ['download', 'none']: value = INDEX_NONE
                         elif value.lower() == 'auto': value = INDEX_AUTO
-                        else: raise RuntimeError('Unknown indexing method: %s' % value)
+                        else: raise ValueError('Unknown indexing method: %s' % value)
                     elif key in ['max_file_size', 'prometheus_port']:
                         if value.isnumeric(): value = int(value)
-                        else: raise RuntimeError('Key %s expects integer value, got %s' % (key, value))
+                        else: raise TypeError('Key %s expects integer value, got %s' % (key, value))
                     # Allow old key if there is no conflict. To be removed later.
                     elif self.download_dir and key in ['download_dir', 'pywb_collection_dir']:
                         raise RuntimeError('Both download_dir and pywb_collection_dir has been set, only use download_dir.')
