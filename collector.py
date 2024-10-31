@@ -231,19 +231,18 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
             logger.warning('%s does not exist, check your pywb configuration.' % str(indexfile))
         else:
             logger.info('Checking index status of %d files.' % len(self))
-            count = 0
             with indexfile.open('r') as f:
                 for line in f.read().splitlines():
-                    logger.debug(len(self.files))
+                    if len(self.files) == 0:
+                        break
                     _,_,info = line.split(' ', 2)
                     filename = json.loads(info)['filename']
                     position = bisect.bisect_left(self.files, filename)
-                    if self.files[position] == filename:
+                    if position < len(self.files) and self.files[position] == filename:
                         self.files.pop(position)
-                    else:
-                        Path(config.download_dir, filename).touch()
-                        count += 1
-            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % count)
+            for f in self.files:
+                Path(config.download_dir, f).touch()
+            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
 
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
