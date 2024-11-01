@@ -191,12 +191,15 @@ class Monitor:
     def __init__(self, monitor):
         self.monitors[monitor] = self
         self.retryqueue = Gauge('collector_retryqueue', 'Retry Queue Entries')
+        self.retryqueue.set_function(lambda: len(RetryQueue.queue))
         self.requests = Counter('collector_requests', 'Requests Sent')
         self.failed = Counter('collector_failed', 'Failed Requests')
         self.state = Enum('collector_state', 'Current State', states=['collecting', 'idle'])
         self.status = Info('collector_status', 'Collector Status Information')
         self.download_size = Summary('collector_download_size', 'Download Size')
-        if config.indexing_method == INDEX_AUTO: self.unknown_status_files = Gauge('unknown_status_files', 'Unknown Status Files')
+        if config.indexing_method == INDEX_AUTO:
+            self.unknown_status_files = Gauge('unknown_status_files', 'Unknown Status Files')
+            self.unknown_status_files.set_function(lambda: len(FileList.get('unknown_status_files')))
 
     def get(name):
         if name in Monitor.monitors: return Monitor.monitors[name]
@@ -226,7 +229,6 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
     
     def add(self, filename):
         bisect.insort_left(self.files, filename)
-        Monitor.get('monitor').unknown_status_files.inc()
 
     def check_and_hack(self):
         logger.debug('check_and_hack')
@@ -244,7 +246,6 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
                     position = bisect.bisect_left(self.files, filename)
                     if position < len(self.files) and self.files[position] == filename:
                         self.files.pop(position)
-                        Monitor.get('monitor').unknown_status_files.dec()
             for f in self.files:
                 Path(config.download_dir, f).touch()
             logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
@@ -732,7 +733,6 @@ def main():
         logger.info('Cached %d previously downloaded files for index comparison.' % len(unknown_status_files))
 
     while True:
-        monitor.retryqueue.set(len(retryqueue.queue))
         if Path(config.domain_list_file).stat().st_mtime > domains_last_modified:
             if domains_last_modified == 0:
                 logger.info('Reading domain list.')
