@@ -226,6 +226,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
         bisect.insort_left(self.files, filename)
 
     def check_and_hack(self):
+        logger.debug('check_and_hack')
         indexfile = Path(config.download_dir.parents[0], 'indexes', 'autoindex.cdxj')
         if not indexfile.exists():
             logger.warning('%s does not exist, check your pywb configuration.' % str(indexfile))
@@ -761,6 +762,7 @@ def main():
         retryqueue.process()
 
         if config.indexing_method == INDEX_AUTO and time.time() - last_index_hack > 600: # Once every 10 minutes should be good.
+            logger.debug('index_hack %d' % len(unknown_status_files))
             if len(unknown_status_files) > 0: unknown_status_files.check_and_hack()
             last_index_hack = time.time()
         
