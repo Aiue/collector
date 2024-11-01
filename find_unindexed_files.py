@@ -72,7 +72,7 @@ def main():
         # This should, according to a hunch, make pywb 'see' them and attempt to index them again.
         elif key == 't':
             for archive in archives:
-                Path(config.download_dir + '/' + archive).touch()
+                Path(config.download_dir, archive).touch()
                 
         elif key == 'w':
             with Path('unindexed_archive_list').open('w') as f:
