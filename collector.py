@@ -243,7 +243,6 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
                     if position < len(self.files) and self.files[position] == filename:
                         self.files.pop(position)
             for f in self.files:
-                logger.debug(Path(config.download_dir, f))
                 Path(config.download_dir, f).touch()
             logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
 
@@ -764,7 +763,6 @@ def main():
         retryqueue.process()
 
         if config.indexing_method == INDEX_AUTO and time.time() - last_index_hack > 600: # Once every 10 minutes should be good.
-            logger.debug('index_hack %d' % len(unknown_status_files))
             if len(unknown_status_files) > 0: unknown_status_files.check_and_hack()
             last_index_hack = time.time()
         
