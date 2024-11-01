@@ -224,9 +224,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
         return len(self.files)
     
     def add(self, filename):
-        logger.debug('FileList.add pre  %d' % len(self.files))
         bisect.insort_left(self.files, filename)
-        logger.debug('FileList.add post %d' % len(self.files))
 
     def check_and_hack(self):
         logger.debug('check_and_hack')
@@ -405,9 +403,7 @@ class RemoteFile:
         else:
             self.write(contents)
             self.filename.rename(Path(config.download_dir, self.filename.name))
-            logger.debug('download pre  %d' % len(FileList.get('unknown_status_files')))
             FileList.get('unknown_status_files').add(self.filename.name)
-            logger.debug('download post %d' % len(FileList.get('unknown_status_files')))
 
     def read(self):
         #logger.debug('Reading from %s', self.url)
