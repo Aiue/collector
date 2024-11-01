@@ -196,6 +196,7 @@ class Monitor:
         self.state = Enum('collector_state', 'Current State', states=['collecting', 'idle'])
         self.status = Info('collector_status', 'Collector Status Information')
         self.download_size = Summary('collector_download_size', 'Download Size')
+        if config.indexing_method == INDEX_AUTO: self.unknown_status_files = Gauge('unknown_status_files', 'Unknown Status Files')
 
     def get(name):
         if name in Monitor.monitors: return Monitor.monitors[name]
@@ -225,6 +226,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
     
     def add(self, filename):
         bisect.insort_left(self.files, filename)
+        Monitor.get('monitor').unknown_status_files.inc()
 
     def check_and_hack(self):
         logger.debug('check_and_hack')
@@ -242,6 +244,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
                     position = bisect.bisect_left(self.files, filename)
                     if position < len(self.files) and self.files[position] == filename:
                         self.files.pop(position)
+                        Monitor.get('monitor').unknown_status_files.dec()
             for f in self.files:
                 Path(config.download_dir, f).touch()
             logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
