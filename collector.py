@@ -217,6 +217,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
         return FileList(name)
 
     def __init__(self, name):
+        self.filelists[name] = self
         self.files = []
 
     def __len__(self):
