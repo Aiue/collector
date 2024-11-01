@@ -242,6 +242,7 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
                     if position < len(self.files) and self.files[position] == filename:
                         self.files.pop(position)
             for f in self.files:
+                logger.debug(Path(config.download_dir, f))
                 Path(config.download_dir, f).touch()
             logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
 
@@ -401,7 +402,9 @@ class RemoteFile:
         else:
             self.write(contents)
             self.filename.rename(Path(config.download_dir, self.filename.name))
+            logger.debug('download pre  %d' % len(FileList.get('unknown_status_files')))
             FileList.get('unknown_status_files').add(self.filename.name)
+            logger.debug('download post %d' % len(FileList.get('unknown_status_files')))
 
     def read(self):
         #logger.debug('Reading from %s', self.url)
