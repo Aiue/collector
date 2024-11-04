@@ -197,9 +197,6 @@ class Monitor:
         self.state = Enum('collector_state', 'Current State', states=['collecting', 'idle'])
         self.status = Info('collector_status', 'Collector Status Information')
         self.download_size = Summary('collector_download_size', 'Download Size')
-        if config.indexing_method == INDEX_AUTO:
-            self.unknown_status_files = Gauge('collector_unknown_status_files', 'Unknown Status Files')
-            self.unknown_status_files.set_function(lambda: len(FileList.get('unknown_status_files')))
 
     def get(name):
         if name in Monitor.monitors: return Monitor.monitors[name]
