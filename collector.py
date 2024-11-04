@@ -228,7 +228,6 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
         bisect.insort_left(self.files, filename)
 
     def check_and_hack(self):
-        logger.debug('check_and_hack')
         indexfile = Path(config.download_dir.parents[0], 'indexes', 'autoindex.cdxj')
         if not indexfile.exists():
             logger.warning('%s does not exist, check your pywb configuration.' % str(indexfile))
