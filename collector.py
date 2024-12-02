@@ -83,7 +83,6 @@ class Config:
     notification_email = None
     mail_from_address = None
     tempdir = Path('/tmp/cccollector')
-    collection_name = None
     indexing_method=INDEX_AUTO
 
     def __init__(self, configFile):
@@ -92,8 +91,6 @@ class Config:
                 for line in f.read().splitlines():
                     # This isn't pretty, but it will ensure the preferred format is viable.
                     key,value = line.split('=')
-                    if key == 'pywb_collection_dir':
-                        key = 'download_dir'
                     if key == 'cache_index_clusters':
                         if value.lower() == 'true': value = True
                         elif value.lower() == 'false': value = False
@@ -108,12 +105,9 @@ class Config:
                     elif key in ['max_file_size', 'prometheus_port']:
                         if value.isnumeric(): value = int(value)
                         else: raise TypeError('Key %s expects integer value, got %s' % (key, value))
-                    # Allow old key if there is no conflict. To be removed later.
-                    elif self.download_dir and key in ['download_dir', 'pywb_collection_dir']:
-                        raise RuntimeError('Both download_dir and pywb_collection_dir has been set, only use download_dir.')
                     elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'download_dir']:
                         value = Path(value)
-                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'collection_name']:
+                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
             # Currently no other supported indexing methods, but leave like this for future reference.
@@ -244,7 +238,10 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
                         self.files.pop(position)
             for f in self.files:
                 Path(config.download_dir, f).touch()
-            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
+            if len(self.files) > 0:
+                logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
+            else:
+                logger.info('All files checked were properly indexed.')
 
 class Archive:
     def __init__(self, archiveID, indexPathsFile):

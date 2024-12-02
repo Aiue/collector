@@ -83,24 +83,25 @@ Default: None *(NoneType)*
 
 Where to drop files if automatic or no indexing method is used.
 
-#### collection_name *(string)*
-Default: root
-
-#### pywb_collection_dir *(string)* (DEPRECATED)
-Default: None
-
-Use download_dir instead.
-
 ### remove_domain_archives.py
 Usage: `./remove_domain_archive.py <domain>`
 
 Removes all of: indexed archives for a specific domain, pywb index entries for the domain, and our own history file for the domain. The main purpose is to be used in testing, but may have other use-cases. **Recommended to not use while collector or pywb are running, and also, it relies on pywb having finished building the index.**
 
 ### status.py
-`status.py` can be used to get completion information on individual domains. Usage is simple: `./status.py <all|domain>`. 
+`status.py` can be used to get completion information on individual domains. Usage is simple: `./status.py <all|domain>`. This makes use of history files, located in `history/`.
 
-### find_unindexed_files.py and verify_history.py
-Debugging scripts, should have little other use.
+When given the argument *all*, it will show how many domains have been fully processed, out of those configured in *domains.conf*, and how many have been partially processed. Additionally, it will show average number of archives processed per domain. Any domains that are partially processed will have slightly more detailed information printed out, showing archive completion rate.
+
+When given a domain as an argument, number of processed archives out of total number of known archives will be shown, along with number of partially processed archives. Any partially processed archives will have their completion rate printed, along with how many file retrievals have failed and are currently in the retry queue.
+
+For information about current collector state, Grafana would be advised over use of this tool, however.
+
+### find_unindexed_files.py
+Debugging tool that compares pywb's index to the downloaded files, then lists any files missing from the index, or any indexed files that are missing. If any unindexed files are found, gives the option to write the list of files to a file, move all unindexed files, or to `touch` all unindexed files. Most of this functionality should no longer be needed, as the problem it helped identify has now been resolved with a hack. It may still have some use in identifying other indexing issues, however.
+
+### verify_history.py
+Another debugging tool. Compares history files to search results. Requires cached index files to function. Has been running periodically for a few months to investigate suspicions of searches sometimes yielding false negatives, but has during that time failed to replicate the issue. Will likely conclude that this issue does not exist and remove this tool before I leave.
 
 ## Exceptions
 The script comes with two custom exceptions. Both inherit from Exception with no additional changes. The exceptions are `ParserError` and `BadHTTPStatus`.
