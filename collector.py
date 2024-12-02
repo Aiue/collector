@@ -83,7 +83,6 @@ class Config:
     notification_email = None
     mail_from_address = None
     tempdir = Path('/tmp/cccollector')
-    collection_name = None
     indexing_method=INDEX_AUTO
 
     def __init__(self, configFile):
@@ -108,7 +107,7 @@ class Config:
                         else: raise TypeError('Key %s expects integer value, got %s' % (key, value))
                     elif key in ['domain_list_file', 'safe_path', 'cache_dir', 'tempdir', 'download_dir']:
                         value = Path(value)
-                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email', 'collection_name']:
+                    elif key not in ['archive_host', 'archive_list_uri', 'mail_from_address', 'notification_email']:
                         raise RuntimeError('Unknown configuration key: %s' % key)
                     setattr(self, key, value)
             # Currently no other supported indexing methods, but leave like this for future reference.
