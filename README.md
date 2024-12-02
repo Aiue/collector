@@ -99,7 +99,7 @@ Removes all of: indexed archives for a specific domain, pywb index entries for t
 ### status.py
 `status.py` can be used to get completion information on individual domains. Usage is simple: `./status.py <all|domain>`. This makes use of history files, located in `history/`.
 
-When given the argument *all*, it will show how many domains have been fully processed, out of those configured in *domains.conf*, and how many have been partially processed. Additionally, it will show average number of archives processed per domain. Any domains that are partially processed will have slightly more detailed information printed out.
+When given the argument *all*, it will show how many domains have been fully processed, out of those configured in *domains.conf*, and how many have been partially processed. Additionally, it will show average number of archives processed per domain. Any domains that are partially processed will have slightly more detailed information printed out, showing archive completion rate.
 
 When given a domain as an argument, number of processed archives out of total number of known archives will be shown, along with number of partially processed archives. Any partially processed archives will have their completion rate printed, along with how many file retrievals have failed and are currently in the retry queue.
 
