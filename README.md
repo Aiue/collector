@@ -97,7 +97,13 @@ Usage: `./remove_domain_archive.py <domain>`
 Removes all of: indexed archives for a specific domain, pywb index entries for the domain, and our own history file for the domain. The main purpose is to be used in testing, but may have other use-cases. **Recommended to not use while collector or pywb are running, and also, it relies on pywb having finished building the index.**
 
 ### status.py
-`status.py` can be used to get completion information on individual domains. Usage is simple: `./status.py <all|domain>`. 
+`status.py` can be used to get completion information on individual domains. Usage is simple: `./status.py <all|domain>`. This makes use of history files, located in `history/`.
+
+When given the argument *all*, it will show how many domains have been fully processed, out of those configured in *domains.conf*, and how many have been partially processed. Additionally, it will show average number of archives processed per domain. Any domains that are partially processed will have slightly more detailed information printed out.
+
+When given a domain as an argument, number of processed archives out of total number of known archives will be shown, along with number of partially processed archives. Any partially processed archives will have their completion rate printed, along with how many file retrievals have failed and are currently in the retry queue.
+
+For information about current collector state, Grafana would be advised over use of this tool, however.
 
 ### find_unindexed_files.py and verify_history.py
 Debugging scripts, should have little other use.
