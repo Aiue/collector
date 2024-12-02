@@ -238,7 +238,10 @@ class FileList: # UnkwnonStatusFileList would be a bit of a mouthful.
                         self.files.pop(position)
             for f in self.files:
                 Path(config.download_dir, f).touch()
-            logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
+            if len(self.files) > 0:
+                logger.info('Touched %d files that were missing from pywb\'s index, they should now be indexed shortly.' % len(self.files))
+            else:
+                logger.info('All files checked were properly indexed.')
 
 class Archive:
     def __init__(self, archiveID, indexPathsFile):
