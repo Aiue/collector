@@ -86,11 +86,6 @@ Where to drop files if automatic or no indexing method is used.
 #### collection_name *(string)*
 Default: root
 
-#### pywb_collection_dir *(string)* (DEPRECATED)
-Default: None
-
-Use download_dir instead.
-
 ### remove_domain_archives.py
 Usage: `./remove_domain_archive.py <domain>`
 
