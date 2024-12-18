@@ -75,8 +75,8 @@ Where to store temporary files. Needs to be on the same device as cache and coll
 Default: auto
 
 Indexing method:
- - 'none' (or 'download') means the collector will make no attempts to interact with pywb, making it able to function standalone. Requires `download_dir` to also be set.
- - 'auto' means the collector will make use of pywb's automatic indexing, and track files that remain unindexed to make use of a workaround. Will result in a slight increase in startup times. Requires `download_dir` to also be set.
+ - `none` (or `download`) means the collector will make no attempts to interact with pywb, making it able to function standalone. Requires `download_dir` to also be set.
+ - `auto` means the collector will make use of pywb's automatic indexing, and track files that remain unindexed to make use of a workaround. Will result in a slight increase in startup times. Requires `download_dir` to also be set.
 
 #### download_dir *(string)*
 Default: None *(NoneType)*
