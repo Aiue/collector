@@ -100,9 +100,6 @@ For information about current collector state, Grafana would be advised over use
 ### find_unindexed_files.py
 Debugging tool that compares pywb's index to the downloaded files, then lists any files missing from the index, or any indexed files that are missing. If any unindexed files are found, gives the option to write the list of files to a file, move all unindexed files, or to `touch` all unindexed files. Most of this functionality should no longer be needed, as the problem it helped identify has now been resolved with a hack. It may still have some use in identifying other indexing issues, however.
 
-### verify_history.py
-Another debugging tool. Compares history files to search results. Requires cached index files to function. Has been running periodically for a few months to investigate suspicions of searches sometimes yielding false negatives, but has during that time failed to replicate the issue. Will likely conclude that this issue does not exist and remove this tool before I leave.
-
 ## Exceptions
 The script comes with two custom exceptions. Both inherit from Exception with no additional changes. The exceptions are `ParserError` and `BadHTTPStatus`.
 
